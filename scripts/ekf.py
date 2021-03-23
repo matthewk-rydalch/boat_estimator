@@ -42,11 +42,12 @@ def dynamics(xHat,accel,omega,dt):
      xHat.ba = xHat.ba + xHat.dba*dt
      xHat.bg = xHat.bg + xHat.dbg*dt
 
-     update_Jacobian_A(xHat,Rb2v,omega,g)
+     update_Jacobian_A(xHat,omega,g)
 
      return xHat
 
-def update_Jacobian_A(xHat,Rb2v,omega,g):
+def update_Jacobian_A(xHat,omega,g):
+     #TODO: check Jacobian more thouroughly
      spsi = np.sin(xHat.th.item(2))
      cpsi = np.cos(xHat.th.item(2))
 
@@ -54,7 +55,7 @@ def update_Jacobian_A(xHat,Rb2v,omega,g):
      dpdq = np.array([[spsi*xHat.v.item(2), cpsi*xHat.v.item(2), spsi*xHat.v.item(0)-cpsi*xHat.v.item(1)],
                       [0.0, spsi*xHat.v.item(2), cpsi*xHat.v.item(0)-spsi*xHat.v.item(1)],
                       [xHat.v.item(1),-xHat.v.item(0),0.0]])
-     dpdv = Rb2v.as_matrix()
+     dpdv = R.from_rotvec(xHat.th.squeeze()).as_matrix()
      dpdBa = np.zeros((3,3))
      dpdBg = np.zeros((3,3))
      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdBa,dpdBg),axis=1)
@@ -75,7 +76,7 @@ def update_Jacobian_A(xHat,Rb2v,omega,g):
      dvdv = np.array([[0.0,-omega.item(2),omega.item(1)],
                       [omega.item(2), 0.0, -omega.item(0)],
                       [-omega.item(1),omega.item(0),0.0]])
-     dvdBa = np.identity(3)
+     dvdBa = -np.identity(3)
      dvdBg = np.zeros((3,3))
      dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdBa, dvdBg), axis=1)
 
