@@ -48,7 +48,7 @@ def dynamics(xHat,accel,omega,dt):
 
 def update_Jacobian_A(xHat,Rb2v,omega,g):
      spsi = np.sin(xHat.th.item(2))
-     cpsi = np.sin(xHat.th.item(2))
+     cpsi = np.cos(xHat.th.item(2))
 
      dpdp = np.zeros((3,3))
      dpdq = np.array([[spsi*xHat.v.item(2), cpsi*xHat.v.item(2), spsi*xHat.v.item(0)-cpsi*xHat.v.item(1)],

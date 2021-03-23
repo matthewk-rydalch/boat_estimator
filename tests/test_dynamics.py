@@ -25,7 +25,6 @@ class TestPropagation(unittest.TestCase):
         bgExpected = np.zeros((3,1))
         covExpected = np.array([[1.0,1.0,1.0]]).T
         expectedStateEstimates = States(pExpected,qExpected,vExpected,baExpected,bgExpected,covExpected,covExpected,covExpected,covExpected,covExpected)
-        expectedA = np.zeros((15,15))
         xHat = ekf.dynamics(xHat,accel,omega,dt)
         self.assert_state_equal(xHat,expectedStateEstimates)
 
@@ -47,9 +46,29 @@ class TestPropagation(unittest.TestCase):
         bgExpected = np.zeros((3,1))
         covExpected = np.array([[1.0,1.0,1.0]]).T
         expectedStateEstimates = States(pExpected,thExpected,vExpected,baExpected,bgExpected,covExpected,covExpected,covExpected,covExpected,covExpected)
-        expectedA = np.zeros((15,15))
         xHat = ekf.dynamics(xHat,accel,omega,dt)
         self.assert_state_equal(xHat,expectedStateEstimates)
+
+    def test_update_jacobian_no_inputs(self):
+        p0 = np.zeros((3,1))
+        th0 = np.zeros((3,1))
+        v0 = np.zeros((3,1))
+        ba0 = np.zeros((3,1))
+        bg0 = np.zeros((3,1))
+        cov0 = [1.0,1.0,1.0]
+        xHat = States(p0,th0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
+        accel = np.zeros((3,1))
+        omega = np.zeros((3,1))
+        dt = 0.1
+        expectedA = np.zeros((15,15))
+        expectedA[0][4] = 0.981
+        expectedA[0:3,6:9] = np.identity(3)
+        expectedA[3:6,12:15] = -np.identity(3)
+        expectedA[6][4] = 9.81
+        expectedA[7][3] = -9.81
+        expectedA[6:9,9:12] = np.identity(3)
+        xHat = ekf.dynamics(xHat,accel,omega,dt)
+        self.assert_jacobian_equal(xHat,expectedA)
 
     def assert_state_equal(self,xHat,expectedStateEstimates):
         for i in range(3):
@@ -62,7 +81,7 @@ class TestPropagation(unittest.TestCase):
     def assert_jacobian_equal(self,xHat,expectedA):
         for j in range(15):
             for k in range(15):
-                self.assertEqual(xHat.A[j][k],expectedA[j][k])
+                self.assertAlmostEqual(xHat.A[j][k],expectedA[j][k])
 
 
 if __name__ == '__main__':
