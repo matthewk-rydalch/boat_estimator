@@ -3,59 +3,46 @@ from scipy.spatial.transform import Rotation as R
 
 from states import States
 
-def propagate():
-    p = [0.0,0.0,0.0]
-    th = [0.0,0.0,0.0]
-    v = [0.0,0.0,0.0]
-    ba = [0.0,0.0,0.0]
-    bg = [0.0,0.0,0.0]
-    cov = [1.0,1.0,1.0]
-    xHat = States(p,th,v,ba,bg,cov,cov,cov,cov,cov)
-    P = [[1.0,0.0,0.0],
-         [0.0,1.0,0.0],
-         [0.0,0.0,1.0]]
-    return xHat, P
+def propagate(xHat,Rt,dt):
+     xHat.p = xHat.p + xHat.dp*dt
+     xHat.q = xHat.q + xHat.dq*dt
+     xHat.v = xHat.v + xHat.dv*dt
+     xHat.ba = xHat.ba + xHat.dba*dt
+     xHat.bg = xHat.bg + xHat.dbg*dt
 
-def dynamics(xHat,accel,omega,dt):
+     xHat.P = xHat.A@xHat.P@xHat.A.T + Rt
+
+def dynamics(xHat,u,dt):
      g = np.array([[0.0,0.0,9.81]]).T
-     accel = accel - xHat.ba
-     omega = omega - xHat.bg
-     Rb2v = R.from_rotvec(xHat.th.squeeze())
+     accel = u[0] - xHat.ba
+     omega = u[1] - xHat.bg
+     Rb2v = R.from_rotvec(xHat.q.squeeze())
      Rv2b = Rb2v.inv()
-     sphi = np.sin(xHat.th.item(0))
-     cphi = np.cos(xHat.th.item(0))
-     cth = np.cos(xHat.th.item(1))
-     tth = np.tan(xHat.th.item(1))
+     sphi = np.sin(xHat.q.item(0))
+     cphi = np.cos(xHat.q.item(0))
+     cth = np.cos(xHat.q.item(1))
+     tth = np.tan(xHat.q.item(1))
      attitudeDynamics = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
 
      xHat.dp = Rb2v.apply(xHat.v.T).T
-     xHat.dth = attitudeDynamics @ omega
+     xHat.dq = attitudeDynamics @ omega
      xHat.dv = accel + Rv2b.apply(g.T).T - np.cross(omega.T,xHat.v.T).T
      xHat.ba = np.array([[0.0,0.0,0.0]]).T
      xHat.bg = np.array([[0.0,0.0,0.0]]).T
 
-     xHat.p = xHat.p + xHat.dp*dt
-     xHat.th = xHat.th + xHat.dth*dt
-     xHat.v = xHat.v + xHat.dv*dt
-     xHat.ba = xHat.ba + xHat.dba*dt
-     xHat.bg = xHat.bg + xHat.dbg*dt
-
-     update_Jacobian_A(xHat,omega,g)
-
-     return xHat
-
-def update_Jacobian_A(xHat,omega,g):
+def update_Jacobian_A(xHat,omega):
      #TODO: check Jacobian more thouroughly
-     spsi = np.sin(xHat.th.item(2))
-     cpsi = np.cos(xHat.th.item(2))
+     g = np.array([[0.0,0.0,9.81]]).T
+     spsi = np.sin(xHat.q.item(2))
+     cpsi = np.cos(xHat.q.item(2))
 
      dpdp = np.zeros((3,3))
      dpdq = np.array([[spsi*xHat.v.item(2), cpsi*xHat.v.item(2), spsi*xHat.v.item(0)-cpsi*xHat.v.item(1)],
                       [0.0, spsi*xHat.v.item(2), cpsi*xHat.v.item(0)-spsi*xHat.v.item(1)],
                       [xHat.v.item(1),-xHat.v.item(0),0.0]])
-     dpdv = R.from_rotvec(xHat.th.squeeze()).as_matrix()
+     dpdv = R.from_rotvec(xHat.q.squeeze()).as_matrix()
      dpdBa = np.zeros((3,3))
      dpdBg = np.zeros((3,3))
      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdBa,dpdBg),axis=1)

@@ -1,119 +1,61 @@
 import sys
 sys.path.append('../scripts')
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 
 import unittest
 import ekf
 from states import States
 
-class TestPropagation(unittest.TestCase):
+class TestDynamics(unittest.TestCase):
     def test_no_inputs(self):
         p0 = np.zeros((3,1))
-        th0 = np.zeros((3,1))
+        q0 = np.zeros((3,1))
         v0 = np.zeros((3,1))
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
         cov0 = [1.0,1.0,1.0]
-        xHat = States(p0,th0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
-        accel = np.zeros((3,1))
-        omega = np.zeros((3,1))
+        xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
+        acclerometers = np.zeros((3,1))
+        gyros = np.zeros((3,1))
+        u = [acclerometers,gyros]
         dt = 0.1
-        pExpected = np.zeros((3,1))
-        qExpected = np.zeros((3,1))
-        vExpected = np.array([[0.0,0.0,0.981]]).T
-        baExpected = np.zeros((3,1))
-        bgExpected = np.zeros((3,1))
-        covExpected = np.array([[1.0,1.0,1.0]]).T
-        expectedStateEstimates = States(pExpected,qExpected,vExpected,baExpected,bgExpected,covExpected,covExpected,covExpected,covExpected,covExpected)
-        xHat = ekf.dynamics(xHat,accel,omega,dt)
-        self.assert_state_equal(xHat,expectedStateEstimates)
+        dpExpected = np.zeros((3,1))
+        dqExpected = np.zeros((3,1))
+        dvExpected = np.array([[0.0,0.0,9.81]]).T
+        dbaExpected = np.zeros((3,1))
+        dbgExpected = np.zeros((3,1))
+        expectedDynamics = [dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected]
+        ekf.dynamics(xHat,u,dt)
+        self.assert_dynamics_equal(xHat,expectedDynamics)
 
     def test_inputs_equal_ones(self):
         p0 = np.zeros((3,1))
-        th0 = np.zeros((3,1))
+        q0 = np.zeros((3,1))
         v0 = np.zeros((3,1))
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
         cov0 = np.array([[1.0,1.0,1.0]]).T
-        xHat = States(p0,th0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
-        accel = np.array([[1.0,1.0,1.0]]).T
-        omega = np.array([[1.0,1.0,1.0]]).T
+        xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
+        accelerometers = np.array([[1.0,1.0,1.0]]).T
+        gyros = np.array([[1.0,1.0,1.0]]).T
+        u = [accelerometers,gyros]
         dt = 0.1
-        pExpected = np.zeros((3,1))
-        thExpected = np.array([[0.1,0.1,0.1]]).T
-        vExpected = np.array([[0.1,0.1,1.081]]).T
-        baExpected = np.zeros((3,1))
-        bgExpected = np.zeros((3,1))
-        covExpected = np.array([[1.0,1.0,1.0]]).T
-        expectedStateEstimates = States(pExpected,thExpected,vExpected,baExpected,bgExpected,covExpected,covExpected,covExpected,covExpected,covExpected)
-        xHat = ekf.dynamics(xHat,accel,omega,dt)
-        self.assert_state_equal(xHat,expectedStateEstimates)
+        dpExpected = np.zeros((3,1))
+        dqExpected = np.array([[1.0,1.0,1.0]]).T
+        dvExpected = np.array([[1.0,1.0,10.81]]).T
+        dbaExpected = np.zeros((3,1))
+        dbgExpected = np.zeros((3,1))
+        expectedDynamics = [dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected]
+        ekf.dynamics(xHat,u,dt)
+        self.assert_dynamics_equal(xHat,expectedDynamics)
 
-    def test_update_jacobian_no_inputs(self):
-        p0 = np.zeros((3,1))
-        th0 = np.zeros((3,1))
-        v0 = np.zeros((3,1))
-        ba0 = np.zeros((3,1))
-        bg0 = np.zeros((3,1))
-        cov0 = [1.0,1.0,1.0]
-        xHat = States(p0,th0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
-        accel = np.zeros((3,1))
-        omega = np.zeros((3,1))
-        dt = 0.1
-        expectedA = np.zeros((15,15))
-        expectedA[0][4] = 0.981
-        expectedA[0:3,6:9] = np.identity(3)
-        expectedA[3:6,12:15] = -np.identity(3)
-        expectedA[6][4] = 9.81
-        expectedA[7][3] = -9.81
-        expectedA[6:9,9:12] = -np.identity(3)
-        xHat = ekf.dynamics(xHat,accel,omega,dt)
-        self.assert_jacobian_equal(xHat,expectedA)
-
-    def test_jacobians_inputs_equal_ones(self):
-        p0 = np.zeros((3,1))
-        th0 = np.zeros((3,1))
-        v0 = np.zeros((3,1))
-        ba0 = np.zeros((3,1))
-        bg0 = np.zeros((3,1))
-        cov0 = np.array([[1.0,1.0,1.0]]).T
-        xHat = States(p0,th0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
-        accel = np.array([[1.0,1.0,1.0]]).T
-        omega = np.array([[1.0,1.0,1.0]]).T
-        dt = 0.1
-        expectedA = np.zeros((15,15))
-        expectedA[0:3,3:6] = [[np.sin(0.1)*1.081, np.cos(0.1)*1.081, np.sin(0.1)*(0.1)-np.cos(0.1)*0.1],
-                              [0.0, np.sin(0.1)*1.081, np.cos(0.1)*0.1-np.sin(0.1)*0.1],
-                              [0.1,-0.1,0.0]]
-        expectedA[0:3,6:9] = R.from_rotvec([0.1,0.1,0.1]).as_matrix()
-        expectedA[3:6,3:6] = [[0.0,1.0,0.0],
-                              [1.0,0.0,0.0],
-                              [1.0,0.0,0.0]]
-        expectedA[3:6,12:15] = -np.identity(3)
-        expectedA[6:9,3:6] = np.array([[np.sin(0.1), np.cos(0.1), 0.0],
-                                       [np.sin(0.1)-np.cos(0.1),np.sin(0.1),0.0],
-                                       [0.0,0.0,0.0]])*9.81
-        expectedA[6:9,6:9] = [[0.0,-1.0,1.0],
-                              [1.0,0.0,-1.0],
-                              [-1.0,1.0,0.0]]
-        expectedA[6:9,9:12] = -np.identity(3)
-        xHat = ekf.dynamics(xHat,accel,omega,dt)
-        self.assert_jacobian_equal(xHat,expectedA)
-
-    def assert_state_equal(self,xHat,expectedStateEstimates):
+    def assert_dynamics_equal(self,xHat,expectedDynamics):
         for i in range(3):
-            self.assertAlmostEqual(xHat.p.item(i),expectedStateEstimates.p.item(i))
-            self.assertAlmostEqual(xHat.th.item(i),expectedStateEstimates.th.item(i))
-            self.assertAlmostEqual(xHat.v.item(i),expectedStateEstimates.v.item(i))
-            self.assertAlmostEqual(xHat.ba.item(i),expectedStateEstimates.ba.item(i))
-            self.assertAlmostEqual(xHat.bg.item(i),expectedStateEstimates.bg.item(i))
-
-    def assert_jacobian_equal(self,xHat,expectedA):
-        for j in range(15):
-            for k in range(15):
-                self.assertAlmostEqual(xHat.A[j][k],expectedA[j][k])
-
+            self.assertAlmostEqual(xHat.dp.item(i),expectedDynamics[0][i])
+            self.assertAlmostEqual(xHat.dq.item(i),expectedDynamics[1][i])
+            self.assertAlmostEqual(xHat.dv.item(i),expectedDynamics[2][i])
+            self.assertAlmostEqual(xHat.dba.item(i),expectedDynamics[3][i])
+            self.assertAlmostEqual(xHat.dbg.item(i),expectedDynamics[4][i])
 
 if __name__ == '__main__':
     unittest.main()
