@@ -1,9 +1,9 @@
 import numpy as np
 
 class States:
-   def __init__(self,p,q,v,ba,bg,Px,Pth,Pv,Pba,Pbg):
+   def __init__(self,p,th,v,ba,bg,Px,Pth,Pv,Pba,Pbg):
       self.p = np.array(p)
-      self.q = np.array(q)
+      self.th = np.array(th)
       self.v = np.array(v)
       self.ba = np.array(ba)
       self.bg = np.array(bg)
