@@ -12,6 +12,8 @@ def propagate(xHat,Rt,dt):
 
      xHat.P = xHat.A@xHat.P@xHat.A.T + Rt
 
+def update(xHat,Qt,zt)
+
 def dynamics(xHat,u,dt):
      g = np.array([[0.0,0.0,9.81]]).T
      accel = u[0] - xHat.ba
