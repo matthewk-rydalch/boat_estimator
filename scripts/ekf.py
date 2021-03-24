@@ -12,7 +12,18 @@ def propagate(xHat,Rt,dt):
 
      xHat.P = xHat.A@xHat.P@xHat.A.T + Rt
 
-def dynamics(xHat,u,dt):
+def update(xHat,Qt,zt,ht,C):
+     L = xHat.P@C.T@np.linalg.inv(C@xHat.P@C.T+Qt)
+     dx = L@(zt-ht)
+     xHat.p = xHat.p + dx[0:3]
+     xHat.q = xHat.q + dx[3:6]
+     xHat.v = xHat.v + dx[6:9]
+     xHat.ba = xHat.ba + dx[9:12]
+     xHat.bg = xHat.bg + dx[12:15]
+
+     xHat.P = (np.identity(15) - L@C)@xHat.P
+
+def update_dynamic_model(xHat,u,dt):
      g = np.array([[0.0,0.0,9.81]]).T
      accel = u[0] - xHat.ba
      omega = u[1] - xHat.bg
@@ -31,6 +42,11 @@ def dynamics(xHat,u,dt):
      xHat.dv = accel + Rv2b.apply(g.T).T - np.cross(omega.T,xHat.v.T).T
      xHat.ba = np.array([[0.0,0.0,0.0]]).T
      xHat.bg = np.array([[0.0,0.0,0.0]]).T
+
+def update_measurement_model(xHat):
+     h = np.concatenate((xHat.p,np.array([[xHat.q.item(2)]]).T,xHat.v),axis=0)
+
+     return h
 
 def update_Jacobian_A(xHat,omega):
      #TODO: check Jacobian more thouroughly
@@ -82,3 +98,31 @@ def update_Jacobian_A(xHat,omega):
      dBgdx = np.concatenate((dBgdp, dBgdq, dBgdv, dBgdBa, dBgdBg), axis=1)
 
      xHat.A = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
+
+def get_jacobian_C():
+     dpdp = np.identity(3)
+     dpdq = np.zeros((3,3))
+     dpdv = np.zeros((3,3))
+     dpdba = np.zeros((3,3))
+     dpdbg = np.zeros((3,3))
+     dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdba,dpdbg),axis=1)
+
+     dpsidp = np.zeros((1,3))
+     dpsidq = np.array([[0.0,0.0,1.0]])
+     dpsidv = np.zeros((1,3))
+     dpsidba = np.zeros((1,3))
+     dpsidbg = np.zeros((1,3))
+     dpsidx = np.concatenate((dpsidp,dpsidq,dpsidv,dpsidba,dpsidbg),axis=1)
+
+     dvdp = np.zeros((3,3))
+     dvdq = np.zeros((3,3))
+     dvdv = np.identity(3)
+     dvdba = np.zeros((3,3))
+     dvdbg = np.zeros((3,3))
+     dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdba, dvdbg), axis=1)
+
+     C = np.concatenate((dpdx,dpsidx,dvdx),axis=0)
+     
+     return C
+     
+

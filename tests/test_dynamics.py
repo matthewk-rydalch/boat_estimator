@@ -13,7 +13,7 @@ class TestDynamics(unittest.TestCase):
         v0 = np.zeros((3,1))
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
-        cov0 = [1.0,1.0,1.0]
+        cov0 = np.array([[1.0,1.0,1.0]]).T
         xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
         acclerometers = np.zeros((3,1))
         gyros = np.zeros((3,1))
@@ -25,7 +25,7 @@ class TestDynamics(unittest.TestCase):
         dbaExpected = np.zeros((3,1))
         dbgExpected = np.zeros((3,1))
         expectedDynamics = [dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected]
-        ekf.dynamics(xHat,u,dt)
+        ekf.update_dynamic_model(xHat,u,dt)
         self.assert_dynamics_equal(xHat,expectedDynamics)
 
     def test_inputs_equal_ones(self):
@@ -46,7 +46,7 @@ class TestDynamics(unittest.TestCase):
         dbaExpected = np.zeros((3,1))
         dbgExpected = np.zeros((3,1))
         expectedDynamics = [dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected]
-        ekf.dynamics(xHat,u,dt)
+        ekf.update_dynamic_model(xHat,u,dt)
         self.assert_dynamics_equal(xHat,expectedDynamics)
 
     def assert_dynamics_equal(self,xHat,expectedDynamics):

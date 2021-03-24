@@ -8,6 +8,8 @@ from states import States
 from ekf_class import EKF
 
 class TestPredictionStep(unittest.TestCase):
+    def test_no_tests(sefl):
+        print('not a good way to test this right now!!!!!!!!!!!!')
     #Right now I do not know a good way to test this.
     
     # def test_no_movement(self):

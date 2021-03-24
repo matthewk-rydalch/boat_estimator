@@ -20,4 +20,6 @@ class EKFParams:
                   1.0,1.0,1.0, \
                   1.0,1.0,1.0]
         self.Rt = np.diag(RtDiag)
+        QtDiag = [1.0,1.0,1.0,1.0,1.0,1.0,1.0]
+        self.Qt = np.diag(QtDiag)
 

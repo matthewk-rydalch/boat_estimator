@@ -21,7 +21,7 @@ class TestPredictionStep(unittest.TestCase):
             vPrev = estimator.xHat.v
             baPrev = estimator.xHat.ba
             bgPrev = estimator.xHat.bg
-            estimator.prediction_step(u,dt)
+            estimator.run_prediction_step(u,dt)
             self.check_acceleration_trend(estimator.xHat,pPrev,qPrev,vPrev,baPrev,bgPrev)
 
     def test_yaw(self):
@@ -37,7 +37,7 @@ class TestPredictionStep(unittest.TestCase):
             vPrev = estimator.xHat.v
             baPrev = estimator.xHat.ba
             bgPrev = estimator.xHat.bg
-            estimator.prediction_step(u,dt)
+            estimator.run_prediction_step(u,dt)
             self.check_yaw_trend(estimator.xHat,pPrev,qPrev,vPrev,baPrev,bgPrev)
 
     def test_pitch_xz_acceleration(self):
@@ -53,7 +53,7 @@ class TestPredictionStep(unittest.TestCase):
             vPrev = estimator.xHat.v
             baPrev = estimator.xHat.ba
             bgPrev = estimator.xHat.bg
-            estimator.prediction_step(u,dt)
+            estimator.run_prediction_step(u,dt)
             self.check_pitch_trend(estimator.xHat,pPrev,qPrev,vPrev,baPrev,bgPrev)
 
     def test_roll_yz_acceleration(self):
@@ -69,7 +69,7 @@ class TestPredictionStep(unittest.TestCase):
             vPrev = estimator.xHat.v
             baPrev = estimator.xHat.ba
             bgPrev = estimator.xHat.bg
-            estimator.prediction_step(u,dt)
+            estimator.run_prediction_step(u,dt)
             self.check_roll_trend(estimator.xHat,pPrev,qPrev,vPrev,baPrev,bgPrev)
 
     def check_acceleration_trend(self,xHat,pPrev,qPrev,vPrev,baPrev,bgPrev):
