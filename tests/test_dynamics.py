@@ -13,7 +13,7 @@ class TestDynamics(unittest.TestCase):
         v0 = np.zeros((3,1))
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
-        cov0 = [1.0,1.0,1.0]
+        cov0 = np.array([[1.0,1.0,1.0]]).T
         xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
         acclerometers = np.zeros((3,1))
         gyros = np.zeros((3,1))
