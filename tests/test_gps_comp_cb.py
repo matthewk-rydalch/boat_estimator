@@ -1,5 +1,6 @@
 import sys
-sys.path.append('../scripts')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts')
+
 import numpy as np
 
 import unittest

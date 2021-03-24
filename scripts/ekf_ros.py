@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+
+import rospy
+from scipy.spatial.transform import Rotation as R
+
+from geometry_msgs.msg import Vector3
+from sensor_msgs.msg import Imu
+from nav_msgs.msg import Odometry
+from ublox.msg import PosVelEcef
+from ublox.msg import RelPos
+
 from sensors import ImuMsg
 from sensors import GpsMsg
 from sensors import GpsCompassMsg
@@ -6,7 +17,17 @@ from ekf_class import EKF
 
 class EKFRos:
     def __init__(self):
+        self.odomEstimate = Odometry()
         self.ekf = EKF()
+
+        self.boat_estimate_pub_ = rospy.Publisher('boat_odom', Odometry, queue_size=5, latch=True)
+        self.imu_sub_ = rospy.Subscriber('imu', Imu, self.imuCallback, queue_size=5)
+        self.pos_vel_ecef_sub_ = rospy.Subscriber('posVelEcef', PosVelEcef, self.posVelEcefCallback, queue_size=5)
+        self.comp_rel_pos_sub_ = rospy.Subscriber('compass_relPos', RelPos, self.compassRelPosCallback, queue_size=5)
+        self.ref_lla_sub_ = rospy.Subscriber('ref_lla',Vector3, self.refLlaCallback,queue_size=5)
+
+        while not rospy.is_shutdown():
+            rospy.spin()
 
     def imuCallback(self,msg):
         timeS = msg.header.stamp.secs + msg.header.stamp.nsecs*1E-9
@@ -15,6 +36,7 @@ class EKFRos:
         imu = ImuMsg(timeS,accelerometers,gyros)
 
         self.ekf.imu_callback(imu)
+        self.publish_odom_estimate()
 
     def posVelEcefCallback(self,msg):
         positionEcefMeters = msg.position
@@ -28,3 +50,36 @@ class EKFRos:
         gpsCompass = GpsCompassMsg(headingDeg)
 
         self.ekf.gps_compass_callback(gpsCompass)
+
+    def refLlaCallback(self,msg):
+        self.ekf.set_ref_lla_callback(msg.x,msg.y,msg.z)
+
+    def publish_odom_estimate(self):
+        self.odomEstimate.header.stamp = rospy.Time.now()
+
+        self.odomEstimate.pose.pose.position.x = self.ekf.xHat.p[0]
+        self.odomEstimate.pose.pose.position.y = self.ekf.xHat.p[1]
+        self.odomEstimate.pose.pose.position.z = self.ekf.xHat.p[2]
+
+        quat = R.from_euler('zyx', self.ekf.xHat.q.T, degrees=False).as_quat()
+        self.odomEstimate.pose.pose.orientation.x = quat.item(0)
+        self.odomEstimate.pose.pose.orientation.y = quat.item(1)
+        self.odomEstimate.pose.pose.orientation.z = quat.item(2)
+        self.odomEstimate.pose.pose.orientation.w = quat.item(3)
+
+        #These are in the body frame I beleive
+        self.odomEstimate.twist.twist.linear.x = self.ekf.xHat.v[0]
+        self.odomEstimate.twist.twist.linear.y = self.ekf.xHat.v[1]
+        self.odomEstimate.twist.twist.linear.z = self.ekf.xHat.v[2]
+
+        self.boat_estimate_pub_.publish(self.odomEstimate)
+
+
+if __name__ == '__main__':
+    rospy.init_node('ekf_ros', anonymous=True)
+    try:
+        ekfRos = EKFRos()
+    except:
+        rospy.ROSInterruptException
+    pass
+

@@ -2,7 +2,7 @@ import navpy
 import numpy as np
 
 import sys
-sys.path.append('../params')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/params')
 
 from ekf_params import EKFParams
 import ekf
@@ -47,7 +47,7 @@ class EKF:
    #    covariance?
    #    flag?
    #TODO: need to take into account the current orientation of the vehicle
-      zt = gpsCompass.heading
+      zt = gpsCompass.headingDeg
       ht = ekf.update_compass_measurement_model(self.xHat)
       C = ekf.get_jacobian_C_compass()
       self.run_correction_step(self.params.QtGpsCompass,zt,ht,C)

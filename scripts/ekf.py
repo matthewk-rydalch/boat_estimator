@@ -49,7 +49,7 @@ def update_gps_measurement_model(xHat):
      return h
 
 def update_compass_measurement_model(xHat):
-     h = xHat.q.item(2)
+     h = np.array([[xHat.q.item(2)]]).T
      return h
 
 def update_Jacobian_A(xHat,omega):

@@ -13,4 +13,4 @@ class GpsMsg:
 
 class GpsCompassMsg:
     def __init__(self,headingDeg):
-        self.headingDeg = headingDeg
+        self.headingDeg = np.array([[headingDeg]]).T
