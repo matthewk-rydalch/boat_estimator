@@ -29,7 +29,6 @@ class EKF:
       # vertical_covariance?
       # speed_covariance?
 
-      # ned = ekf.ecef2ned(ecef,self.latRef,self.lonRef,self.altRef)
       positionNed = np.array([navpy.ecef2ned(gps.positionEcef,self.latRef,self.lonRef,self.altRef)]).T
       velocityNed = np.array([navpy.ecef2ned(gps.velocityEcef,self.latRef,self.lonRef,self.altRef)]).T
       zt = np.concatenate((positionNed,velocityNed),axis=0)

@@ -19,6 +19,18 @@ class TestUpdate(unittest.TestCase):
         estimator.altRef = 0.0
         estimator.gps_callback(gps)
 
+        pExpected = np.zeros((3,1))
+        qExpected = np.zeros((3,1))
+        vExpected = np.zeros((3,1))
+        baExpected = np.zeros((3,1))
+        bgExpected = np.zeros((3,1))
+        cov0 = np.array([[1.0,1.0,1.0]]).T
+        statesExpected = States(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
+        expectedP = np.diag([0.5,0.5,0.5,1.0,1.0,1.0,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0,1.0])
+
+        self.assert_states_equal(estimator.xHat,statesExpected)
+        self.assert_covariances_equal(estimator.xHat,expectedP)
+
     def assert_states_equal(self,xHat,statesExpected):
         for i in range(3):
             self.assertAlmostEqual(xHat.p.item(i),statesExpected.p.item(i))
