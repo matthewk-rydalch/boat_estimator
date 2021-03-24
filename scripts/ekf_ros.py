@@ -16,9 +16,9 @@ class EKFRos:
         self.ekf = EKF()
 
         # self.rover2Base_relPos_stripped_pub_ = rospy.Publisher('rover2Base_relPos_stripped', Point, queue_size=5, latch=True)
-        self.imu_sub_ = rospy.Subscriber('boat/imu', Imu, self.imuCallback, queue_size=5)
-        self.pos_vel_ecef_sub_ = rospy.Subscriber('boat/PosVelEcef', PosVelEcef, self.posVelEcefCallback, queue_size=5)
-        self.comp_rel_pos_sub_ = rospy.Subscriber('boat/compass/RelPos', RelPos, self.compassRelPosCallback, queue_size=5)
+        self.imu_sub_ = rospy.Subscriber('imu', Imu, self.imuCallback, queue_size=5)
+        self.pos_vel_ecef_sub_ = rospy.Subscriber('posVelEcef', PosVelEcef, self.posVelEcefCallback, queue_size=5)
+        self.comp_rel_pos_sub_ = rospy.Subscriber('compass_relPos', RelPos, self.compassRelPosCallback, queue_size=5)
         self.ref_lla_sub_ = rospy.Subscriber('ref_lla',Vector3, self.refLlaCallback,queue_size=5)
     
     def imuCallback(self,msg):
