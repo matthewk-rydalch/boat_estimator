@@ -7,6 +7,7 @@
     <arg name="boat_PosVelEcef"     value="/boat/PosVelEcef"/>
     <arg name="compass_relPos"      value="/boat/compass/RelPos"/>
     <arg name="ref_lla"             value="/ref_lla"/>
+    <arg name="rover_posVelEcef"    value="/rover/PosVelEcef"/>
 
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock ../data/px4flight/outdoor/0318/$(arg bag_in_filename).bag"/>
 
@@ -15,6 +16,10 @@
         <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
         <remap from="compass_relPos" to="$(arg compass_relPos)"/>
         <remap from="ref_lla" to="$(arg ref_lla)"/>
+    </node>
+
+    <node name="ref_lla_temp" pkg="boat_estimator" type="ref_lla_temp.py" output="screen">
+        <remap from="rover_posVelEcef" to="$(arg rover_posVelEcef)"/>
     </node>
 
     <node pkg="rosbag" type="record" name="record" output="screen" args="-O ../data/px4flight/sim/$(arg bag_out_filename).bag --all"/>

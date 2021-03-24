@@ -48,7 +48,6 @@ class EKFRos:
         self.ekf.gps_compass_callback(gpsCompass)
 
     def refLlaCallback(self,msg):
-        print('in ref lla callback')
         self.ekf.set_ref_lla_callback(msg.x,msg.y,msg.z)
 
 if __name__ == '__main__':
