@@ -2,6 +2,7 @@ import numpy as np
 
 class States:
    def __init__(self,p,q,v,ba,bg,Pp,Pq,Pv,Pba,Pbg):
+      #TODO need to make units clear and type (numpy array?)
       self.p = p
       self.q= q
       self.v = v
