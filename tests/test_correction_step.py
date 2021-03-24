@@ -5,19 +5,14 @@ import numpy as np
 import unittest
 import ekf
 from states import States
+from ekf_class import EKF
 
 class TestUpdate(unittest.TestCase):
     def test_all_zeros(self):
-        p0 = np.zeros((3,1))
-        q0 = np.zeros((3,1))
-        v0 = np.zeros((3,1))
-        ba0 = np.zeros((3,1))
-        bg0 = np.zeros((3,1))
         cov0 = np.array([[1.0,1.0,1.0]]).T
-        xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
-        Qt = np.identity(7)
         zt = np.zeros((7,1))
-        ht = ekf.update_measurement_model(xHat)
+        estimator = EKF()
+        estimator.run_correction_step(zt)
 
         pExpected = np.zeros((3,1))
         qExpected = np.zeros((3,1))
@@ -27,42 +22,28 @@ class TestUpdate(unittest.TestCase):
         statesExpected = States(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
 
         expectedP = np.diag([0.5,0.5,0.5,1.0,1.0,0.5,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0,1.0])
-        
-        Ct = ekf.get_jacobian_C()
 
-        ekf.update(xHat,Qt,zt,ht,Ct)
-
-        self.assert_states_equal(xHat,statesExpected)
-        self.assert_covariances_equal(xHat,expectedP)
+        self.assert_states_equal(estimator.xHat,statesExpected)
+        self.assert_covariances_equal(estimator.xHat,expectedP)
 
     def test_with_measurements(self):
-        p0 = np.array([[1.0,1.0,-1.0]]).T
-        q0 = np.array([[0.2,0.2,1.0,]]).T
-        v0 = np.array([[1.0,2.0,0.2]]).T
-        ba0 = np.zeros((3,1))
-        bg0 = np.zeros((3,1))
         cov0 = np.array([[1.0,1.0,1.0]]).T
-        xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
-        Qt = np.identity(7)
-        zt = np.array([[1.2,1.5,-0.8,1.1,1.2,1.8,-0.1]]).T
-        ht = ekf.update_measurement_model(xHat)
-        # ht = np.array([[1.0,1.0,-1.0,1.0,1.0,2.0,0.2]]).T
+        
+        zt = np.array([[0.2,0.5,-0.3,0.1,0.2,-1.0,-0.1]]).T
+        estimator = EKF()
+        estimator.run_correction_step(zt)
 
-        pExpected = np.array([[1.1000,1.2500,-0.9000]]).T
-        qExpected = np.array([[0.2000,0.2000,1.0500]]).T
-        vExpected = np.array([[1.1000,1.9000,0.0500]]).T
+        pExpected = np.array([[0.1000,0.2500,-0.1500]]).T
+        qExpected = np.array([[0.0,0.0,0.0500]]).T
+        vExpected = np.array([[0.1000,-0.5000,-0.0500]]).T
         baExpected = np.zeros((3,1))
         bgExpected = np.zeros((3,1))
         statesExpected = States(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
 
         expectedP = np.diag([0.5,0.5,0.5,1.0,1.0,0.5,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0,1.0])
-        
-        Ct = ekf.get_jacobian_C()
 
-        ekf.update(xHat,Qt,zt,ht,Ct)
-
-        self.assert_states_equal(xHat,statesExpected)
-        self.assert_covariances_equal(xHat,expectedP)
+        self.assert_states_equal(estimator.xHat,statesExpected)
+        self.assert_covariances_equal(estimator.xHat,expectedP)
 
     def assert_states_equal(self,xHat,statesExpected):
         for i in range(3):

@@ -25,7 +25,7 @@ class TestDynamics(unittest.TestCase):
         dbaExpected = np.zeros((3,1))
         dbgExpected = np.zeros((3,1))
         expectedDynamics = [dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected]
-        ekf.dynamics(xHat,u,dt)
+        ekf.update_dynamic_model(xHat,u,dt)
         self.assert_dynamics_equal(xHat,expectedDynamics)
 
     def test_inputs_equal_ones(self):
@@ -46,7 +46,7 @@ class TestDynamics(unittest.TestCase):
         dbaExpected = np.zeros((3,1))
         dbgExpected = np.zeros((3,1))
         expectedDynamics = [dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected]
-        ekf.dynamics(xHat,u,dt)
+        ekf.update_dynamic_model(xHat,u,dt)
         self.assert_dynamics_equal(xHat,expectedDynamics)
 
     def assert_dynamics_equal(self,xHat,expectedDynamics):

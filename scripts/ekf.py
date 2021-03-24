@@ -13,7 +13,7 @@ def propagate(xHat,Rt,dt):
      xHat.P = xHat.A@xHat.P@xHat.A.T + Rt
 
 def update(xHat,Qt,zt,ht,C):
-     L = xHat.P@C.T@(C@xHat.P@C.T+Qt)
+     L = xHat.P@C.T@np.linalg.inv(C@xHat.P@C.T+Qt)
      dx = L@(zt-ht)
      xHat.p = xHat.p + dx[0:3]
      xHat.q = xHat.q + dx[3:6]
@@ -44,7 +44,7 @@ def update_dynamic_model(xHat,u,dt):
      xHat.bg = np.array([[0.0,0.0,0.0]]).T
 
 def update_measurement_model(xHat):
-     h = np.concatenate((xHat.p,xHat.q[2],xHat.v),axis=0)
+     h = np.concatenate((xHat.p,np.array([[xHat.q.item(2)]]).T,xHat.v),axis=0)
 
      return h
 
