@@ -13,6 +13,7 @@ class EKF:
       self.params = EKFParams()
       self.xHat = States(self.params.p0,self.params.q0,self.params.v0,self.params.ba0,self.params.bg0, \
          self.params.pCov0,self.params.qCov0,self.params.vCov0,self.params.baCov0,self.params.bgCov0)
+      self.refLlaSet = False
       self.latRef = 0.0
       self.lonRef = 0.0
       self.altRef = 0.0
@@ -32,7 +33,8 @@ class EKF:
       # horizontal_covariance?
       # vertical_covariance?
       # speed_covariance?
-
+      if not self.refLlaSet:
+         return
       refEcef = np.array([navpy.lla2ecef(self.latRef,self.lonRef,self.altRef)]).T
       positionNed = np.array([navpy.ecef2ned((gps.positionEcef-refEcef),self.latRef,self.lonRef,self.altRef)]).T
       velocityNed = np.array([navpy.ecef2ned(gps.velocityEcef, self.latRef, self.lonRef, self.altRef)]).T
@@ -49,6 +51,12 @@ class EKF:
       ht = ekf.update_compass_measurement_model(self.xHat)
       C = ekf.get_jacobian_C_compass()
       self.run_correction_step(self.params.QtGpsCompass,zt,ht,C)
+
+   def set_ref_lla_callback(self,latDeg,lonDeg,altM):
+      self.latRef = latDeg
+      self.lonRef = lonDeg
+      self.altRef = altM
+      self.refLlaSet = True
 
    def run_prediction_step(self,u,dt):
       ekf.update_dynamic_model(self.xHat,u,dt)
