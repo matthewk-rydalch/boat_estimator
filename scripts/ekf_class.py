@@ -2,7 +2,7 @@ import navpy
 import numpy as np
 
 import sys
-sys.path.append('../params')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/params')
 
 from ekf_params import EKFParams
 import ekf
