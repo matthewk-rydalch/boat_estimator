@@ -8,11 +8,11 @@ class EKFParams:
         self.ba0 = np.zeros((3,1))
         self.bg0 = np.zeros((3,1))
 
-        self.pCov0 = np.array([[1.0,1.0,1.0]]).T
-        self.qCov0 = np.array([[1.0,1.0,1.0]]).T
-        self.vCov0 = np.array([[1.0,1.0,1.0]]).T
-        self.baCov0 = np.array([[1.0,1.0,1.0]]).T
-        self.bgCov0 = np.array([[1.0,1.0,1.0]]).T
+        self.pCov0 = np.array([[10.0,10.0,10.0]]).T
+        self.qCov0 = np.array([[10.0,10.0,10.0]]).T
+        self.vCov0 = np.array([[10.0,10.0,10.0]]).T
+        self.baCov0 = np.array([[10.0,10.0,10.0]]).T
+        self.bgCov0 = np.array([[10.0,10.0,10.0]]).T
 
         RtDiag = [1.0,1.0,1.0, \
                   1.0,1.0,1.0, \
@@ -20,6 +20,7 @@ class EKFParams:
                   1.0,1.0,1.0, \
                   1.0,1.0,1.0]
         self.Rt = np.diag(RtDiag)
-        QtDiag = [1.0,1.0,1.0,1.0,1.0,1.0,1.0]
-        self.Qt = np.diag(QtDiag)
+        QtGpsDiag = [1.0,1.0,1.0,1.0,1.0,1.0]
+        self.QtGps = np.diag(QtGpsDiag)
+        self.QtGpsCompass = np.array([[1.0]])
 

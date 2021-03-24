@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+import navpy
 
 from states import States
 
@@ -43,9 +44,12 @@ def update_dynamic_model(xHat,u,dt):
      xHat.ba = np.array([[0.0,0.0,0.0]]).T
      xHat.bg = np.array([[0.0,0.0,0.0]]).T
 
-def update_measurement_model(xHat):
-     h = np.concatenate((xHat.p,np.array([[xHat.q.item(2)]]).T,xHat.v),axis=0)
+def update_gps_measurement_model(xHat):
+     h = np.concatenate((xHat.p,xHat.v),axis=0)
+     return h
 
+def update_compass_measurement_model(xHat):
+     h = xHat.q.item(2)
      return h
 
 def update_Jacobian_A(xHat,omega):
@@ -99,20 +103,13 @@ def update_Jacobian_A(xHat,omega):
 
      xHat.A = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
 
-def get_jacobian_C():
+def get_jacobian_C_gps():
      dpdp = np.identity(3)
      dpdq = np.zeros((3,3))
      dpdv = np.zeros((3,3))
      dpdba = np.zeros((3,3))
      dpdbg = np.zeros((3,3))
      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdba,dpdbg),axis=1)
-
-     dpsidp = np.zeros((1,3))
-     dpsidq = np.array([[0.0,0.0,1.0]])
-     dpsidv = np.zeros((1,3))
-     dpsidba = np.zeros((1,3))
-     dpsidbg = np.zeros((1,3))
-     dpsidx = np.concatenate((dpsidp,dpsidq,dpsidv,dpsidba,dpsidbg),axis=1)
 
      dvdp = np.zeros((3,3))
      dvdq = np.zeros((3,3))
@@ -121,8 +118,22 @@ def get_jacobian_C():
      dvdbg = np.zeros((3,3))
      dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdba, dvdbg), axis=1)
 
-     C = np.concatenate((dpdx,dpsidx,dvdx),axis=0)
+     C = np.concatenate((dpdx,dvdx),axis=0)
      
      return C
+
+def get_jacobian_C_compass():
+     dpsidp = np.zeros((1,3))
+     dpsidq = np.array([[0.0,0.0,1.0]])
+     dpsidv = np.zeros((1,3))
+     dpsidba = np.zeros((1,3))
+     dpsidbg = np.zeros((1,3))
+     C = np.concatenate((dpsidp,dpsidq,dpsidv,dpsidba,dpsidbg),axis=1)
+
+     return C
+
+# def ecef2ned(ecef,latRef,lonRef,altRef):
+#      ned = navpy.ecef2ned(ecef,latRef,lonRef,altRef)
+#      return ned
      
 
