@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="bag_in_filename"     value="flightG_0306"/>
+    <arg name="bag_in_filename"     value="flightC"/>
     <arg name="bag_out_filename"    value="boat_est"/>
     <arg name="boat_imu"            value="/boat/imu"/>
     <arg name="boat_PosVelEcef"     value="/boat/PosVelEcef"/>
     <arg name="compass_relPos"      value="/boat/compass/RelPos"/>
     <arg name="ref_lla"             value="/ref_lla"/>
 
-    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock ../data/px4flight/outdoor/$(arg bag_in_filename).bag"/>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock ../data/px4flight/outdoor/0318/$(arg bag_in_filename).bag"/>
 
     <node name="ekf" pkg="boat_estimator" type="ekf_ros.py" output="screen">
         <remap from="imu" to="$(arg boat_imu)"/>

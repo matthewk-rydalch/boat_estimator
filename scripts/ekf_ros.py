@@ -22,7 +22,10 @@ class EKFRos:
         self.pos_vel_ecef_sub_ = rospy.Subscriber('posVelEcef', PosVelEcef, self.posVelEcefCallback, queue_size=5)
         self.comp_rel_pos_sub_ = rospy.Subscriber('compass_relPos', RelPos, self.compassRelPosCallback, queue_size=5)
         self.ref_lla_sub_ = rospy.Subscriber('ref_lla',Vector3, self.refLlaCallback,queue_size=5)
-    
+
+        while not rospy.is_shutdown():
+            rospy.spin()
+
     def imuCallback(self,msg):
         timeS = msg.header.stamp.secs + msg.header.stamp.nsecs*1E-9
         gyros = msg.angular_velocity
@@ -45,4 +48,14 @@ class EKFRos:
         self.ekf.gps_compass_callback(gpsCompass)
 
     def refLlaCallback(self,msg):
+        print('in ref lla callback')
         self.ekf.set_ref_lla_callback(msg.x,msg.y,msg.z)
+
+if __name__ == '__main__':
+    rospy.init_node('ekf_ros', anonymous=True)
+    try:
+        ekfRos = EKFRos()
+    except:
+        rospy.ROSInterruptException
+    pass
+
