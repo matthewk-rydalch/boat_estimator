@@ -9,21 +9,22 @@ class EKFRos:
         self.ekf = EKF()
 
     def imuCallback(self,msg):
-        imu = ImuMsg()
-        imu.angularVelocity = msg.angular_velocity
-        imu.linearAcceleration = msg.linear_acceleration
+        timeS = msg.header.stamp.secs + msg.header.stamp.nsecs*1E-9
+        gyros = msg.angular_velocity
+        accelerometers = msg.linear_acceleration
+        imu = ImuMsg(timeS,accelerometers,gyros)
 
         self.ekf.imu_callback(imu)
 
     def posVelEcefCallback(self,msg):
-        gps = GpsMsg()
-        gps.ecef = msg.position
-        gps.velocity = msg.velocity
-
+        positionEcefMeters = msg.position
+        velocityEcefMpS = msg.velocity #Mps: m/s
+        gps = GpsMsg(positionEcefMeters,velocityEcefMpS)
+ 
         self.ekf.gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
-        gpsCompass = GpsCompassMsg()
-        gpsCompass.heading = msg.relPosHeading
+        headingDeg = msg.relPosHeading
+        gpsCompass = GpsCompassMsg(headingDeg)
 
-        self.ekf.gps_compass_callback()
+        self.ekf.gps_compass_callback(gpsCompass)

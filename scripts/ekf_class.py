@@ -16,12 +16,16 @@ class EKF:
       self.latRef = 0.0
       self.lonRef = 0.0
       self.altRef = 0.0
+      self.imuPrevTime = 0.0
 
-   # def imu_callback(self):
-   #    accel = imu.linear_acceleration
+   def imu_callback(self,imu):
    #    covariance?
-   #    gyro = imu.angular_velocity
    #    covariance?
+      if self.imuPrevTime == 0.0:
+         return
+      dt = imu.timeS - self.imuPrevTime
+      u = [imu.accelerometers,imu.gyros]
+      self.run_prediction_step(u,dt)
 
    def gps_callback(self,gps):
       #Start with simple ecef and velocity.  Add covariance and flags stuff later.
@@ -35,17 +39,21 @@ class EKF:
       zt = np.concatenate((positionNed,velocityNed),axis=0)
       ht = ekf.update_gps_measurement_model(self.xHat)
       C = ekf.get_jacobian_C_gps()
-      self.run_correction_step(zt,ht,C)
+      self.run_correction_step(self.params.QtGps,zt,ht,C)
 
-   # def gps_compass_callback(self):
-   #    heading = gpsCompass.heading
+   def gps_compass_callback(self,gpsCompass):
    #    covariance?
    #    flag?
+   #TODO: need to take into account the current orientation of the vehicle
+      zt = gpsCompass.heading
+      ht = ekf.update_compass_measurement_model(self.xHat)
+      C = ekf.get_jacobian_C_compass()
+      self.run_correction_step(self.params.QtGpsCompass,zt,ht,C)
 
    def run_prediction_step(self,u,dt):
       ekf.update_dynamic_model(self.xHat,u,dt)
       ekf.update_Jacobian_A(self.xHat,u[1])
       ekf.propagate(self.xHat,self.params.Rt,dt)
 
-   def run_correction_step(self,zt,ht,C):
-      ekf.update(self.xHat,self.params.QtGps,zt,ht,C)
+   def run_correction_step(self,Qt,zt,ht,C):
+      ekf.update(self.xHat,Qt,zt,ht,C)

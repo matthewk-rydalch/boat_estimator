@@ -5,28 +5,41 @@ import numpy as np
 import unittest
 import ekf
 from states import States
-from sensors import GpsMsg
+from sensors import GpsCompassMsg
 from ekf_class import EKF
 
 class TestUpdate(unittest.TestCase):
-    def test_with_measurements(self):
-        positionEcef = [-1800198.22956286, -4532912.78883003,  4098399.82768237]
-        velocityEcef = [0.0,0.0,0.0]
-        gps = GpsMsg(positionEcef,velocityEcef)
+    def test_measure_zero(self):
+        headingDeg = 0.0
+        gpsCompass = GpsCompassMsg(headingDeg)
         estimator = EKF()
-        estimator.latRef = 40.23
-        estimator.lonRef = -111.66
-        estimator.altRef = 1370.0
-        estimator.gps_callback(gps)
+        estimator.gps_compass_callback(gpsCompass)
 
-        pExpected = np.array([[0.9091,1.8182,2.7273]]).T
-        qExpected = np.zeros((3,1))
+        pExpected = np.zeros((3,1))
+        qExpected = np.array([[0.0,0.0,0.0]]).T
         vExpected = np.zeros((3,1))
         baExpected = np.zeros((3,1))
         bgExpected = np.zeros((3,1))
         cov0 = np.array([[10.0,10.0,10.0]]).T
         statesExpected = States(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
-        expectedP = np.diag([0.9091,0.9091,0.9091,10.0,10.0,10.0,0.9091,0.9091,0.9091,10.0,10.0,10.0,10.0,10.0,10.0])
+        expectedP = np.diag([10.0,10.0,10.0,10.0,10.0,0.9091,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0])
+        self.assert_states_equal(estimator.xHat,statesExpected)
+        self.assert_covariances_equal(estimator.xHat,expectedP)
+
+    def test_measure_p8(self):
+        headingDeg = 0.8
+        gpsCompass = GpsCompassMsg(headingDeg)
+        estimator = EKF()
+        estimator.gps_compass_callback(gpsCompass)
+
+        pExpected = np.zeros((3,1))
+        qExpected = np.array([[0.0,0.0,0.7273]]).T
+        vExpected = np.zeros((3,1))
+        baExpected = np.zeros((3,1))
+        bgExpected = np.zeros((3,1))
+        cov0 = np.array([[10.0,10.0,10.0]]).T
+        statesExpected = States(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
+        expectedP = np.diag([10.0,10.0,10.0,10.0,10.0,0.9091,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0])
         self.assert_states_equal(estimator.xHat,statesExpected)
         self.assert_covariances_equal(estimator.xHat,expectedP)
 
