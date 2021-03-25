@@ -8,7 +8,7 @@ from collections import namedtuple
 import navpy
 
 def main():
-	odomTopic = '/odom'
+	odomTopic = '/boat_odom'
 	truthTopic = '/truth'
 	imuTopic = '/imu'
 	gpsTopic = '/gps'
@@ -18,21 +18,21 @@ def main():
 	filename = 'syn_meas.bag'
 	bag = rosbag.Bag('/home/matt/data/px4flight/sim/' + filename)
 
-	truth,imu,gps,gpsCompass,refLla = get_data(data, bag)
-	imuIntegrated = integrateImu(imu,truth)
-	gpsNed = ecef2ned(gps,refLla)
-	get_north_data(truth,imuIntegrated)
-	# get_east_data(odom,gps)
-	# get_down_data(odom,gps)
-
+	odom,truth,imu,gps,gpsCompass,refLla = get_data(data, bag)
+	# imuIntegrated = integrateImu(imu,truth)
+	# gpsNed = ecef2ned(gps,refLla)
+	get_north_data(truth,odom)
+	get_east_data(truth,odom)
+	get_down_data(truth,odom)
 
 def get_data(data, bag):
+	odom = data.get_odom(bag)
 	truth = data.get_truth(bag)
 	imu = data.get_imu(bag)
 	gps = data.get_gps(bag)
 	gpsCompass = data.get_gps_compass(bag)
 	refLla = data.get_ref_lla(bag)
-	return truth,imu,gps,gpsCompass,refLla
+	return odom,truth,imu,gps,gpsCompass,refLla
 
 def integrateImu(imu,truth):
 	imuU = []
@@ -79,32 +79,19 @@ def ecef2ned(gps,refLla):
 	gpsNed = GpsNed(gps.time,gpsPositionNed,gpsVelocityNed)
 	return gpsNed
 
-def get_north_data(truth, imuIntegrated):
-
+def get_north_data(truth,odom):
 	fig_num = 1
-	plot_2(fig_num, truth.time, truth.position[0], 'truth', imuIntegrated.time, imuIntegrated.position[0], 'imu')
+	plot_2(fig_num, truth.time, truth.position[0], 'truth_north', odom.time, odom.position[0], 'estimated_north')
 
 
-def get_east_data(odom, gps):
-	odomTime = odom.time
-	odomE = np.array(odom.position[1])
-
-	gpsTime = gps.time
-	gpsE = np.array(gps.position[1])
-
+def get_east_data(truth,odom):
 	fig_num = 2
-	plot_2(fig_num, odomTime, odomE, 'odom', gpsTime, gpsE, 'gps')
+	plot_2(fig_num, truth.time, truth.position[1], 'truth_east', odom.time, odom.position[1], 'estimated_east')
 
 
-def get_down_data(odom, gps):
-	odomTime = odom.time
-	odomD = np.array(odom.position[2])
-
-	gpsTime = gps.time
-	gpsD = np.array(gps.position[2])
-
+def get_down_data(truth,odom):
 	fig_num = 3
-	plot_2(fig_num, odomTime, odomD, 'odom', gpsTime, gpsD, 'gps')
+	plot_2(fig_num, truth.time, truth.position[2], 'truth_down', odom.time, odom.position[2], 'estimated_down')
 
 def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
 

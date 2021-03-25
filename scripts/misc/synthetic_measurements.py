@@ -9,6 +9,7 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu
 from ublox.msg import PosVelEcef
 from ublox.msg import RelPos
+from geometry_msgs.msg import Vector3
 
 class SyntheticMeasurements:
     def __init__(self):
@@ -16,7 +17,7 @@ class SyntheticMeasurements:
         self.imu = Imu()
         self.gps = PosVelEcef()
         self.gpsCompass = RelPos()
-        self.refLla = PosVelEcef()
+        self.refLla = Vector3()
         self.acceleration = np.zeros((3,1))
 
         #TODO: Add variation to the periods?
@@ -36,7 +37,7 @@ class SyntheticMeasurements:
         self.imu_pub_ = rospy.Publisher('imu',Imu,queue_size=5,latch=True)
         self.gps_pub_ = rospy.Publisher('gps',PosVelEcef,queue_size=5,latch=True)
         self.gps_compass_pub_ = rospy.Publisher('gps_compass',RelPos,queue_size=5,latch=True)
-        self.ref_lla_pub_ = rospy.Publisher('ref_lla',PosVelEcef,queue_size=5,latch=True)
+        self.ref_lla_pub_ = rospy.Publisher('ref_lla',Vector3,queue_size=5,latch=True)
 
         self.truth_rate_timer_ = rospy.Timer(rospy.Duration(self.imuTs), self.truthCallback)
         self.gps_rate_timer_ = rospy.Timer(rospy.Duration(self.gpsTs), self.gpsCallback)
@@ -64,7 +65,9 @@ class SyntheticMeasurements:
             return
         stamp = rospy.Time.now()
         if not self.refLlaSent:
-            self.setup_ref_lla(stamp)
+            self.refLla.x = self.latRef
+            self.refLla.y = self.lonRef
+            self.refLla.z = self.altRef
             self.ref_lla_pub_.publish(self.refLla)
             self.refLlaSent = True
         
@@ -103,10 +106,6 @@ class SyntheticMeasurements:
         self.imu.linear_acceleration.x = self.acceleration[0]
         self.imu.linear_acceleration.y = self.acceleration[1]
         self.imu.linear_acceleration.z = self.acceleration[2]
-
-    def setup_ref_lla(self,stamp):
-        self.refLla.header.stamp = stamp
-        self.refLla.lla = [self.latRef,self.lonRef,self.altRef]
 
     def compute_gps(self,stamp):
         self.gps.header.stamp = stamp

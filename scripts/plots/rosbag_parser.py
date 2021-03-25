@@ -130,20 +130,16 @@ class Parser:
 		return GpsCompass(sec,nsec,heading)
 
 	def get_ref_lla(self, bag):
-		sec = []
-		nsec = []
 		lat = []
 		lon = []
 		alt = []
 
 		for topic, msg, t in bag.read_messages(topics=[self.refLlaTopic]):
-			sec.append(msg.header.stamp.secs)
-			nsec.append(msg.header.stamp.nsecs)
-			lat.append(msg.lla[0])
-			lon.append(msg.lla[1])
-			alt.append(msg.lla[2])
+			lat.append(msg.x)
+			lon.append(msg.y)
+			alt.append(msg.z)
 
-		return refLla(sec,nsec,lat,lon,alt)
+		return refLla(lat,lon,alt)
 
 class Odom:
 	def __init__(self,sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz):
@@ -174,8 +170,7 @@ class GpsCompass:
 		self.heading = np.array([heading])
 
 class refLla:
-	def __init__(self,sec,nsec,lat,lon,alt):
-		self.time = np.array(sec)+np.array(nsec)*1E-9
+	def __init__(self,lat,lon,alt):
 		self.lat = np.array([lat])
 		self.lon = np.array([lon])
 		self.alt = np.array([alt])
