@@ -27,6 +27,7 @@ class EKF:
          self.imuPrevTime = imu.time
          return
       dt = imu.time - self.imuPrevTime
+      self.imuPrevTime = imu.time
       ut = [imu.accelerometers,imu.gyros]
       ft = DynamicModel()
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)

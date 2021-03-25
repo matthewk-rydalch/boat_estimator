@@ -81,31 +81,34 @@ class SyntheticMeasurements:
 
     def compute_truth(self,t,stamp):
         self.truth.header.stamp = stamp
-        self.truth.pose.pose.position.x = np.sin(t)
-        self.truth.pose.pose.position.y = t
+        self.truth.pose.pose.position.x = 3.0*np.cos(t) - 3.0
+        self.truth.pose.pose.position.y = np.sin(t)
         self.truth.pose.pose.position.z = np.cos(t)
         self.truth.pose.pose.orientation.x = 0.0
         self.truth.pose.pose.orientation.y = 0.0
         self.truth.pose.pose.orientation.z = 0.0
         self.truth.pose.pose.orientation.w = 1.0
-        self.truth.twist.twist.linear.x = np.cos(t)
-        self.truth.twist.twist.linear.y = 1.0
+        self.truth.twist.twist.linear.x = -3.0*np.sin(t)
+        self.truth.twist.twist.linear.y = np.cos(t)
         self.truth.twist.twist.linear.z = -np.sin(t)
         self.truth.twist.twist.angular.x = 0.0
         self.truth.twist.twist.angular.y = 0.0
         self.truth.twist.twist.angular.z = 0.0
 
-        self.acceleration[0] = -np.sin(t)
-        self.acceleration[1] = 0.0
-        self.acceleration[2] = -np.cos(t)
+        self.acceleration[0] = -3.0*np.cos(t)
+        self.acceleration[1] = -np.sin(t)
+        self.acceleration[2] = -np.cos(t) - 9.81
 
     def compute_imu(self):
         self.imu.header.stamp = self.truth.header.stamp
         self.imu.angular_velocity = self.truth.twist.twist.angular
         #TODO: add gravity and coriolis?
-        self.imu.linear_acceleration.x = self.acceleration[0]
-        self.imu.linear_acceleration.y = self.acceleration[1]
-        self.imu.linear_acceleration.z = self.acceleration[2]
+        quat = [self.truth.pose.pose.orientation.x,self.truth.pose.pose.orientation.y,self.truth.pose.pose.orientation.z,self.truth.pose.pose.orientation.w]
+        Ri2b = R.from_quat(quat)
+        accelBody = Ri2b.apply(np.squeeze(self.acceleration))
+        self.imu.linear_acceleration.x = accelBody[0]
+        self.imu.linear_acceleration.y = accelBody[1]
+        self.imu.linear_acceleration.z = accelBody[2]
 
     def compute_gps(self,stamp):
         self.gps.header.stamp = stamp
