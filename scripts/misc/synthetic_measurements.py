@@ -34,6 +34,7 @@ class SyntheticMeasurements:
         self.imu_pub_ = rospy.Publisher('imu',Imu,queue_size=5,latch=True)
         self.gps_pub_ = rospy.Publisher('gps',PosVelEcef,queue_size=5,latch=True)
         self.gps_compass_pub_ = rospy.Publisher('gps_compass',RelPos,queue_size=5,latch=True)
+        #TODO: Publish ref lla!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         self.truth_rate_timer_ = rospy.Timer(rospy.Duration(self.imuTs), self.truthCallback)
         self.gps_rate_timer_ = rospy.Timer(rospy.Duration(self.gpsTs), self.gpsCallback)

@@ -7,19 +7,19 @@ from collections import namedtuple
 
 def main():
 	data = Parser()
-	filename = 'sync_meas.bag'
+	filename = 'syn_meas.bag'
 	bag = rosbag.Bag('/home/matt/data/px4flight/sim/' + filename)
 
-	odom,imu,gps,gpsCompass = get_data(data, bag)
-	get_north_data(odom,gps)
+	truth,imu,gps,gpsCompass = get_data(data, bag)
+	get_north_data(truth,gps)
 	# get_east_data(odom,gps)
 	# get_down_data(odom,gps)
 
 
 def get_data(data, bag):
-	truth = data.get_boat_truth(bag)
-	imu = data.get_boat_imu(bag)
-	gps = data.get_boat_gps(bag)
+	truth = data.get_truth(bag)
+	imu = data.get_imu(bag)
+	gps = data.get_gps(bag)
 	gpsCompass = data.get_gps_compass(bag)
 	return truth,imu,gps,gpsCompass
 

@@ -5,7 +5,7 @@ import numpy as np
 from geometry_msgs.msg import Pose
 
 class Parser:
-	def get_boat_odom(self, bag):
+	def get_odom(self, bag):
 		sec = []
 		nsec = []
 		pn = []
@@ -35,7 +35,37 @@ class Parser:
 
 		return Odom(sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz)
 
-	def get_boat_imu(self, bag):
+	def get_truth(self, bag):
+		sec = []
+		nsec = []
+		pn = []
+		pe = []
+		pd = []
+		qx = []
+		qy = []
+		qz = []
+		qw = []
+		vx = []
+		vy = []
+		vz = []
+
+		for topic, msg, t in bag.read_messages(topics=['/truth']):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			pn.append(msg.pose.pose.position.x)
+			pe.append(msg.pose.pose.position.y)
+			pd.append(msg.pose.pose.position.z)
+			qx.append(msg.pose.pose.orientation.x)
+			qy.append(msg.pose.pose.orientation.y)
+			qz.append(msg.pose.pose.orientation.z)
+			qw.append(msg.pose.pose.orientation.w)
+			vx.append(msg.twist.twist.linear.x)
+			vy.append(msg.twist.twist.linear.y)
+			vz.append(msg.twist.twist.linear.z)
+
+		return Odom(sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz)
+
+	def get_imu(self, bag):
 		sec = []
 		nsec = []
 		ax = []
@@ -57,7 +87,7 @@ class Parser:
 
 		return Imu(sec,nsec,ax,ay,az,wx,wy,wz)
 
-	def get_boat_gps(self, bag):
+	def get_gps(self, bag):
 		sec = []
 		nsec = []
 		px = []
@@ -78,6 +108,18 @@ class Parser:
 			vz.append(msg.velocity[2])
 
 		return Gps(sec,nsec,px,py,pz,vx,vy,vz)
+
+	def get_gps_compass(self, bag):
+		sec = []
+		nsec = []
+		heading = []
+
+		for topic, msg, t in bag.read_messages(topics=['/gps_compass']):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			heading.append(msg.relPosHeading)
+
+		return GpsCompass(sec,nsec,heading)
 
 class Odom:
 	def __init__(self,sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz):
@@ -100,6 +142,12 @@ class Gps:
 		self.time = np.array(sec)+np.array(nsec)*1E-9
 		self.position = np.array([px,py,pz])
 		self.velocity = np.array([vx,vy,vz])
+
+class GpsCompass:
+	def __init__(self,sec,nsec,heading):
+		
+		self.time = np.array(sec)+np.array(nsec)*1E-9
+		self.heading = np.array([heading])
 
 if __name__ == '__main__':
     vals = main()
