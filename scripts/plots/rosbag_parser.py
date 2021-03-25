@@ -5,6 +5,14 @@ import numpy as np
 from geometry_msgs.msg import Pose
 
 class Parser:
+	def __init__(self,odomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic):
+		self.odomTopic = odomTopic
+		self.truthTopic = truthTopic
+		self.imuTopic = imuTopic
+		self.gpsTopic = gpsTopic
+		self.gpsCompassTopic = gpsCompassTopic
+		self.refLlaTopic = refLlaTopic
+
 	def get_odom(self, bag):
 		sec = []
 		nsec = []
@@ -19,7 +27,7 @@ class Parser:
 		vy = []
 		vz = []
 
-		for topic, msg, t in bag.read_messages(topics=['/boat_odom']):
+		for topic, msg, t in bag.read_messages(topics=[self.odomTopic]):
 			sec.append(msg.header.stamp.secs)
 			nsec.append(msg.header.stamp.nsecs)
 			pn.append(msg.pose.pose.position.x)
@@ -49,7 +57,7 @@ class Parser:
 		vy = []
 		vz = []
 
-		for topic, msg, t in bag.read_messages(topics=['/truth']):
+		for topic, msg, t in bag.read_messages(topics=[self.truthTopic]):
 			sec.append(msg.header.stamp.secs)
 			nsec.append(msg.header.stamp.nsecs)
 			pn.append(msg.pose.pose.position.x)
@@ -75,7 +83,7 @@ class Parser:
 		wy = []
 		wz = []
 
-		for topic, msg, t in bag.read_messages(topics=['/boat/imu']):
+		for topic, msg, t in bag.read_messages(topics=[self.imuTopic]):
 			sec.append(msg.header.stamp.secs)
 			nsec.append(msg.header.stamp.nsecs)
 			ax.append(msg.linear_acceleration.x)
@@ -97,7 +105,7 @@ class Parser:
 		vy = []
 		vz = []
 
-		for topic, msg, t in bag.read_messages(topics=['/boat/PosVelEcef']):
+		for topic, msg, t in bag.read_messages(topics=[self.gpsTopic]):
 			sec.append(msg.header.stamp.secs)
 			nsec.append(msg.header.stamp.nsecs)
 			px.append(msg.position[0])
@@ -114,12 +122,28 @@ class Parser:
 		nsec = []
 		heading = []
 
-		for topic, msg, t in bag.read_messages(topics=['/gps_compass']):
+		for topic, msg, t in bag.read_messages(topics=[self.gpsCompassTopic]):
 			sec.append(msg.header.stamp.secs)
 			nsec.append(msg.header.stamp.nsecs)
 			heading.append(msg.relPosHeading)
 
 		return GpsCompass(sec,nsec,heading)
+
+	def get_ref_lla(self, bag):
+		sec = []
+		nsec = []
+		lat = []
+		lon = []
+		alt = []
+
+		for topic, msg, t in bag.read_messages(topics=[self.refLlaTopic]):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			lat.append(msg.lla[0])
+			lon.append(msg.lla[1])
+			alt.append(msg.lla[2])
+
+		return refLla(sec,nsec,lat,lon,alt)
 
 class Odom:
 	def __init__(self,sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz):
@@ -149,5 +173,9 @@ class GpsCompass:
 		self.time = np.array(sec)+np.array(nsec)*1E-9
 		self.heading = np.array([heading])
 
-if __name__ == '__main__':
-    vals = main()
+class refLla:
+	def __init__(self,sec,nsec,lat,lon,alt):
+		self.time = np.array(sec)+np.array(nsec)*1E-9
+		self.lat = np.array([lat])
+		self.lon = np.array([lon])
+		self.alt = np.array([alt])

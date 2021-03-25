@@ -16,6 +16,7 @@ class SyntheticMeasurements:
         self.imu = Imu()
         self.gps = PosVelEcef()
         self.gpsCompass = RelPos()
+        self.refLla = PosVelEcef()
         self.acceleration = np.zeros((3,1))
 
         #TODO: Add variation to the periods?
@@ -24,6 +25,7 @@ class SyntheticMeasurements:
 
         self.firstCallback = True
         self.firstTime = 0.0
+        self.refLlaSent = False
 
         self.latRef = 20.24
         self.lonRef = -111.66
@@ -34,7 +36,7 @@ class SyntheticMeasurements:
         self.imu_pub_ = rospy.Publisher('imu',Imu,queue_size=5,latch=True)
         self.gps_pub_ = rospy.Publisher('gps',PosVelEcef,queue_size=5,latch=True)
         self.gps_compass_pub_ = rospy.Publisher('gps_compass',RelPos,queue_size=5,latch=True)
-        #TODO: Publish ref lla!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.ref_lla_pub_ = rospy.Publisher('ref_lla',PosVelEcef,queue_size=5,latch=True)
 
         self.truth_rate_timer_ = rospy.Timer(rospy.Duration(self.imuTs), self.truthCallback)
         self.gps_rate_timer_ = rospy.Timer(rospy.Duration(self.gpsTs), self.gpsCallback)
@@ -61,6 +63,10 @@ class SyntheticMeasurements:
         if self.firstCallback:
             return
         stamp = rospy.Time.now()
+        if not self.refLlaSent:
+            self.setup_ref_lla(stamp)
+            self.ref_lla_pub_.publish(self.refLla)
+            self.refLlaSent = True
         
         self.compute_gps(stamp)
         # self.add_gps_noise()
@@ -97,6 +103,10 @@ class SyntheticMeasurements:
         self.imu.linear_acceleration.x = self.acceleration[0]
         self.imu.linear_acceleration.y = self.acceleration[1]
         self.imu.linear_acceleration.z = self.acceleration[2]
+
+    def setup_ref_lla(self,stamp):
+        self.refLla.header.stamp = stamp
+        self.refLla.lla = [self.latRef,self.lonRef,self.altRef]
 
     def compute_gps(self,stamp):
         self.gps.header.stamp = stamp
