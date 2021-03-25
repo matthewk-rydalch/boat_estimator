@@ -7,6 +7,7 @@ sys.path.append('/home/matt/px4_ws/src/boat_estimator/params')
 from ekf_params import EKFParams
 import ekf
 from states import States
+from dynamic_model import DynamicModel
 
 class EKF:
    def __init__(self):
@@ -25,9 +26,10 @@ class EKF:
          return
       dt = imu.time - self.imuPrevTime
       ut = [imu.accelerometers,imu.gyros]
-      ekf.update_dynamic_model(self.xHat,ut,self.params.gravity,dt)
-      ekf.update_Jacobian_A(self.xHat,imu.gyros)
-      ekf.propagate(self.xHat,self.params.Rt,dt)
+      ft = DynamicModel()
+      ekf.update_dynamic_model(ft,self.xHat,ut,self.params.gravity,dt)
+      At = ekf.update_Jacobian_A(self.xHat,imu.gyros)
+      ekf.propagate(self.xHat,self.params.Rt,ft,At,dt)
 
    def gps_callback(self,gps):
       #TODO: Add covariance values

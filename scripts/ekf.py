@@ -4,17 +4,17 @@ import navpy
 
 from states import States
 
-def propagate(xHat,Rt,dt):
-     xHat.p = xHat.p + xHat.dp*dt
-     xHat.q = xHat.q + xHat.dq*dt
-     xHat.v = xHat.v + xHat.dv*dt
-     xHat.ba = xHat.ba + xHat.dba*dt
-     xHat.bg = xHat.bg + xHat.dbg*dt
+def propagate(xHat,Rt,ft,At,dt):
+     xHat.p = xHat.p + ft.dp*dt
+     xHat.q = xHat.q + ft.dq*dt
+     xHat.v = xHat.v + ft.dv*dt
+     xHat.ba = xHat.ba + ft.dba*dt
+     xHat.bg = xHat.bg + ft.dbg*dt
 
-     xHat.P = xHat.At@xHat.P@xHat.At.T + Rt
+     xHat.P = At@xHat.P@At.T + Rt
 
 def update(xHat,Qt,zt,ht,Ct):
-     Lt = xHat.P@Ct.T@np.linalg.inv(Ct@xHat.P@C.T+Qt)
+     Lt = xHat.P@Ct.T@np.linalg.inv(Ct@xHat.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      xHat.p = xHat.p + dx[0:3]
      xHat.q = xHat.q + dx[3:6]
@@ -24,7 +24,7 @@ def update(xHat,Qt,zt,ht,Ct):
 
      xHat.P = (np.identity(15) - Lt@Ct)@xHat.P
 
-def update_dynamic_model(xHat,ut,gravity,dt):
+def update_dynamic_model(ft,xHat,ut,gravity,dt):
      accel = ut[0] - xHat.ba
      omega = ut[1] - xHat.bg
      Rb2v = R.from_rotvec(xHat.q.squeeze())
@@ -37,11 +37,13 @@ def update_dynamic_model(xHat,ut,gravity,dt):
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
 
-     xHat.dp = Rb2v.apply(xHat.v.T).T
-     xHat.dq = attitudeModelInversion @ omega
-     xHat.dv = accel + Rv2b.apply(gravity.T).T - np.cross(omega.T,xHat.v.T).T
-     xHat.ba = np.array([[0.0,0.0,0.0]]).T
-     xHat.bg = np.array([[0.0,0.0,0.0]]).T
+     ft.dp = Rb2v.apply(xHat.v.T).T
+     ft.dq = attitudeModelInversion @ omega
+     ft.dv = accel + Rv2b.apply(gravity.T).T - np.cross(omega.T,xHat.v.T).T
+     ft.dba = np.array([[0.0,0.0,0.0]]).T
+     ft.dbg = np.array([[0.0,0.0,0.0]]).T
+     
+     return ft
 
 def update_gps_measurement_model(xHat):
      h = np.concatenate((xHat.p,xHat.v),axis=0)
@@ -100,7 +102,8 @@ def update_Jacobian_A(xHat,omega):
      dBgdBg = np.zeros((3,3))
      dBgdx = np.concatenate((dBgdp, dBgdq, dBgdv, dBgdBa, dBgdBg), axis=1)
 
-     xHat.At = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
+     At = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
+     return At
 
 def get_jacobian_C_gps():
      dpdp = np.identity(3)
