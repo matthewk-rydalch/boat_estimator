@@ -13,7 +13,7 @@ class TestUpdate(unittest.TestCase):
         v0 = np.zeros((3,1))
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
-        cov0 = np.array([[1.0,1.0,1.0]]).T
+        cov0 = np.array([[10.0,10.0,10.0]]).T
         xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
         Qt = np.identity(1)
         zt = np.zeros((1,1))
@@ -26,14 +26,14 @@ class TestUpdate(unittest.TestCase):
         bgExpected = np.zeros((3,1))
         statesExpected = States(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
 
-        expectedP = np.diag([0.5,0.5,0.5,1.0,1.0,0.5,0.5,0.5,0.5,1.0,1.0,1.0,1.0,1.0,1.0])
+        expectedP = np.diag([10.0,10.0,10.0,10.0,10.0,0.9091,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0])
         
         Ct = ekf.get_jacobian_C_compass()
 
         ekf.update(xHat,Qt,zt,ht,Ct)
 
-        # self.assert_states_equal(xHat,statesExpected)
-        # self.assert_covariances_equal(xHat,expectedP)
+        self.assert_states_equal(xHat,statesExpected)
+        self.assert_covariances_equal(xHat,expectedP)
 
     def test_with_gps_measurements(self):
         p0 = np.array([[1.0,1.0,-1.0]]).T
@@ -46,7 +46,6 @@ class TestUpdate(unittest.TestCase):
         Qt = np.identity(6)
         zt = np.array([[1.2,1.5,-0.8,1.2,1.8,-0.1]]).T
         ht = ekf.update_gps_measurement_model(xHat)
-        # ht = np.array([[1.0,1.0,-1.0,1.0,1.0,2.0,0.2]]).T
 
         pExpected = np.array([[1.1818,1.4545,-0.8182]]).T
         qExpected = np.array([[0.2000,0.2000,1.0]]).T
@@ -62,7 +61,7 @@ class TestUpdate(unittest.TestCase):
         ekf.update(xHat,Qt,zt,ht,Ct)
 
         self.assert_states_equal(xHat,statesExpected)
-        # self.assert_covariances_equal(xHat,expectedP)
+        self.assert_covariances_equal(xHat,expectedP)
 
     def assert_states_equal(self,xHat,statesExpected):
         decimalPlaces = 3
