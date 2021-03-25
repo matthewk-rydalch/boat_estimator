@@ -4,7 +4,7 @@ import numpy as np
 
 import unittest
 import ekf
-from states import States
+from states_covariance import StatesCovariance
 
 class TestDynamics(unittest.TestCase):
     def test_no_inputs(self):
@@ -14,7 +14,7 @@ class TestDynamics(unittest.TestCase):
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
         cov0 = np.array([[1.0,1.0,1.0]]).T
-        xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
+        beleif = StatesCovariance(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
         acclerometers = np.zeros((3,1))
         gyros = np.zeros((3,1))
         u = [acclerometers,gyros]
@@ -25,8 +25,8 @@ class TestDynamics(unittest.TestCase):
         dbaExpected = np.zeros((3,1))
         dbgExpected = np.zeros((3,1))
         expectedDynamics = [dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected]
-        ekf.update_dynamic_model(xHat,u,dt)
-        self.assert_dynamics_equal(xHat,expectedDynamics)
+        ekf.update_dynamic_model(beleif,u,dt)
+        self.assert_dynamics_equal(beleif,expectedDynamics)
 
     def test_inputs_equal_ones(self):
         p0 = np.zeros((3,1))
@@ -35,7 +35,7 @@ class TestDynamics(unittest.TestCase):
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
         cov0 = np.array([[1.0,1.0,1.0]]).T
-        xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
+        beleif = StatesCovariance(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
         accelerometers = np.array([[1.0,1.0,1.0]]).T
         gyros = np.array([[1.0,1.0,1.0]]).T
         u = [accelerometers,gyros]
@@ -46,16 +46,16 @@ class TestDynamics(unittest.TestCase):
         dbaExpected = np.zeros((3,1))
         dbgExpected = np.zeros((3,1))
         expectedDynamics = [dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected]
-        ekf.update_dynamic_model(xHat,u,dt)
-        self.assert_dynamics_equal(xHat,expectedDynamics)
+        ekf.update_dynamic_model(beleif,u,dt)
+        self.assert_dynamics_equal(beleif,expectedDynamics)
 
-    def assert_dynamics_equal(self,xHat,expectedDynamics):
+    def assert_dynamics_equal(self,beleif,expectedDynamics):
         for i in range(3):
-            self.assertAlmostEqual(xHat.dp.item(i),expectedDynamics[0][i])
-            self.assertAlmostEqual(xHat.dq.item(i),expectedDynamics[1][i])
-            self.assertAlmostEqual(xHat.dv.item(i),expectedDynamics[2][i])
-            self.assertAlmostEqual(xHat.dba.item(i),expectedDynamics[3][i])
-            self.assertAlmostEqual(xHat.dbg.item(i),expectedDynamics[4][i])
+            self.assertAlmostEqual(beleif.dp.item(i),expectedDynamics[0][i])
+            self.assertAlmostEqual(beleif.dq.item(i),expectedDynamics[1][i])
+            self.assertAlmostEqual(beleif.dv.item(i),expectedDynamics[2][i])
+            self.assertAlmostEqual(beleif.dba.item(i),expectedDynamics[3][i])
+            self.assertAlmostEqual(beleif.dbg.item(i),expectedDynamics[4][i])
 
 if __name__ == '__main__':
     unittest.main()

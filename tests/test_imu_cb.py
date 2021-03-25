@@ -4,7 +4,7 @@ import numpy as np
 
 import unittest
 import ekf
-from states import States
+from states import StatesCovariance
 from ekf_class import EKF
 from sensors import ImuMsg
 
@@ -19,8 +19,8 @@ class TestPredictionStep(unittest.TestCase):
         estimator.imuPrevTime = 123.023
         estimator.imu_callback(imu)
 
-        print('state = ', estimator.xHat.p, ' ', estimator.xHat.q, ' ', estimator.xHat.v)
-        print('covariance = ', estimator.xHat.P)
+        print('state = ', estimator.beleif.p, ' ', estimator.beleif.q, ' ', estimator.beleif.v)
+        print('covariance = ', estimator.beleif.P)
         #TODO: May want to actually make this a complete test later.  For now I just wanted to make sure things were running.
 
 if __name__ == '__main__':

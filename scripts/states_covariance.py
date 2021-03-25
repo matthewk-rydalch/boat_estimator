@@ -1,6 +1,6 @@
 import numpy as np
 
-class States:
+class StatesCovariance:
    def __init__(self,pMeters,qDegrees,vMetersPerSecond,baMetersPerSecondSquared,bgDegreesPerSecond,Pp,Pq,Pv,Pba,Pbg):
       #TODO need to make units clear and type (numpy array?)
       self.p = pMeters

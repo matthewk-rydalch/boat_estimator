@@ -40,7 +40,7 @@ class EKFRos:
 
     def posVelEcefCallback(self,msg):
         positionEcefMeters = msg.position
-        velocityEcefMetersPerSecond = msg.velocity #Mps: m/s
+        velocityEcefMetersPerSecond = msg.velocity
         gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond)
  
         self.ekf.gps_callback(gps)
@@ -58,20 +58,20 @@ class EKFRos:
     def publish_odom_estimate(self):
         self.odomEstimate.header.stamp = rospy.Time.now()
 
-        self.odomEstimate.pose.pose.position.x = self.ekf.xHat.p[0]
-        self.odomEstimate.pose.pose.position.y = self.ekf.xHat.p[1]
-        self.odomEstimate.pose.pose.position.z = self.ekf.xHat.p[2]
+        self.odomEstimate.pose.pose.position.x = self.ekf.beleif.p[0]
+        self.odomEstimate.pose.pose.position.y = self.ekf.beleif.p[1]
+        self.odomEstimate.pose.pose.position.z = self.ekf.beleif.p[2]
 
-        quat = R.from_euler('zyx', self.ekf.xHat.q.T, degrees=False).as_quat()
+        quat = R.from_euler('zyx', self.ekf.beleif.q.T, degrees=False).as_quat()
         self.odomEstimate.pose.pose.orientation.x = quat.item(0)
         self.odomEstimate.pose.pose.orientation.y = quat.item(1)
         self.odomEstimate.pose.pose.orientation.z = quat.item(2)
         self.odomEstimate.pose.pose.orientation.w = quat.item(3)
 
         #These are in the body frame I beleive
-        self.odomEstimate.twist.twist.linear.x = self.ekf.xHat.v[0]
-        self.odomEstimate.twist.twist.linear.y = self.ekf.xHat.v[1]
-        self.odomEstimate.twist.twist.linear.z = self.ekf.xHat.v[2]
+        self.odomEstimate.twist.twist.linear.x = self.ekf.beleif.v[0]
+        self.odomEstimate.twist.twist.linear.y = self.ekf.beleif.v[1]
+        self.odomEstimate.twist.twist.linear.z = self.ekf.beleif.v[2]
 
         self.boat_estimate_pub_.publish(self.odomEstimate)
 

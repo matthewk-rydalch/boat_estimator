@@ -2,68 +2,68 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import navpy
 
-from states import States
+from states_covariance import StatesCovariance
 
-def propagate(xHat,Rt,ft,At,dt):
-     xHat.p = xHat.p + ft.dp*dt
-     xHat.q = xHat.q + ft.dq*dt
-     xHat.v = xHat.v + ft.dv*dt
-     xHat.ba = xHat.ba + ft.dba*dt
-     xHat.bg = xHat.bg + ft.dbg*dt
+def propagate(beleif,Rt,ft,At,dt):
+     beleif.p = beleif.p + ft.dp*dt
+     beleif.q = beleif.q + ft.dq*dt
+     beleif.v = beleif.v + ft.dv*dt
+     beleif.ba = beleif.ba + ft.dba*dt
+     beleif.bg = beleif.bg + ft.dbg*dt
 
-     xHat.P = At@xHat.P@At.T + Rt
+     beleif.P = At@beleif.P@At.T + Rt
 
-def update(xHat,Qt,zt,ht,Ct):
-     Lt = xHat.P@Ct.T@np.linalg.inv(Ct@xHat.P@Ct.T+Qt)
+def update(beleif,Qt,zt,ht,Ct):
+     Lt = beleif.P@Ct.T@np.linalg.inv(Ct@beleif.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
-     xHat.p = xHat.p + dx[0:3]
-     xHat.q = xHat.q + dx[3:6]
-     xHat.v = xHat.v + dx[6:9]
-     xHat.ba = xHat.ba + dx[9:12]
-     xHat.bg = xHat.bg + dx[12:15]
+     beleif.p = beleif.p + dx[0:3]
+     beleif.q = beleif.q + dx[3:6]
+     beleif.v = beleif.v + dx[6:9]
+     beleif.ba = beleif.ba + dx[9:12]
+     beleif.bg = beleif.bg + dx[12:15]
 
-     xHat.P = (np.identity(15) - Lt@Ct)@xHat.P
+     beleif.P = (np.identity(15) - Lt@Ct)@beleif.P
 
-def update_dynamic_model(ft,xHat,ut,gravity,dt):
-     accel = ut[0] - xHat.ba
-     omega = ut[1] - xHat.bg
-     Rb2v = R.from_rotvec(xHat.q.squeeze())
+def update_dynamic_model(ft,beleif,ut,gravity,dt):
+     accel = ut[0] - beleif.ba
+     omega = ut[1] - beleif.bg
+     Rb2v = R.from_rotvec(beleif.q.squeeze())
      Rv2b = Rb2v.inv()
-     sphi = np.sin(xHat.q.item(0))
-     cphi = np.cos(xHat.q.item(0))
-     cth = np.cos(xHat.q.item(1))
-     tth = np.tan(xHat.q.item(1))
+     sphi = np.sin(beleif.q.item(0))
+     cphi = np.cos(beleif.q.item(0))
+     cth = np.cos(beleif.q.item(1))
+     tth = np.tan(beleif.q.item(1))
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
 
-     ft.dp = Rb2v.apply(xHat.v.T).T
+     ft.dp = Rb2v.apply(beleif.v.T).T
      ft.dq = attitudeModelInversion @ omega
-     ft.dv = accel + Rv2b.apply(gravity.T).T - np.cross(omega.T,xHat.v.T).T
+     ft.dv = accel + Rv2b.apply(gravity.T).T - np.cross(omega.T,beleif.v.T).T
      ft.dba = np.array([[0.0,0.0,0.0]]).T
      ft.dbg = np.array([[0.0,0.0,0.0]]).T
      
      return ft
 
-def update_gps_measurement_model(xHat):
-     h = np.concatenate((xHat.p,xHat.v),axis=0)
+def update_gps_measurement_model(beleif):
+     h = np.concatenate((beleif.p,beleif.v),axis=0)
      return h
 
-def update_compass_measurement_model(xHat):
-     h = np.array([[xHat.q.item(2)]]).T
+def update_compass_measurement_model(beleif):
+     h = np.array([[beleif.q.item(2)]]).T
      return h
 
-def update_Jacobian_A(xHat,omega):
+def update_Jacobian_A(beleif,omega):
      #TODO: check Jacobian more thouroughly
      g = np.array([[0.0,0.0,9.81]]).T
-     spsi = np.sin(xHat.q.item(2))
-     cpsi = np.cos(xHat.q.item(2))
+     spsi = np.sin(beleif.q.item(2))
+     cpsi = np.cos(beleif.q.item(2))
 
      dpdp = np.zeros((3,3))
-     dpdq = np.array([[spsi*xHat.v.item(2), cpsi*xHat.v.item(2), spsi*xHat.v.item(0)-cpsi*xHat.v.item(1)],
-                      [0.0, spsi*xHat.v.item(2), cpsi*xHat.v.item(0)-spsi*xHat.v.item(1)],
-                      [xHat.v.item(1),-xHat.v.item(0),0.0]])
-     dpdv = R.from_rotvec(xHat.q.squeeze()).as_matrix()
+     dpdq = np.array([[spsi*beleif.v.item(2), cpsi*beleif.v.item(2), spsi*beleif.v.item(0)-cpsi*beleif.v.item(1)],
+                      [0.0, spsi*beleif.v.item(2), cpsi*beleif.v.item(0)-spsi*beleif.v.item(1)],
+                      [beleif.v.item(1),-beleif.v.item(0),0.0]])
+     dpdv = R.from_rotvec(beleif.q.squeeze()).as_matrix()
      dpdBa = np.zeros((3,3))
      dpdBg = np.zeros((3,3))
      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdBa,dpdBg),axis=1)
