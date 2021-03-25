@@ -2,6 +2,9 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import navpy
 
+import sys
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
+
 from states_covariance import StatesCovariance
 
 def propagate(beleif,Rt,ft,At,dt):

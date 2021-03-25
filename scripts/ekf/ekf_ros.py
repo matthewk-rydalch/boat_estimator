@@ -3,6 +3,9 @@
 import rospy
 from scipy.spatial.transform import Rotation as R
 
+import sys
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
+
 from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry

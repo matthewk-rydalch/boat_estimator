@@ -1,5 +1,6 @@
 import sys
-sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/ekf')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/structs')
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 

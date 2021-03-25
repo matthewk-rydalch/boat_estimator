@@ -3,6 +3,7 @@ import numpy as np
 
 import sys
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/params')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 from ekf_params import EKFParams
 import ekf
