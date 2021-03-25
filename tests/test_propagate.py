@@ -36,7 +36,7 @@ class TestPropagation(unittest.TestCase):
         Rt = np.array([[1.0,2.0,3.0],
                        [0.0,1.0,-1.0],
                        [1.0,1.0,-2.0]])
-        A = np.array([[1.0,-1.0,1.0],
+        At = np.array([[1.0,-1.0,1.0],
                       [2.0,2.0,0.0],
                       [0.0,1.0,1.0]])
         P = np.array([[2.0,1.0,0.0],
@@ -50,7 +50,7 @@ class TestPropagation(unittest.TestCase):
         cov0 = np.array([[1.0,1.0,1.0]]).T
         xHat = States(p0,q0,v0,ba0,bg0,cov0,cov0,cov0,cov0,cov0)
         xHat.P = P
-        xHat.A = A
+        xHat.At = At
         ekf.propagate(xHat,Rt,dt)
         expectedP = np.array([[5.0,6.0,2.0],
                               [-4.0,21.0,3.0],

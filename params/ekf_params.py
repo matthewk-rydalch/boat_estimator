@@ -24,3 +24,5 @@ class EKFParams:
         self.QtGps = np.diag(QtGpsDiag)
         self.QtGpsCompass = np.array([[1.0]])
 
+        self.gravity = np.array([[0.0,0.0,9.81]]).T
+

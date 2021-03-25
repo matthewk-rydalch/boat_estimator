@@ -63,7 +63,7 @@ class TestJacobianA(unittest.TestCase):
     def assert_jacobian_equal(self,xHat,expectedA):
         for j in range(15):
             for k in range(15):
-                self.assertAlmostEqual(xHat.A[j][k],expectedA[j][k])
+                self.assertAlmostEqual(xHat.At[j][k],expectedA[j][k])
 
 if __name__ == '__main__':
     unittest.main()

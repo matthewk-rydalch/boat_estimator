@@ -30,22 +30,23 @@ class EKFRos:
             rospy.spin()
 
     def imuCallback(self,msg):
-        timeS = msg.header.stamp.secs + msg.header.stamp.nsecs*1E-9
-        gyros = msg.angular_velocity
-        accelerometers = msg.linear_acceleration
-        imu = ImuMsg(timeS,accelerometers,gyros)
+        timeSeconds = msg.header.stamp.secs + msg.header.stamp.nsecs*1E-9
+        gyrosDegreesPerSecond = msg.angular_velocity #TODO:check!  This is probably radians
+        accelerometersMetersPerSecondSquared = msg.linear_acceleration
+        imu = ImuMsg(timeSeconds,accelerometersMetersPerSecondSquared,gyrosDegreesPerSecond)
 
         self.ekf.imu_callback(imu)
         self.publish_odom_estimate()
 
     def posVelEcefCallback(self,msg):
         positionEcefMeters = msg.position
-        velocityEcefMpS = msg.velocity #Mps: m/s
-        gps = GpsMsg(positionEcefMeters,velocityEcefMpS)
+        velocityEcefMetersPerSecond = msg.velocity #Mps: m/s
+        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond)
  
         self.ekf.gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
+        #TODO Name this something else?  Need to check and see if what we are receiving really is heading or if it is yaw
         headingDeg = msg.relPosHeading
         gpsCompass = GpsCompassMsg(headingDeg)
 
