@@ -16,12 +16,12 @@ class SyntheticMeasurements:
         self.imu = Imu()
         self.gps = PosVelEcef()
         self.gpsCompass = RelPos()
-        
+        self.acceleration = np.zeros((3,1))
+
         #TODO: Add variation to the periods?
         self.imuTs = 1.0/200
         self.gpsTs = 1.0/5.0
 
-        self.acceleration = np.zeros((3,1))
         self.firstCallback = True
         self.firstTime = 0.0
 
