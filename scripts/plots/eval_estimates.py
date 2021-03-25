@@ -22,16 +22,15 @@ def get_data(data, bag):
 	gps = data.get_boat_gps(bag)
 	return odom,imu,gps
 
-
 def get_north_data(odom, gps):
 	# odomTime = odom.time
 	# odomN = np.array(odom.position[0])
 
 	# gpsTime = gps.time
 	# gpsN = np.array(gps.position[0])
-	# set_trace()
 
 	fig_num = 1
+	set_trace()
 	plot_2(fig_num, odom.time, odom.position[0], 'odom', gps.time, gps.position[0], 'gps')
 
 
