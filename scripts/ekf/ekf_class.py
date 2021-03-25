@@ -3,6 +3,7 @@ import numpy as np
 
 import sys
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/params')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 from ekf_params import EKFParams
 import ekf
@@ -23,8 +24,10 @@ class EKF:
    def imu_callback(self,imu):
       #TODO: Add covariance values
       if self.imuPrevTime == 0.0:
+         self.imuPrevTime = imu.time
          return
       dt = imu.time - self.imuPrevTime
+      self.imuPrevTime = imu.time
       ut = [imu.accelerometers,imu.gyros]
       ft = DynamicModel()
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)

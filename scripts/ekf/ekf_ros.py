@@ -3,6 +3,9 @@
 import rospy
 from scipy.spatial.transform import Rotation as R
 
+import sys
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/structs')
+
 from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import Imu
 from nav_msgs.msg import Odometry
@@ -31,10 +34,11 @@ class EKFRos:
 
     def imuCallback(self,msg):
         timeSeconds = msg.header.stamp.secs + msg.header.stamp.nsecs*1E-9
-        gyrosDegreesPerSecond = msg.angular_velocity #TODO:check!  This is probably radians
-        accelerometersMetersPerSecondSquared = msg.linear_acceleration
+        gyrosDegreesPerSecond = [msg.angular_velocity.x,msg.angular_velocity.y,msg.angular_velocity.z] #TODO:check!  This is probably radians
+        accelerometersMetersPerSecondSquared = [msg.linear_acceleration.x,msg.linear_acceleration.y,msg.linear_acceleration.z]
         imu = ImuMsg(timeSeconds,accelerometersMetersPerSecondSquared,gyrosDegreesPerSecond)
 
+        #TODO: Turn imu back on and get it working properly
         self.ekf.imu_callback(imu)
         self.publish_odom_estimate()
 
@@ -43,14 +47,14 @@ class EKFRos:
         velocityEcefMetersPerSecond = msg.velocity
         gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond)
  
-        self.ekf.gps_callback(gps)
+        # self.ekf.gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
         #TODO Name this something else?  Need to check and see if what we are receiving really is heading or if it is yaw
         headingDeg = msg.relPosHeading
         gpsCompass = GpsCompassMsg(headingDeg)
 
-        self.ekf.gps_compass_callback(gpsCompass)
+        # self.ekf.gps_compass_callback(gpsCompass)
 
     def refLlaCallback(self,msg):
         self.ekf.set_ref_lla_callback(msg.x,msg.y,msg.z)
