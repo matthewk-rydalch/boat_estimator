@@ -34,11 +34,12 @@ class EKFRos:
 
     def imuCallback(self,msg):
         timeSeconds = msg.header.stamp.secs + msg.header.stamp.nsecs*1E-9
-        gyrosDegreesPerSecond = msg.angular_velocity #TODO:check!  This is probably radians
-        accelerometersMetersPerSecondSquared = msg.linear_acceleration
+        gyrosDegreesPerSecond = [msg.angular_velocity.x,msg.angular_velocity.y,msg.angular_velocity.z] #TODO:check!  This is probably radians
+        accelerometersMetersPerSecondSquared = [msg.linear_acceleration.x,msg.linear_acceleration.y,msg.linear_acceleration.z]
         imu = ImuMsg(timeSeconds,accelerometersMetersPerSecondSquared,gyrosDegreesPerSecond)
 
-        self.ekf.imu_callback(imu)
+        #TODO: Turn imu back on and get it working properly
+        # self.ekf.imu_callback(imu)
         self.publish_odom_estimate()
 
     def posVelEcefCallback(self,msg):

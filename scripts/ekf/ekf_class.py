@@ -24,6 +24,7 @@ class EKF:
    def imu_callback(self,imu):
       #TODO: Add covariance values
       if self.imuPrevTime == 0.0:
+         self.imuPrevTime = imu.time
          return
       dt = imu.time - self.imuPrevTime
       ut = [imu.accelerometers,imu.gyros]
