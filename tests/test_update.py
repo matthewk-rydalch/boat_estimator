@@ -4,7 +4,7 @@ import numpy as np
 
 import unittest
 import ekf
-from states import StatesCovariance
+from states_covariance import StatesCovariance
 
 class TestUpdate(unittest.TestCase):
     def test_compass_meas_zero(self):
@@ -24,7 +24,7 @@ class TestUpdate(unittest.TestCase):
         vExpected = np.zeros((3,1))
         baExpected = np.zeros((3,1))
         bgExpected = np.zeros((3,1))
-        statesExpected = StatesCovariance(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
+        beleifExpected = StatesCovariance(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
 
         expectedP = np.diag([10.0,10.0,10.0,10.0,10.0,0.9091,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0,10.0])
         
@@ -32,7 +32,7 @@ class TestUpdate(unittest.TestCase):
 
         ekf.update(beleif,Qt,zt,ht,Ct)
 
-        self.assert_states_equal(beleif,statesExpected)
+        self.assert_states_equal(beleif,beleifExpected)
         self.assert_covariances_equal(beleif,expectedP)
 
     def test_with_gps_measurements(self):
@@ -52,7 +52,7 @@ class TestUpdate(unittest.TestCase):
         vExpected = np.array([[1.1818,1.8182,-0.0727]]).T
         baExpected = np.zeros((3,1))
         bgExpected = np.zeros((3,1))
-        statesExpected = StatesCovariance(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
+        beleifExpected = StatesCovariance(pExpected,qExpected,vExpected,baExpected,bgExpected,cov0,cov0,cov0,cov0,cov0)
 
         expectedP = np.diag([0.9091,0.9091,0.9091,10.0,10.0,10.0,0.9091,0.9091,0.9091,10.0,10.0,10.0,10.0,10.0,10.0])
         
@@ -60,17 +60,17 @@ class TestUpdate(unittest.TestCase):
 
         ekf.update(beleif,Qt,zt,ht,Ct)
 
-        self.assert_states_equal(beleif,statesExpected)
+        self.assert_states_equal(beleif,beleifExpected)
         self.assert_covariances_equal(beleif,expectedP)
 
-    def assert_states_equal(self,beleif,statesExpected):
+    def assert_states_equal(self,beleif,beleifExpected):
         decimalPlaces = 3
         for i in range(3):
-            self.assertAlmostEqual(beleif.p.item(i),statesExpected.p.item(i),decimalPlaces)
-            self.assertAlmostEqual(beleif.q.item(i),statesExpected.q.item(i),decimalPlaces)
-            self.assertAlmostEqual(beleif.v.item(i),statesExpected.v.item(i),decimalPlaces)
-            self.assertAlmostEqual(beleif.ba.item(i),statesExpected.ba.item(i),decimalPlaces)
-            self.assertAlmostEqual(beleif.bg.item(i),statesExpected.bg.item(i),decimalPlaces)
+            self.assertAlmostEqual(beleif.p.item(i),beleifExpected.p.item(i),decimalPlaces)
+            self.assertAlmostEqual(beleif.q.item(i),beleifExpected.q.item(i),decimalPlaces)
+            self.assertAlmostEqual(beleif.v.item(i),beleifExpected.v.item(i),decimalPlaces)
+            self.assertAlmostEqual(beleif.ba.item(i),beleifExpected.ba.item(i),decimalPlaces)
+            self.assertAlmostEqual(beleif.bg.item(i),beleifExpected.bg.item(i),decimalPlaces)
 
     def assert_covariances_equal(self,beleif,expectedP):
         decimalPlaces = 3

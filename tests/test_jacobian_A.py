@@ -5,7 +5,7 @@ from scipy.spatial.transform import Rotation as R
 
 import unittest
 import ekf
-from states import StatesCovariance
+from states_covariance import StatesCovariance
 
 class TestJacobianA(unittest.TestCase):
     def test_no_inputs(self):
@@ -26,8 +26,8 @@ class TestJacobianA(unittest.TestCase):
         expectedA[6][4] = 9.81
         expectedA[7][3] = -9.81
         expectedA[6:9,9:12] = -np.identity(3)
-        ekf.update_Jacobian_A(beleif,u[1])
-        self.assert_jacobian_equal(beleif,expectedA)
+        At = ekf.update_Jacobian_A(beleif,u[1])
+        self.assert_jacobian_equal(At,expectedA)
 
     def test_inputs_equal_ones(self):
         p = np.zeros((3,1))
@@ -57,13 +57,13 @@ class TestJacobianA(unittest.TestCase):
                               [1.0,0.0,-1.0],
                               [-1.0,1.0,0.0]]
         expectedA[6:9,9:12] = -np.identity(3)
-        ekf.update_Jacobian_A(beleif,u[1])
-        self.assert_jacobian_equal(beleif,expectedA)
+        At = ekf.update_Jacobian_A(beleif,u[1])
+        self.assert_jacobian_equal(At,expectedA)
 
-    def assert_jacobian_equal(self,beleif,expectedA):
+    def assert_jacobian_equal(self,At,expectedA):
         for j in range(15):
             for k in range(15):
-                self.assertAlmostEqual(beleif.At[j][k],expectedA[j][k])
+                self.assertAlmostEqual(At[j][k],expectedA[j][k])
 
 if __name__ == '__main__':
     unittest.main()

@@ -53,7 +53,7 @@ class EKF:
       #TODO: Add covariance values
       #TODO: Add flag check
       #TODO: Do I need to take into account the current orientation of the vehicle?
-      zt = gpsCompass.headingDeg
+      zt = gpsCompass.heading
       ht = ekf.update_compass_measurement_model(self.beleif)
       #TODO: Should probably set up the C jacobians in the parameter file
       Ct = ekf.get_jacobian_C_compass()
