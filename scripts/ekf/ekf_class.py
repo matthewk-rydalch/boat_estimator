@@ -20,16 +20,19 @@ class EKF:
       self.lonRef = 0.0
       self.altRef = 0.0
       self.imuPrevTime = 0.0
+      self.firstImu = True
 
    def imu_callback(self,imu):
       #TODO: Add covariance values
-      if self.imuPrevTime == 0.0:
+      if self.firstImu:
          self.imuPrevTime = imu.time
+         self.firstImu = False
          return
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time
       ut = [imu.accelerometers,imu.gyros]
       ft = DynamicModel()
+      # self.beleif.q = np.array([[imu.time,0.3*np.sin(imu.time),0.0]]).T
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
       At = ekf.update_Jacobian_A(self.beleif,imu.gyros)
       ekf.propagate(self.beleif,self.params.Rt,ft,At,dt)

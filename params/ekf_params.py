@@ -3,7 +3,7 @@ import numpy as np
 class EKFParams:
     def __init__(self):
         self.p0 = np.zeros((3,1))
-        # self.q0 = np.array([[0.0,0.0,np.pi/2.0]]).T #np.zeros((3,1))
+        # self.q0 = np.array([[0.0,0.0,0.0]]).T #np.zeros((3,1))
         self.q0 = np.zeros((3,1))
         self.v0 = np.zeros((3,1))
         self.ba0 = np.zeros((3,1))
