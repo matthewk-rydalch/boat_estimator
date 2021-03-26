@@ -19,7 +19,7 @@ class SyntheticMeasurements:
         self.gpsCompass = RelPos()
         self.refLla = Vector3()
         self.acceleration = np.zeros((3,1))
-        self.RTruth = R.from_euler('zyx',[0.0,0.0,0.0])
+        self.RTruth = R.from_euler('xyz',[0.0,0.0,0.0])
 
         #TODO: Add variation to the periods?
         self.imuTs = 1.0/200
@@ -82,24 +82,32 @@ class SyntheticMeasurements:
 
     def compute_truth(self,t,stamp):
         self.truth.header.stamp = stamp
-        self.truth.pose.pose.position.x = 0.0#3.0*np.cos(t) - 3.0
+        self.truth.pose.pose.position.x = t**2#3.0*np.cos(t) - 3.0
         self.truth.pose.pose.position.y = 0.0#np.sin(t)
         self.truth.pose.pose.position.z = 0.0#np.cos(t)
-        truePhi = np.pi/2.0#0.2*t**2#0.2*np.sin(t)
-        trueTheta = 0.0#0.3*np.cos(t)
-        truePsi = 0.0#-0.1*np.cos(t)
-        self.RTruth = R.from_euler('zyx',[truePsi,trueTheta,truePhi])
+        truePhi = 0.2*np.sin(t)
+        trueTheta = 0.3*np.sin(t)
+        truePsi = -0.1*np.sin(t)
+        self.RTruth = R.from_euler('xyz',[truePhi,trueTheta,truePsi])
         trueQuaternion = self.RTruth.as_quat()
         self.truth.pose.pose.orientation.x = trueQuaternion[0]
         self.truth.pose.pose.orientation.y = trueQuaternion[1]
         self.truth.pose.pose.orientation.z = trueQuaternion[2]
         self.truth.pose.pose.orientation.w = trueQuaternion[3]
-        self.truth.twist.twist.linear.x = 0.0#-3.0*np.sin(t)
+        
+        sth = np.sin(trueTheta)
+        cphi = np.cos(truePhi)
+        sphi = np.sin(truePhi)
+        cth = np.cos(trueTheta)
+        phiDot = 0.2*np.cos(t)
+        thetaDot = 0.3*np.cos(t)
+        psiDot = -0.1*np.cos(t)
+        self.truth.twist.twist.linear.x = 0.0#2.0*t#-3.0*np.sin(t)
         self.truth.twist.twist.linear.y = 0.0#np.cos(t)
         self.truth.twist.twist.linear.z = 0.0#-np.sin(t)
-        self.truth.twist.twist.angular.x = 0.0 #0.4*t#0.2*np.cos(t)
-        self.truth.twist.twist.angular.y = 0.0#-0.3*np.sin(t)
-        self.truth.twist.twist.angular.z = 0.0#-0.1*np.sin(t)
+        self.truth.twist.twist.angular.x = phiDot - sth*psiDot #These come from euler dynamics
+        self.truth.twist.twist.angular.y = cphi*thetaDot + sphi*cth*psiDot
+        self.truth.twist.twist.angular.z = -sphi*thetaDot + cphi*cth*psiDot
 
         self.acceleration[0] = 0.0#-3.0*np.cos(t)
         self.acceleration[1] = 0.0#-np.sin(t)
@@ -108,16 +116,25 @@ class SyntheticMeasurements:
     def compute_imu(self):
         self.imu.header.stamp = self.truth.header.stamp
         Ri2b = self.RTruth.inv()
+        print('True q = ', Ri2b.as_euler('xyz'))
+        print('Ri2b = ', Ri2b.as_matrix())
         angularVelocityInertial = [self.truth.twist.twist.angular.x,self.truth.twist.twist.angular.y,self.truth.twist.twist.angular.z]
+        print('inertial angular velocity = ', angularVelocityInertial)
         angularVelocityBody = Ri2b.apply(angularVelocityInertial)
+        print('body angular velocity = ', angularVelocityInertial)
         self.imu.angular_velocity.x = angularVelocityBody[0]
         self.imu.angular_velocity.y = angularVelocityBody[1]
         self.imu.angular_velocity.z = angularVelocityBody[2]
         velocityInertial = [self.truth.twist.twist.linear.x,self.truth.twist.twist.linear.y,self.truth.twist.twist.linear.z]
+        print('inertial velocity = ', velocityInertial)
         velocityBody = Ri2b.apply(velocityInertial)
+        print('body velocity = ', velocityBody)
         corriolisEffect = np.cross(angularVelocityBody,velocityBody)
-        feltAccelerationInertial = self.acceleration - np.array([[0.0,0.0,9.81]]).T + np.array([corriolisEffect]).T
+        print('corriolis effect = ', corriolisEffect)
+        feltAccelerationInertial = self.acceleration - np.array([[0.0,0.0,9.81]]).T #+ np.array([corriolisEffect]).T
+        print('feltAccelerationInertial = ', feltAccelerationInertial)
         accelBody = Ri2b.apply(np.squeeze(feltAccelerationInertial))
+        print('accelBoyd = ', accelBody)
         self.imu.linear_acceleration.x = accelBody[0]
         self.imu.linear_acceleration.y = accelBody[1]
         self.imu.linear_acceleration.z = accelBody[2]
@@ -138,7 +155,7 @@ class SyntheticMeasurements:
         self.gpsCompass.header.stamp = stamp
         quat = [self.truth.pose.pose.orientation.x,self.truth.pose.pose.orientation.y,self.truth.pose.pose.orientation.z,self.truth.pose.pose.orientation.w]
         rotation = R.from_quat(quat)
-        eulerRadians = rotation.as_euler('zyx')
+        eulerRadians = rotation.as_euler('xyz')
         self.gpsCompass.relPosHeading = eulerRadians[2]
 
 if __name__ == '__main__':

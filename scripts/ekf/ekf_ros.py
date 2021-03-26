@@ -66,7 +66,7 @@ class EKFRos:
         self.odomEstimate.pose.pose.position.y = self.ekf.beleif.p[1]
         self.odomEstimate.pose.pose.position.z = self.ekf.beleif.p[2]
 
-        quat = R.from_euler('zyx', self.ekf.beleif.q.T, degrees=False).as_quat()
+        quat = R.from_euler('xyz', self.ekf.beleif.q.T, degrees=False).as_quat()
         self.odomEstimate.pose.pose.orientation.x = quat.item(0)
         self.odomEstimate.pose.pose.orientation.y = quat.item(1)
         self.odomEstimate.pose.pose.orientation.z = quat.item(2)
