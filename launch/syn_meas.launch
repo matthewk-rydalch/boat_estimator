@@ -14,7 +14,7 @@
         <remap from="ref_lla" to="$(arg ref_lla)"/>
     </node>
 
-    <node name="syn_meas" pkg="boat_estimator" type="synthetic_measurements.py" output="screen"/>
+    <node name="syn_meas" pkg="boat_estimator" type="syn_meas_class.py" output="screen"/>
 
     <node pkg="rosbag" type="record" name="record" output="screen" args="-O ../data/px4flight/sim/$(arg bag_out_filename).bag --all"/>
 </launch>

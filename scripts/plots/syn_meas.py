@@ -30,9 +30,9 @@ def main():
 	get_east_data(truth,odom)
 	get_down_data(truth,odom)
 
-	# get_roll_data(truthEuler,odomEuler)
-	# get_pitch_data(truthEuler,odomEuler)	
-	# get_yaw_data(truthEuler,odomEuler)
+	get_roll_data(truthEuler,odomEuler)
+	get_pitch_data(truthEuler,odomEuler)	
+	get_yaw_data(truthEuler,odomEuler)
 
 	get_u_data(truth,odom)
 	get_v_data(truth,odom)
