@@ -85,10 +85,10 @@ class SyntheticMeasurements:
         self.truth.pose.pose.position.x = 0.0#3.0*np.cos(t) - 3.0
         self.truth.pose.pose.position.y = 0.0#np.sin(t)
         self.truth.pose.pose.position.z = 0.0#np.cos(t)
-        truePhi = 0.2*t**2#0.2*np.sin(t)
+        truePhi = np.pi/2.0#0.2*t**2#0.2*np.sin(t)
         trueTheta = 0.0#0.3*np.cos(t)
         truePsi = 0.0#-0.1*np.cos(t)
-        self.RTruth = R.from_euler('zyx',[truePhi,trueTheta,truePsi])
+        self.RTruth = R.from_euler('zyx',[truePsi,trueTheta,truePhi])
         trueQuaternion = self.RTruth.as_quat()
         self.truth.pose.pose.orientation.x = trueQuaternion[0]
         self.truth.pose.pose.orientation.y = trueQuaternion[1]
@@ -97,7 +97,7 @@ class SyntheticMeasurements:
         self.truth.twist.twist.linear.x = 0.0#-3.0*np.sin(t)
         self.truth.twist.twist.linear.y = 0.0#np.cos(t)
         self.truth.twist.twist.linear.z = 0.0#-np.sin(t)
-        self.truth.twist.twist.angular.x = 0.4*t#0.2*np.cos(t)
+        self.truth.twist.twist.angular.x = 0.0 #0.4*t#0.2*np.cos(t)
         self.truth.twist.twist.angular.y = 0.0#-0.3*np.sin(t)
         self.truth.twist.twist.angular.z = 0.0#-0.1*np.sin(t)
 
@@ -116,14 +116,14 @@ class SyntheticMeasurements:
         velocityInertial = [self.truth.twist.twist.linear.x,self.truth.twist.twist.linear.y,self.truth.twist.twist.linear.z]
         velocityBody = Ri2b.apply(velocityInertial)
         corriolisEffect = np.cross(angularVelocityBody,velocityBody)
-        feltAcceleration = self.acceleration - np.array([[0.0,0.0,9.81]]).T + np.array([corriolisEffect]).T
-        accelBody = Ri2b.apply(np.squeeze(feltAcceleration))
-        # self.imu.linear_acceleration.x = accelBody[0]
-        # self.imu.linear_acceleration.y = accelBody[1]
-        # self.imu.linear_acceleration.z = accelBody[2]
-        self.imu.linear_acceleration.x = feltAcceleration[0] #accelBody[0]
-        self.imu.linear_acceleration.y = feltAcceleration[1] #accelBody[1]
-        self.imu.linear_acceleration.z = feltAcceleration[2] #accelBody[2]
+        feltAccelerationInertial = self.acceleration - np.array([[0.0,0.0,9.81]]).T + np.array([corriolisEffect]).T
+        accelBody = Ri2b.apply(np.squeeze(feltAccelerationInertial))
+        self.imu.linear_acceleration.x = accelBody[0]
+        self.imu.linear_acceleration.y = accelBody[1]
+        self.imu.linear_acceleration.z = accelBody[2]
+        # self.imu.linear_acceleration.x = feltAccelerationInertial[0] #accelBody[0]
+        # self.imu.linear_acceleration.y = feltAccelerationInertial[1] #accelBody[1]
+        # self.imu.linear_acceleration.z = feltAccelerationInertial[2] #accelBody[2]
 
     def compute_gps(self,stamp):
         self.gps.header.stamp = stamp
