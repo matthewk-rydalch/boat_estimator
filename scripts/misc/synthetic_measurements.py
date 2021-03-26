@@ -19,6 +19,7 @@ class SyntheticMeasurements:
         self.gpsCompass = RelPos()
         self.refLla = Vector3()
         self.acceleration = np.zeros((3,1))
+        self.RTruth = R.from_euler('zyx',[0.0,0.0,0.0])
 
         #TODO: Add variation to the periods?
         self.imuTs = 1.0/200
@@ -81,34 +82,48 @@ class SyntheticMeasurements:
 
     def compute_truth(self,t,stamp):
         self.truth.header.stamp = stamp
-        self.truth.pose.pose.position.x = 3.0*np.cos(t) - 3.0
-        self.truth.pose.pose.position.y = np.sin(t)
-        self.truth.pose.pose.position.z = np.cos(t)
-        self.truth.pose.pose.orientation.x = 0.0
-        self.truth.pose.pose.orientation.y = 0.0
-        self.truth.pose.pose.orientation.z = 0.0
-        self.truth.pose.pose.orientation.w = 1.0
-        self.truth.twist.twist.linear.x = -3.0*np.sin(t)
-        self.truth.twist.twist.linear.y = np.cos(t)
-        self.truth.twist.twist.linear.z = -np.sin(t)
-        self.truth.twist.twist.angular.x = 0.0
-        self.truth.twist.twist.angular.y = 0.0
-        self.truth.twist.twist.angular.z = 0.0
+        self.truth.pose.pose.position.x = 0.0#3.0*np.cos(t) - 3.0
+        self.truth.pose.pose.position.y = 0.0#np.sin(t)
+        self.truth.pose.pose.position.z = 0.0#np.cos(t)
+        truePhi = 0.2*t**2#0.2*np.sin(t)
+        trueTheta = 0.0#0.3*np.cos(t)
+        truePsi = 0.0#-0.1*np.cos(t)
+        self.RTruth = R.from_euler('zyx',[truePhi,trueTheta,truePsi])
+        trueQuaternion = self.RTruth.as_quat()
+        self.truth.pose.pose.orientation.x = trueQuaternion[0]
+        self.truth.pose.pose.orientation.y = trueQuaternion[1]
+        self.truth.pose.pose.orientation.z = trueQuaternion[2]
+        self.truth.pose.pose.orientation.w = trueQuaternion[3]
+        self.truth.twist.twist.linear.x = 0.0#-3.0*np.sin(t)
+        self.truth.twist.twist.linear.y = 0.0#np.cos(t)
+        self.truth.twist.twist.linear.z = 0.0#-np.sin(t)
+        self.truth.twist.twist.angular.x = 0.4*t#0.2*np.cos(t)
+        self.truth.twist.twist.angular.y = 0.0#-0.3*np.sin(t)
+        self.truth.twist.twist.angular.z = 0.0#-0.1*np.sin(t)
 
-        self.acceleration[0] = -3.0*np.cos(t)
-        self.acceleration[1] = -np.sin(t)
-        self.acceleration[2] = -np.cos(t) - 9.81
+        self.acceleration[0] = 0.0#-3.0*np.cos(t)
+        self.acceleration[1] = 0.0#-np.sin(t)
+        self.acceleration[2] = 0.0#-np.cos(t)
 
     def compute_imu(self):
         self.imu.header.stamp = self.truth.header.stamp
-        self.imu.angular_velocity = self.truth.twist.twist.angular
-        #TODO: add gravity and coriolis?
-        quat = [self.truth.pose.pose.orientation.x,self.truth.pose.pose.orientation.y,self.truth.pose.pose.orientation.z,self.truth.pose.pose.orientation.w]
-        Ri2b = R.from_quat(quat)
-        accelBody = Ri2b.apply(np.squeeze(self.acceleration))
-        self.imu.linear_acceleration.x = accelBody[0]
-        self.imu.linear_acceleration.y = accelBody[1]
-        self.imu.linear_acceleration.z = accelBody[2]
+        Ri2b = self.RTruth.inv()
+        angularVelocityInertial = [self.truth.twist.twist.angular.x,self.truth.twist.twist.angular.y,self.truth.twist.twist.angular.z]
+        angularVelocityBody = Ri2b.apply(angularVelocityInertial)
+        self.imu.angular_velocity.x = angularVelocityBody[0]
+        self.imu.angular_velocity.y = angularVelocityBody[1]
+        self.imu.angular_velocity.z = angularVelocityBody[2]
+        velocityInertial = [self.truth.twist.twist.linear.x,self.truth.twist.twist.linear.y,self.truth.twist.twist.linear.z]
+        velocityBody = Ri2b.apply(velocityInertial)
+        corriolisEffect = np.cross(angularVelocityBody,velocityBody)
+        feltAcceleration = self.acceleration - np.array([[0.0,0.0,9.81]]).T + np.array([corriolisEffect]).T
+        accelBody = Ri2b.apply(np.squeeze(feltAcceleration))
+        # self.imu.linear_acceleration.x = accelBody[0]
+        # self.imu.linear_acceleration.y = accelBody[1]
+        # self.imu.linear_acceleration.z = accelBody[2]
+        self.imu.linear_acceleration.x = feltAcceleration[0] #accelBody[0]
+        self.imu.linear_acceleration.y = feltAcceleration[1] #accelBody[1]
+        self.imu.linear_acceleration.z = feltAcceleration[2] #accelBody[2]
 
     def compute_gps(self,stamp):
         self.gps.header.stamp = stamp
