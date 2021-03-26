@@ -30,8 +30,6 @@ def update(beleif,Qt,zt,ht,Ct):
 def update_dynamic_model(ft,beleif,ut,gravity,dt):
      accel = ut[0] - beleif.ba
      omega = ut[1] - beleif.bg
-     print('omega = ', omega)
-     print('beleif q = ', beleif.q)
      Rb2v = R.from_rotvec(beleif.q.squeeze())
      Rv2b = Rb2v.inv()
      sphi = np.sin(beleif.q.item(0))
@@ -41,14 +39,9 @@ def update_dynamic_model(ft,beleif,ut,gravity,dt):
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
-     print('Rb2v ekf = ', Rb2v.as_matrix())
-     print('Rv2b ekf = ', Rv2b.as_matrix())
      ft.dp = Rb2v.apply(beleif.v.T).T
-     print('dp = ', ft.dp)
      ft.dq = attitudeModelInversion @ omega
-     print('dq = ', ft.dq)
      ft.dv = accel + Rv2b.apply(gravity.T).T# - np.cross(omega.T,beleif.v.T).T
-     print('dv = ', ft.dv)
      ft.dba = np.array([[0.0,0.0,0.0]]).T
      ft.dbg = np.array([[0.0,0.0,0.0]]).T
      

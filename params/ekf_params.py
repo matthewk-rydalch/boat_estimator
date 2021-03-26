@@ -3,7 +3,7 @@ import numpy as np
 class EKFParams:
     def __init__(self):
         self.p0 = np.zeros((3,1))
-        # self.q0 = np.array([[0.0,0.0,-0.1]]).T #np.zeros((3,1))
+        # self.q0 = np.array([[0.0,0.0,np.pi/2.0]]).T #np.zeros((3,1))
         self.q0 = np.zeros((3,1))
         self.v0 = np.zeros((3,1))
         self.ba0 = np.zeros((3,1))
@@ -21,9 +21,9 @@ class EKFParams:
                   1.0,1.0,1.0, \
                   1.0,1.0,1.0]
         self.Rt = np.diag(RtDiag)
-        QtGpsDiag = [0.01,0.01,0.01,0.01,0.01,0.01]
+        QtGpsDiag = [100.0,100.0,100.0,100.0,100.0,100.0]
         self.QtGps = np.diag(QtGpsDiag)
-        self.QtGpsCompass = np.array([[0.01]])
+        self.QtGpsCompass = np.array([[100.0]])
 
         self.gravity = np.array([[0.0,0.0,9.81]]).T
 

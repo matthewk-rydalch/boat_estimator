@@ -26,13 +26,17 @@ def main():
 	odomEuler = quat2euler(odom)
 	truthEuler = quat2euler(truth)
 
-	get_north_data(truth,odom)
-	get_east_data(truth,odom)
-	get_down_data(truth,odom)
+	# get_north_data(truth,odom)
+	# get_east_data(truth,odom)
+	# get_down_data(truth,odom)
 
 	get_roll_data(truthEuler,odomEuler)
 	get_pitch_data(truthEuler,odomEuler)	
 	get_yaw_data(truthEuler,odomEuler)
+
+	get_u_data(truth,odom)
+	get_v_data(truth,odom)
+	get_w_data(truth,odom)
 
 def get_data(data, bag):
 	odom = data.get_odom(bag)
@@ -98,11 +102,9 @@ def get_north_data(truth,odom):
 	fig_num = 1
 	plot_2(fig_num, truth.time, truth.position[0], 'truth_north', odom.time, odom.position[0], 'estimated_north')
 
-
 def get_east_data(truth,odom):
 	fig_num = 2
 	plot_2(fig_num, truth.time, truth.position[1], 'truth_east', odom.time, odom.position[1], 'estimated_east')
-
 
 def get_down_data(truth,odom):
 	fig_num = 3
@@ -119,6 +121,18 @@ def get_pitch_data(truth,odom):
 def get_yaw_data(truth,odom):
 	fig_num = 6
 	plot_2(fig_num, truth.time, truth.psi, 'truth_yaw', odom.time, odom.psi, 'estimated_yaw')
+
+def get_u_data(truth,odom):
+	fig_num = 1
+	plot_2(fig_num, truth.time, truth.velocity[0], 'truth_u', odom.time, odom.velocity[0], 'estimated_u')
+
+def get_v_data(truth,odom):
+	fig_num = 2
+	plot_2(fig_num, truth.time, truth.velocity[1], 'truth_v', odom.time, odom.velocity[1], 'estimated_v')
+
+def get_w_data(truth,odom):
+	fig_num = 3
+	plot_2(fig_num, truth.time, truth.velocity[2], 'truth_w', odom.time, odom.velocity[2], 'estimated_w')
 
 def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
 

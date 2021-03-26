@@ -82,12 +82,12 @@ class SyntheticMeasurements:
 
     def compute_truth(self,t,stamp):
         self.truth.header.stamp = stamp
-        self.truth.pose.pose.position.x = t**2#3.0*np.cos(t) - 3.0
+        self.truth.pose.pose.position.x = 0.0#3.0*np.cos(t) - 3.0
         self.truth.pose.pose.position.y = 0.0#np.sin(t)
         self.truth.pose.pose.position.z = 0.0#np.cos(t)
         truePhi = 0.2*np.sin(t)
-        trueTheta = 0.3*np.sin(t)
-        truePsi = -0.1*np.sin(t)
+        trueTheta = 0.0#0.3*np.sin(t)
+        truePsi = 0.0#-0.1*np.sin(t)
         self.RTruth = R.from_euler('xyz',[truePhi,trueTheta,truePsi])
         trueQuaternion = self.RTruth.as_quat()
         self.truth.pose.pose.orientation.x = trueQuaternion[0]
@@ -100,8 +100,8 @@ class SyntheticMeasurements:
         sphi = np.sin(truePhi)
         cth = np.cos(trueTheta)
         phiDot = 0.2*np.cos(t)
-        thetaDot = 0.3*np.cos(t)
-        psiDot = -0.1*np.cos(t)
+        thetaDot = 0.0 #0.3*np.cos(t)
+        psiDot = 0.0 #-0.1*np.cos(t)
         self.truth.twist.twist.linear.x = 0.0#2.0*t#-3.0*np.sin(t)
         self.truth.twist.twist.linear.y = 0.0#np.cos(t)
         self.truth.twist.twist.linear.z = 0.0#-np.sin(t)
@@ -116,31 +116,19 @@ class SyntheticMeasurements:
     def compute_imu(self):
         self.imu.header.stamp = self.truth.header.stamp
         Ri2b = self.RTruth.inv()
-        print('True q = ', Ri2b.as_euler('xyz'))
-        print('Ri2b = ', Ri2b.as_matrix())
         angularVelocityInertial = [self.truth.twist.twist.angular.x,self.truth.twist.twist.angular.y,self.truth.twist.twist.angular.z]
-        print('inertial angular velocity = ', angularVelocityInertial)
         angularVelocityBody = Ri2b.apply(angularVelocityInertial)
-        print('body angular velocity = ', angularVelocityInertial)
         self.imu.angular_velocity.x = angularVelocityBody[0]
         self.imu.angular_velocity.y = angularVelocityBody[1]
         self.imu.angular_velocity.z = angularVelocityBody[2]
         velocityInertial = [self.truth.twist.twist.linear.x,self.truth.twist.twist.linear.y,self.truth.twist.twist.linear.z]
-        print('inertial velocity = ', velocityInertial)
         velocityBody = Ri2b.apply(velocityInertial)
-        print('body velocity = ', velocityBody)
         corriolisEffect = np.cross(angularVelocityBody,velocityBody)
-        print('corriolis effect = ', corriolisEffect)
         feltAccelerationInertial = self.acceleration - np.array([[0.0,0.0,9.81]]).T #+ np.array([corriolisEffect]).T
-        print('feltAccelerationInertial = ', feltAccelerationInertial)
         accelBody = Ri2b.apply(np.squeeze(feltAccelerationInertial))
-        print('accelBoyd = ', accelBody)
         self.imu.linear_acceleration.x = accelBody[0]
         self.imu.linear_acceleration.y = accelBody[1]
         self.imu.linear_acceleration.z = accelBody[2]
-        # self.imu.linear_acceleration.x = feltAccelerationInertial[0] #accelBody[0]
-        # self.imu.linear_acceleration.y = feltAccelerationInertial[1] #accelBody[1]
-        # self.imu.linear_acceleration.z = feltAccelerationInertial[2] #accelBody[2]
 
     def compute_gps(self,stamp):
         self.gps.header.stamp = stamp
