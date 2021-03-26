@@ -47,14 +47,14 @@ class EKFRos:
         velocityEcefMetersPerSecond = msg.velocity
         gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond)
  
-        # self.ekf.gps_callback(gps)
+        self.ekf.gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
         #TODO Name this something else?  Need to check and see if what we are receiving really is heading or if it is yaw
         headingDeg = msg.relPosHeading
         gpsCompass = GpsCompassMsg(headingDeg)
 
-        # self.ekf.gps_compass_callback(gpsCompass)
+        self.ekf.gps_compass_callback(gpsCompass)
 
     def refLlaCallback(self,msg):
         self.ekf.set_ref_lla_callback(msg.x,msg.y,msg.z)
