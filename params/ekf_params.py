@@ -21,7 +21,7 @@ class EKFParams:
                   1.0,1.0,1.0, \
                   1.0,1.0,1.0]
         self.Rt = np.diag(RtDiag)
-        QtGpsDiag = [100.0,100.0,100.0,100.0,100.0,100.0]
+        QtGpsDiag = [0.01,0.01,0.01,0.01,0.01,0.01]
         self.QtGps = np.diag(QtGpsDiag)
         self.QtGpsCompass = np.array([[100.0]])
 

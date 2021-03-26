@@ -82,11 +82,11 @@ class SyntheticMeasurements:
 
     def compute_truth(self,t,stamp):
         self.truth.header.stamp = stamp
-        self.truth.pose.pose.position.x = 0.0#3.0*np.cos(t) - 3.0
-        self.truth.pose.pose.position.y = 0.0#np.sin(t)
-        self.truth.pose.pose.position.z = 0.0#np.cos(t)
-        truePhi = t#0.2*np.sin(t)
-        trueTheta = 0.3*np.sin(t)
+        self.truth.pose.pose.position.x = 3.0*np.cos(t) - 3.0
+        self.truth.pose.pose.position.y = -np.cos(t) + 1.0
+        self.truth.pose.pose.position.z = np.cos(t) - 1.0
+        truePhi = 0.0#0.2*np.sin(t)
+        trueTheta = 0.0#0.3*np.sin(t)
         truePsi = 0.0#-0.1*np.sin(t)
         self.RTruth = R.from_euler('xyz',[truePhi,trueTheta,truePsi])
         trueQuaternion = self.RTruth.as_quat()
@@ -95,9 +95,9 @@ class SyntheticMeasurements:
         self.truth.pose.pose.orientation.z = trueQuaternion[2]
         self.truth.pose.pose.orientation.w = trueQuaternion[3]
         
-        xDot = 0.0#2.0*t#-3.0*np.sin(t)
-        yDot = 0.0#np.cos(t)
-        zDot = 0.0#-np.sin(t)
+        xDot = -3.0*np.sin(t)
+        yDot = np.sin(t)
+        zDot = -np.sin(t)
         bodyVelocity = self.RTruth.apply([xDot,yDot,zDot])
         self.truth.twist.twist.linear.x = bodyVelocity[0]
         self.truth.twist.twist.linear.y = bodyVelocity[1]
@@ -107,16 +107,16 @@ class SyntheticMeasurements:
         cphi = np.cos(truePhi)
         sphi = np.sin(truePhi)
         cth = np.cos(trueTheta)
-        phiDot = 1.0 #0.2*np.cos(t)
-        thetaDot = 0.3*np.cos(t)
-        psiDot = 0.0 #-0.1*np.cos(t)
+        phiDot = 0.0#0.2*np.cos(t)
+        thetaDot = 0.0#0.3*np.cos(t)
+        psiDot = 0.0#-0.1*np.cos(t)
         self.truth.twist.twist.angular.x = phiDot - sth*psiDot #These come from euler dynamics
         self.truth.twist.twist.angular.y = cphi*thetaDot + sphi*cth*psiDot
         self.truth.twist.twist.angular.z = -sphi*thetaDot + cphi*cth*psiDot
 
-        self.acceleration[0] = 0.0#-3.0*np.cos(t)
-        self.acceleration[1] = 0.0#-np.sin(t)
-        self.acceleration[2] = 0.0#-np.cos(t)
+        self.acceleration[0] = -3.0*np.cos(t)
+        self.acceleration[1] = np.cos(t)
+        self.acceleration[2] = -np.cos(t)
 
     def compute_imu(self):
         self.imu.header.stamp = self.truth.header.stamp
