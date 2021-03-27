@@ -40,7 +40,7 @@ def update_dynamic_model(ft,beleif,ut,gravity,dt):
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
-     ft.dp = Rb2i.apply(beleif.v.T).T
+     ft.dp = Ri2b.apply(beleif.v.T).T
      ft.dq = attitudeModelInversion @ omega
      ft.dv = accel + Ri2b.apply(gravity.T).T# - np.cross(omega.T,beleif.v.T).T
      ft.dba = np.array([[0.0,0.0,0.0]]).T

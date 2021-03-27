@@ -53,7 +53,7 @@ class EKF:
       ht = ekf.update_gps_measurement_model(self.beleif)
       #TODO: Should probably set up the C jacobians in the parameter file
       Ct = ekf.get_jacobian_C_gps()
-      ekf.update(self.beleif,self.params.QtGps,zt,ht,Ct)
+      # ekf.update(self.beleif,self.params.QtGps,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
       #TODO: Add covariance values
@@ -63,7 +63,7 @@ class EKF:
       ht = ekf.update_compass_measurement_model(self.beleif)
       #TODO: Should probably set up the C jacobians in the parameter file
       Ct = ekf.get_jacobian_C_compass()
-      ekf.update(self.beleif,self.params.QtGpsCompass,zt,ht,Ct)
+      # ekf.update(self.beleif,self.params.QtGpsCompass,zt,ht,Ct)
 
    def set_ref_lla_callback(self,latDegrees,lonDegrees,altMeters):
       self.latRef = latDegrees
