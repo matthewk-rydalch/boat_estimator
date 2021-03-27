@@ -20,11 +20,13 @@ class EKF:
       self.lonRef = 0.0
       self.altRef = 0.0
       self.imuPrevTime = 0.0
+      self.firstImu = True
 
    def imu_callback(self,imu):
       #TODO: Add covariance values
-      if self.imuPrevTime == 0.0:
+      if self.firstImu:
          self.imuPrevTime = imu.time
+         self.firstImu = False
          return
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time

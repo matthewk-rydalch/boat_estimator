@@ -1,135 +1,65 @@
 #!/usr/bin/env python3
 
-import rospy
 import numpy as np
 import navpy
 from scipy.spatial.transform import Rotation as R
 
-from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Imu
-from ublox.msg import PosVelEcef
-from ublox.msg import RelPos
-from geometry_msgs.msg import Vector3
+def compute_truth(t,truth):
+    truth.position[0] = 0.8*np.cos(t) - 3.0
+    truth.position[1] = -0.5*np.sin(t) + 1.0
+    truth.position[2] = np.sin(t) + 3.0
+    truth.orientation[0] = 0.02*np.sin(t)
+    truth.orientation[1] = 0.03*np.sin(t)
+    truth.orientation[2] = -0.01*np.sin(t)
+    Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
+    
+    xDot = -0.8*np.sin(t)
+    yDot = -0.5*np.cos(t)
+    zDot = np.cos(t)
+    bodyVelocity = Rb2i.apply([xDot,yDot,zDot])
+    truth.velocity[0] = bodyVelocity[0]
+    truth.velocity[1] = bodyVelocity[1]
+    truth.velocity[2] = bodyVelocity[2]
+    
+    phiDot = 0.02*np.cos(t)
+    thetaDot = 0.03*np.cos(t)
+    psiDot = -0.01*np.cos(t)
+    sth = np.sin(truth.orientation[1])
+    cth = np.cos(truth.orientation[1])
+    cphi = np.cos(truth.orientation[0])
+    sphi = np.sin(truth.orientation[0])
+    truth.angularVelocity[0] = phiDot - sth*psiDot #These come from euler dynamics
+    truth.angularVelocity[1] = cphi*thetaDot + sphi*cth*psiDot
+    truth.angularVelocity[2] = -sphi*thetaDot + cphi*cth*psiDot
 
-class SyntheticMeasurements:
-    def __init__(self):
-        self.truth = Odometry()
-        self.imu = Imu()
-        self.gps = PosVelEcef()
-        self.gpsCompass = RelPos()
-        self.refLla = Vector3()
-        self.acceleration = np.zeros((3,1))
+    xDDot = -0.8*np.cos(t)
+    yDDot = 0.5*np.sin(t)
+    zDDot = -np.sin(t)
+    bodyAcceleration = Rb2i.apply([xDDot,yDDot,zDDot])
+    truth.acceleration[0] = bodyAcceleration[0]
+    truth.acceleration[1] = bodyAcceleration[1]
+    truth.acceleration[2] = bodyAcceleration[2]
 
-        #TODO: Add variation to the periods?
-        self.imuTs = 1.0/200
-        self.gpsTs = 1.0/5.0
+def compute_imu(truth,imu):
+    Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
+    Ri2b = Rb2i.inv()
 
-        self.firstCallback = True
-        self.firstTime = 0.0
-        self.refLlaSent = False
+    imu.gyros = truth.angularVelocity
+    velocityBody = Ri2b.apply(np.squeeze(truth.velocity))
 
-        self.latRef = 20.24
-        self.lonRef = -111.66
-        self.altRef = 1387.0
-        self.originEcef = navpy.lla2ecef(self.latRef,self.lonRef,self.altRef)
+    corriolisEffect = np.cross(np.squeeze(truth.angularVelocity),velocityBody)
+    gravity = np.array([[0.0,0.0,9.81]]).T
+    feltAccelerationInertial = truth.acceleration - gravity + np.array([corriolisEffect]).T
+    accelBody = Ri2b.apply(np.squeeze(feltAccelerationInertial))
+    imu.accelerometers[0] = accelBody[0]
+    imu.accelerometers[1] = accelBody[1]
+    imu.accelerometers[2] = accelBody[2]
 
-        self.truth_pub_ = rospy.Publisher('truth',Odometry,queue_size=5,latch=True)
-        self.imu_pub_ = rospy.Publisher('imu',Imu,queue_size=5,latch=True)
-        self.gps_pub_ = rospy.Publisher('gps',PosVelEcef,queue_size=5,latch=True)
-        self.gps_compass_pub_ = rospy.Publisher('gps_compass',RelPos,queue_size=5,latch=True)
-        self.ref_lla_pub_ = rospy.Publisher('ref_lla',Vector3,queue_size=5,latch=True)
+def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
+    ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
+    gps.position = ecefPositionRelative + originEcef
+    gps.velocity = navpy.ned2ecef(truth.velocity,latRef,lonRef,altRef)
 
-        self.truth_rate_timer_ = rospy.Timer(rospy.Duration(self.imuTs), self.truthCallback)
-        self.gps_rate_timer_ = rospy.Timer(rospy.Duration(self.gpsTs), self.gpsCallback)
-
-        while not rospy.is_shutdown():
-            rospy.spin()
-
-    def truthCallback(self,event):
-        stamp = rospy.Time.now()
-        if self.firstCallback:
-            self.firstTime = stamp.secs+stamp.nsecs*1e-9
-            self.firstCallback = False
-        timeSeconds = stamp.secs+stamp.nsecs*1e-9 - self.firstTime
-
-        self.compute_truth(timeSeconds,stamp)
-        self.truth_pub_.publish(self.truth)
-
-        self.compute_imu()
-        # self.add_imu_noise()
-        # self.add_imu_bias()
-        self.imu_pub_.publish(self.imu)
-
-    def gpsCallback(self,event):
-        if self.firstCallback:
-            return
-        stamp = rospy.Time.now()
-        if not self.refLlaSent:
-            self.refLla.x = self.latRef
-            self.refLla.y = self.lonRef
-            self.refLla.z = self.altRef
-            self.ref_lla_pub_.publish(self.refLla)
-            self.refLlaSent = True
-        
-        self.compute_gps(stamp)
-        # self.add_gps_noise()
-        self.gps_pub_.publish(self.gps)
-
-        self.compute_gps_compass(stamp)
-        # self.add_gps_compass_noise()
-        self.gps_compass_pub_.publish(self.gpsCompass)
-
-    def compute_truth(self,t,stamp):
-        self.truth.header.stamp = stamp
-        self.truth.pose.pose.position.x = 3.0*np.cos(t) - 3.0
-        self.truth.pose.pose.position.y = np.sin(t)
-        self.truth.pose.pose.position.z = np.cos(t)
-        self.truth.pose.pose.orientation.x = 0.0
-        self.truth.pose.pose.orientation.y = 0.0
-        self.truth.pose.pose.orientation.z = 0.0
-        self.truth.pose.pose.orientation.w = 1.0
-        self.truth.twist.twist.linear.x = -3.0*np.sin(t)
-        self.truth.twist.twist.linear.y = np.cos(t)
-        self.truth.twist.twist.linear.z = -np.sin(t)
-        self.truth.twist.twist.angular.x = 0.0
-        self.truth.twist.twist.angular.y = 0.0
-        self.truth.twist.twist.angular.z = 0.0
-
-        self.acceleration[0] = -3.0*np.cos(t)
-        self.acceleration[1] = -np.sin(t)
-        self.acceleration[2] = -np.cos(t) - 9.81
-
-    def compute_imu(self):
-        self.imu.header.stamp = self.truth.header.stamp
-        self.imu.angular_velocity = self.truth.twist.twist.angular
-        #TODO: add gravity and coriolis?
-        quat = [self.truth.pose.pose.orientation.x,self.truth.pose.pose.orientation.y,self.truth.pose.pose.orientation.z,self.truth.pose.pose.orientation.w]
-        Ri2b = R.from_quat(quat)
-        accelBody = Ri2b.apply(np.squeeze(self.acceleration))
-        self.imu.linear_acceleration.x = accelBody[0]
-        self.imu.linear_acceleration.y = accelBody[1]
-        self.imu.linear_acceleration.z = accelBody[2]
-
-    def compute_gps(self,stamp):
-        self.gps.header.stamp = stamp
-        truePositionNed = [self.truth.pose.pose.position.x,self.truth.pose.pose.position.y,self.truth.pose.pose.position.z]
-        ecefPositionRelative = navpy.ned2ecef(truePositionNed,self.latRef,self.lonRef,self.altRef)
-        self.gps.position = ecefPositionRelative + self.originEcef
-        trueVelocityNed = [self.truth.twist.twist.linear.x,self.truth.twist.twist.linear.y,self.truth.twist.twist.linear.z]
-        self.gps.velocity = navpy.ned2ecef(trueVelocityNed,self.latRef,self.lonRef,self.altRef)
-
-    def compute_gps_compass(self,stamp):
-        #TODO should the compass direction take into account the roll and pitch?
-        self.gpsCompass.header.stamp = stamp
-        quat = [self.truth.pose.pose.orientation.x,self.truth.pose.pose.orientation.y,self.truth.pose.pose.orientation.z,self.truth.pose.pose.orientation.w]
-        rotation = R.from_quat(quat)
-        eulerRadians = rotation.as_euler('zyx')
-        self.gpsCompass.relPosHeading = eulerRadians[2]
-
-if __name__ == '__main__':
-    rospy.init_node('synthetic_measurements', anonymous=True)
-    try:
-        syncMeas = SyntheticMeasurements()
-    except:
-        rospy.ROSInterruptException
-    pass
+def compute_gps_compass(truth,gpsCompass):
+    #TODO should the compass direction take into account the roll and pitch?
+    gpsCompass.heading = truth.orientation[2]
