@@ -32,7 +32,6 @@ class EKF:
       self.imuPrevTime = imu.time
       ut = [imu.accelerometers,imu.gyros]
       ft = DynamicModel()
-      # self.beleif.q = np.array([[imu.time,0.3*np.sin(imu.time),0.0]]).T
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
       At = ekf.update_Jacobian_A(self.beleif,imu.gyros)
       ekf.propagate(self.beleif,self.params.Rt,ft,At,dt)
@@ -53,7 +52,7 @@ class EKF:
       ht = ekf.update_gps_measurement_model(self.beleif)
       #TODO: Should probably set up the C jacobians in the parameter file
       Ct = ekf.get_jacobian_C_gps()
-      # ekf.update(self.beleif,self.params.QtGps,zt,ht,Ct)
+      ekf.update(self.beleif,self.params.QtGps,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
       #TODO: Add covariance values
@@ -63,7 +62,7 @@ class EKF:
       ht = ekf.update_compass_measurement_model(self.beleif)
       #TODO: Should probably set up the C jacobians in the parameter file
       Ct = ekf.get_jacobian_C_compass()
-      # ekf.update(self.beleif,self.params.QtGpsCompass,zt,ht,Ct)
+      ekf.update(self.beleif,self.params.QtGpsCompass,zt,ht,Ct)
 
    def set_ref_lla_callback(self,latDegrees,lonDegrees,altMeters):
       self.latRef = latDegrees
