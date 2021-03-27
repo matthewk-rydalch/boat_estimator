@@ -42,10 +42,10 @@ def update_dynamic_model(ft,beleif,ut,gravity,dt):
                                   [0.0, sphi/cth, cphi/cth]])
      ft.dp = Ri2b.apply(beleif.v.T).T
      ft.dq = attitudeModelInversion @ omega
-     ft.dv = accel + Ri2b.apply(gravity.T).T# - np.cross(omega.T,beleif.v.T).T
+     ft.dv = accel + Ri2b.apply(gravity.T).T - np.cross(omega.T,beleif.v.T).T
      ft.dba = np.array([[0.0,0.0,0.0]]).T
      ft.dbg = np.array([[0.0,0.0,0.0]]).T
-     
+
      return ft
 
 def update_gps_measurement_model(beleif):
