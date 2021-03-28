@@ -57,9 +57,45 @@ def compute_imu(truth,imu):
 
 def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
     ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
-    gps.position = ecefPositionRelative + originEcef
-    gps.velocity = navpy.ned2ecef(truth.velocity,latRef,lonRef,altRef)
+    gps.positionEcef = ecefPositionRelative + originEcef
+    gps.velocityEcef = navpy.ned2ecef(truth.velocity,latRef,lonRef,altRef)
 
 def compute_gps_compass(truth,gpsCompass):
     #TODO should the compass direction take into account the roll and pitch?
     gpsCompass.heading = truth.orientation[2]
+
+def add_imu_noise(imu,accelerometerAccuracy,gyroAccuracy):
+    imu.accelerometers[0] = np.random.normal(imu.accelerometers[0],accelerometerAccuracy)
+    imu.accelerometers[1] = np.random.normal(imu.accelerometers[1],accelerometerAccuracy)
+    imu.accelerometers[2] = np.random.normal(imu.accelerometers[2],accelerometerAccuracy)
+    imu.gyros[0] = np.random.normal(imu.gyros[0],gyroAccuracy)
+    imu.gyros[1] = np.random.normal(imu.gyros[1],gyroAccuracy)
+    imu.gyros[2] = np.random.normal(imu.gyros[2],gyroAccuracy)
+
+def add_gps_noise(gps,gpsHorizontalAccuracy,gpsVerticalAccuracy,gpsSpeedAccuracy,latRef,lonRef,altRef,gpsNoise):
+    gpsEcefAccuracy = navpy.ned2ecef([gpsHorizontalAccuracy,gpsHorizontalAccuracy,gpsVerticalAccuracy],latRef,lonRef,altRef)
+    whiteNoisePositionEcef = [0]*3
+    whiteNoiseVelocityEcef = [0]*3
+    alpha = 0.9
+    for i in range(3):
+        whiteNoisePositionEcef[i] = np.random.normal(0.0,gpsEcefAccuracy[i])
+        whiteNoiseVelocityEcef[i] = np.random.normal(0.0,gpsSpeedAccuracy)
+        gpsNoise[i] = low_pass_filter(gpsNoise[i],whiteNoisePositionEcef[i],alpha)
+        gpsNoise[i+3] = low_pass_filter(gpsNoise[i+3],whiteNoiseVelocityEcef[i],alpha)
+
+    gps.positionEcef[0] = gps.positionEcef[0] + gpsNoise[0]
+    gps.positionEcef[1] = gps.positionEcef[1] + gpsNoise[1]
+    gps.positionEcef[2] = gps.positionEcef[2] + gpsNoise[2]
+    gps.velocityEcef[0] = gps.velocityEcef[0] + gpsNoise[3]
+    gps.velocityEcef[1] = gps.velocityEcef[1] + gpsNoise[4]
+    gps.velocityEcef[2] = gps.velocityEcef[2] + gpsNoise[5]
+
+def add_gps_compass_noise(gpsCompass,gpsCompassAccuracy,gpsCompassNoise):
+    alpha = 0.9
+    whiteNoise = np.random.normal(0.0,gpsCompassAccuracy)
+    gpsCompassNoise = low_pass_filter(gpsCompassNoise,whiteNoise,alpha)
+    gpsCompass.heading = gpsCompass.heading + gpsCompassNoise
+
+def low_pass_filter(y,u,alpha):
+    yNew = alpha*y+(1-alpha)*u
+    return yNew
