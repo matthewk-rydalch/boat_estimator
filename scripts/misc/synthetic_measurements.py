@@ -96,6 +96,13 @@ def add_gps_compass_noise(gpsCompass,gpsCompassAccuracy,gpsCompassNoise):
     gpsCompassNoise = low_pass_filter(gpsCompassNoise,whiteNoise,alpha)
     gpsCompass.heading = gpsCompass.heading + gpsCompassNoise
 
+def add_imu_bias(imu,accelerometerBias,gyroBias):
+    imu.accelerometers = imu.accelerometers + np.array([accelerometerBias]).T
+    imu.gyros = imu.gyros + np.array([gyroBias]).T
+
+def add_gps_random_walk():
+    a = 1
+
 def low_pass_filter(y,u,alpha):
     yNew = alpha*y+(1-alpha)*u
     return yNew

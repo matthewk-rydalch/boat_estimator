@@ -39,6 +39,10 @@ class SyntheticMeasurements:
 
         self.gpsNoise = [0.0,0.0,0.0,0.0,0.0,0.0]
         self.gpsCompassNoise = 0.0
+        
+        self.accelerometerBias = [0.1,-0.05,-0.02]
+        self.gyroBias = [0.0,0.0,0.0]
+        # self.gyroBias = [0.01,0.08,-0.02]
 
         #TODO: Add variation to the periods?
         self.imuTs = 1.0/200.0
@@ -77,7 +81,7 @@ class SyntheticMeasurements:
 
         synthetic_measurements.compute_imu(self.truth,self.imu)
         synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
-        # self.add_imu_bias()
+        synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
 
     def gpsCallback(self,event):
@@ -97,6 +101,7 @@ class SyntheticMeasurements:
 
         synthetic_measurements.compute_gps_compass(self.truth,self.gpsCompass)
         synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.gpsCompassNoise)
+        synthetic_measurements.add_gps_random_walk()
         self.publish_gps_compass(stamp,self.gpsCompass)
 
     def publish_truth(self,stamp,truth):
