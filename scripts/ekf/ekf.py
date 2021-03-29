@@ -11,9 +11,11 @@ def propagate(beleif,Rt,ft,At,dt):
      beleif.p = beleif.p + ft.dp*dt
      beleif.q = beleif.q + ft.dq*dt
      beleif.v = beleif.v + ft.dv*dt
-     beleif.ba = beleif.ba + ft.dba*dt
-     beleif.bg = beleif.bg + ft.dbg*dt
+     # beleif.ba = beleif.ba + ft.dba*dt
+     # beleif.bg = beleif.bg + ft.dbg*dt
 
+     print('beleif ba = ', beleif.ba)
+     print('beleif bg = ', beleif.bg)
      beleif.P = At@beleif.P@At.T + Rt
 
 def update(beleif,Qt,zt,ht,Ct):
@@ -22,8 +24,10 @@ def update(beleif,Qt,zt,ht,Ct):
      beleif.p = beleif.p + dx[0:3]
      beleif.q = beleif.q + dx[3:6]
      beleif.v = beleif.v + dx[6:9]
-     beleif.ba = beleif.ba + dx[9:12]
-     beleif.bg = beleif.bg + dx[12:15]
+     # beleif.ba = beleif.ba + dx[9:12]
+     # beleif.bg = beleif.bg + dx[12:15]
+
+     # print('dx meas = ', dx)
 
      beleif.P = (np.identity(15) - Lt@Ct)@beleif.P
 
@@ -94,7 +98,7 @@ def update_Jacobian_A(beleif,omega):
      dBadp = np.zeros((3,3))
      dBadq = np.zeros((3,3))
      dBadv = np.zeros((3,3))
-     dBadBa = np.zeros((3,3))
+     dBadBa = np.identity(3)
      dBadBg = np.zeros((3,3))
      dBadx = np.concatenate((dBadp, dBadq, dBadv, dBadBa, dBadBg), axis=1)
 
@@ -102,7 +106,7 @@ def update_Jacobian_A(beleif,omega):
      dBgdq = np.zeros((3,3))
      dBgdv = np.zeros((3,3))
      dBgdBa = np.zeros((3,3))
-     dBgdBg = np.zeros((3,3))
+     dBgdBg = np.identity(3)
      dBgdx = np.concatenate((dBgdp, dBgdq, dBgdv, dBgdBa, dBgdBg), axis=1)
 
      At = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
