@@ -80,8 +80,8 @@ class SyntheticMeasurements:
         self.publish_truth(stamp,self.truth)
 
         synthetic_measurements.compute_imu(self.truth,self.imu)
-        # synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
-        # synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
+        synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
+        synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
 
     def gpsCallback(self,event):
@@ -96,12 +96,12 @@ class SyntheticMeasurements:
             self.refLlaSent = True
         
         synthetic_measurements.compute_gps(self.truth,self.gps,self.latRef,self.lonRef,self.altRef,self.originEcef)
-        # synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev,self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.gpsNoise)
+        synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev,self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.gpsNoise)
+        # synthetic_measurements.add_gps_random_walk()
         self.publish_gps(stamp,self.gps)
 
         synthetic_measurements.compute_gps_compass(self.truth,self.gpsCompass)
-        # synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.gpsCompassNoise)
-        # synthetic_measurements.add_gps_random_walk() #TODO is this in the wrong spot?
+        synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.gpsCompassNoise)
         self.publish_gps_compass(stamp,self.gpsCompass)
 
     def publish_truth(self,stamp,truth):

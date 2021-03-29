@@ -63,35 +63,34 @@ def update_compass_measurement_model(beleif):
 
 def update_Jacobian_A(beleif,omega):
      #TODO: check Jacobian more thouroughly
+#TODO: check Jacobian more thouroughly
      g = np.array([[0.0,0.0,9.81]]).T
-     spsi = np.sin(beleif.q.item(2))
-     cpsi = np.cos(beleif.q.item(2))
+     
+     Rb2i = R.from_euler('xyz',beleif.q.squeeze())
+     Ri2b = Rb2i.inv()
+     skewV = get_skew_symetric_matrix(beleif.v)
+     skewOmega = get_skew_symetric_matrix(omega-beleif.bg)
+     skewGravity = get_skew_symetric_matrix(Ri2b.apply(g.T).T)
 
      dpdp = np.zeros((3,3))
-     dpdq = np.array([[0.0,0.0,-spsi*beleif.v.item(1)-cpsi*beleif.v.item(2)],
-                      [0.0,0.0,cpsi*beleif.v.item(1)-spsi*beleif.v.item(2)],
-                      [0.0,0.0,0.0]])
-     dpdv = R.from_euler('xyz',[0.0,0.0,beleif.q.item(2)]).as_matrix()
+     dpdq = -Ri2b.apply(skewV)
+     dpdv = Ri2b.as_matrix()
      dpdBa = np.zeros((3,3))
      dpdBg = np.zeros((3,3))
      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdBa,dpdBg),axis=1)
 
      dqdp = np.zeros((3,3))
-     dqdq = np.zeros((3,3))
+     dqdq = -skewOmega
      dqdv = np.zeros((3,3))
      dqdBa = np.zeros((3,3))
      dqdBg = -np.identity(3)
      dqdx = np.concatenate((dqdp, dqdq, dqdv, dqdBa, dqdBg), axis=1)
 
      dvdp = np.zeros((3,3))
-     dvdq = np.zeros((3,3))
-     dvdv = np.array([[0.0,-omega.item(2)-beleif.bg.item(2),omega.item(1)-beleif.bg.item(1)],
-                      [omega.item(2)-beleif.bg.item(2), 0.0, -omega.item(0)+beleif.bg.item(0)],
-                      [-omega.item(1)+beleif.bg.item(1),omega.item(0)-beleif.bg.item(0),0.0]])
+     dvdq = skewGravity
+     dvdv = -skewOmega
      dvdBa = -np.identity(3)
-     dvdBg = np.array([[0.0,-beleif.v.item(2),beleif.v.item(1)],
-                      [beleif.v.item(2),0,-beleif.v.item(0)],
-                      [-beleif.v.item(1),beleif.v.item(0),0]])
+     dvdBg = -skewV
      dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdBa, dvdBg), axis=1)
 
      dBadp = np.zeros((3,3))
@@ -139,5 +138,11 @@ def get_jacobian_C_compass():
      Ct = np.concatenate((dpsidp,dpsidq,dpsidv,dpsidba,dpsidbg),axis=1)
 
      return Ct
+
+def get_skew_symetric_matrix(v):
+     m = np.array([[0.0,-v.item(2),v.item(1)],
+                   [v.item(2),0.0,-v.item(0)],
+                   [-v.item(1),v.item(0),0.0]])
+     return m
      
 
