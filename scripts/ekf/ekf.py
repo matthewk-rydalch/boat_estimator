@@ -11,11 +11,12 @@ def propagate(beleif,Rt,ft,At,dt):
      beleif.p = beleif.p + ft.dp*dt
      beleif.q = beleif.q + ft.dq*dt
      beleif.v = beleif.v + ft.dv*dt
-     # beleif.ba = beleif.ba + ft.dba*dt
-     # beleif.bg = beleif.bg + ft.dbg*dt
+     beleif.ba = beleif.ba + ft.dba*dt
+     beleif.bg = beleif.bg + ft.dbg*dt
 
      print('beleif ba = ', beleif.ba)
      print('beleif bg = ', beleif.bg)
+     # print('beleif.P = ', beleif.P)
      beleif.P = At@beleif.P@At.T + Rt
 
 def update(beleif,Qt,zt,ht,Ct):
@@ -24,8 +25,8 @@ def update(beleif,Qt,zt,ht,Ct):
      beleif.p = beleif.p + dx[0:3]
      beleif.q = beleif.q + dx[3:6]
      beleif.v = beleif.v + dx[6:9]
-     # beleif.ba = beleif.ba + dx[9:12]
-     # beleif.bg = beleif.bg + dx[12:15]
+     beleif.ba = beleif.ba + dx[9:12]
+     beleif.bg = beleif.bg + dx[12:15]
 
      # print('dx meas = ', dx)
 
@@ -67,38 +68,36 @@ def update_Jacobian_A(beleif,omega):
      cpsi = np.cos(beleif.q.item(2))
 
      dpdp = np.zeros((3,3))
-     dpdq = np.array([[spsi*beleif.v.item(2), cpsi*beleif.v.item(2), spsi*beleif.v.item(0)-cpsi*beleif.v.item(1)],
-                      [0.0, spsi*beleif.v.item(2), cpsi*beleif.v.item(0)-spsi*beleif.v.item(1)],
-                      [beleif.v.item(1),-beleif.v.item(0),0.0]])
-     dpdv = R.from_rotvec(beleif.q.squeeze()).as_matrix()
+     dpdq = np.array([[0.0,0.0,-spsi*beleif.v.item(1)-cpsi*beleif.v.item(2)],
+                      [0.0,0.0,cpsi*beleif.v.item(1)-spsi*beleif.v.item(2)],
+                      [0.0,0.0,0.0]])
+     dpdv = R.from_euler('xyz',[0.0,0.0,beleif.q.item(2)]).as_matrix()
      dpdBa = np.zeros((3,3))
      dpdBg = np.zeros((3,3))
      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdBa,dpdBg),axis=1)
 
      dqdp = np.zeros((3,3))
-     dqdq = np.array([[0.0,omega.item(1),0.0],
-                      [omega.item(2),0.0,0.0],
-                      [omega.item(1),0.0,0.0]])
+     dqdq = np.zeros((3,3))
      dqdv = np.zeros((3,3))
      dqdBa = np.zeros((3,3))
      dqdBg = -np.identity(3)
      dqdx = np.concatenate((dqdp, dqdq, dqdv, dqdBa, dqdBg), axis=1)
 
      dvdp = np.zeros((3,3))
-     dvdq = np.array([[spsi, cpsi, 0.0],
-                      [spsi-cpsi, spsi, 0.0],
-                      [0.0,0.0,0.0]])*g.item(2)
-     dvdv = np.array([[0.0,-omega.item(2),omega.item(1)],
-                      [omega.item(2), 0.0, -omega.item(0)],
-                      [-omega.item(1),omega.item(0),0.0]])
+     dvdq = np.zeros((3,3))
+     dvdv = np.array([[0.0,-omega.item(2)-beleif.bg.item(2),omega.item(1)-beleif.bg.item(1)],
+                      [omega.item(2)-beleif.bg.item(2), 0.0, -omega.item(0)+beleif.bg.item(0)],
+                      [-omega.item(1)+beleif.bg.item(1),omega.item(0)-beleif.bg.item(0),0.0]])
      dvdBa = -np.identity(3)
-     dvdBg = np.zeros((3,3))
+     dvdBg = np.array([[0.0,-beleif.v.item(2),beleif.v.item(1)],
+                      [beleif.v.item(2),0,-beleif.v.item(0)],
+                      [-beleif.v.item(1),beleif.v.item(0),0]])
      dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdBa, dvdBg), axis=1)
 
      dBadp = np.zeros((3,3))
      dBadq = np.zeros((3,3))
      dBadv = np.zeros((3,3))
-     dBadBa = np.identity(3)
+     dBadBa = np.zeros((3,3))
      dBadBg = np.zeros((3,3))
      dBadx = np.concatenate((dBadp, dBadq, dBadv, dBadBa, dBadBg), axis=1)
 
@@ -106,7 +105,7 @@ def update_Jacobian_A(beleif,omega):
      dBgdq = np.zeros((3,3))
      dBgdv = np.zeros((3,3))
      dBgdBa = np.zeros((3,3))
-     dBgdBg = np.identity(3)
+     dBgdBg = np.zeros((3,3))
      dBgdx = np.concatenate((dBgdp, dBgdq, dBgdv, dBgdBa, dBgdBg), axis=1)
 
      At = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)

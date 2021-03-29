@@ -8,8 +8,8 @@ def compute_truth(t,truth):
     truth.position[0] = 0.8*np.cos(t) - 3.0
     truth.position[1] = -0.5*np.sin(t) + 1.0
     truth.position[2] = np.sin(t) + 3.0
-    truth.orientation[0] = 0.02*np.sin(t)
-    truth.orientation[1] = 0.03*np.sin(t)
+    truth.orientation[0] = 0.0#0.02*np.sin(t)
+    truth.orientation[1] = 0.0#0.03*np.sin(t)
     truth.orientation[2] = -0.01*np.sin(t)
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
     
@@ -21,8 +21,8 @@ def compute_truth(t,truth):
     truth.velocity[1] = bodyVelocity[1]
     truth.velocity[2] = bodyVelocity[2]
     
-    phiDot = 0.02*np.cos(t)
-    thetaDot = 0.03*np.cos(t)
+    phiDot = 0.0#0.02*np.cos(t)
+    thetaDot = 0.0#0.03*np.cos(t)
     psiDot = -0.01*np.cos(t)
     sth = np.sin(truth.orientation[1])
     cth = np.cos(truth.orientation[1])
