@@ -64,34 +64,37 @@ def update_compass_measurement_model(beleif):
 
 def update_Jacobian_A(beleif,omega):
      #TODO: check Jacobian more thouroughly
-#TODO: check Jacobian more thouroughly
      g = np.array([[0.0,0.0,9.81]]).T
-     
-     Rb2i = R.from_euler('xyz',beleif.q.squeeze())
-     Ri2b = Rb2i.inv()
-     skewV = get_skew_symetric_matrix(beleif.v)
-     skewOmega = get_skew_symetric_matrix(omega-beleif.bg)
-     skewGravity = get_skew_symetric_matrix(Ri2b.apply(g.T).T)
+     spsi = np.sin(beleif.q.item(2))
+     cpsi = np.cos(beleif.q.item(2))
 
      dpdp = np.zeros((3,3))
-     dpdq = -Ri2b.apply(skewV)
-     dpdv = Ri2b.as_matrix()
+     dpdq = np.array([[spsi*beleif.v.item(2), cpsi*beleif.v.item(2), spsi*beleif.v.item(0)-cpsi*beleif.v.item(1)],
+                      [0.0, spsi*beleif.v.item(2), cpsi*beleif.v.item(0)-spsi*beleif.v.item(1)],
+                      [beleif.v.item(1),-beleif.v.item(0),0.0]])
+     dpdv = R.from_rotvec(beleif.q.squeeze()).as_matrix()
      dpdBa = np.zeros((3,3))
      dpdBg = np.zeros((3,3))
      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdBa,dpdBg),axis=1)
 
      dqdp = np.zeros((3,3))
-     dqdq = -skewOmega
+     dqdq = np.array([[0.0,omega.item(1),0.0],
+                      [omega.item(2),0.0,0.0],
+                      [omega.item(1),0.0,0.0]])
      dqdv = np.zeros((3,3))
      dqdBa = np.zeros((3,3))
      dqdBg = -np.identity(3)
      dqdx = np.concatenate((dqdp, dqdq, dqdv, dqdBa, dqdBg), axis=1)
 
      dvdp = np.zeros((3,3))
-     dvdq = skewGravity
-     dvdv = -skewOmega
+     dvdq = np.array([[spsi, cpsi, 0.0],
+                      [spsi-cpsi, spsi, 0.0],
+                      [0.0,0.0,0.0]])*g.item(2)
+     dvdv = np.array([[0.0,-omega.item(2),omega.item(1)],
+                      [omega.item(2), 0.0, -omega.item(0)],
+                      [-omega.item(1),omega.item(0),0.0]])
      dvdBa = -np.identity(3)
-     dvdBg = -skewV
+     dvdBg = np.zeros((3,3))
      dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdBa, dvdBg), axis=1)
 
      dBadp = np.zeros((3,3))
@@ -110,6 +113,7 @@ def update_Jacobian_A(beleif,omega):
 
      At = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
      return At
+
 
 def get_jacobian_C_gps():
      dpdp = np.identity(3)

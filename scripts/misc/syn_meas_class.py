@@ -45,8 +45,8 @@ class SyntheticMeasurements:
         # self.gyroBias = [0.01,0.08,-0.02]
 
         #TODO: Add variation to the periods?
-        self.imuTs = 1.0/5.0
-        self.gpsTs = 1.0/1.0
+        self.imuTs = 1.0/200.0
+        self.gpsTs = 1.0/5.0
 
         self.firstCallback = True
         self.firstTime = 0.0
