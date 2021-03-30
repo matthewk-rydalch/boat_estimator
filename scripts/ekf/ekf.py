@@ -9,8 +9,8 @@ from states_covariance import StatesCovariance
 
 def propagate(beleif,Rt,ft,At,dt):
      beleif.p = beleif.p + ft.dp*dt
-     beleif.q = beleif.q + ft.dq*dt
-     # beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
+     # beleif.q = beleif.q + ft.dq*dt
+     beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
      beleif.v = beleif.v + ft.dv*dt
      beleif.ba = beleif.ba + ft.dba*dt
      beleif.bg = beleif.bg + ft.dbg*dt

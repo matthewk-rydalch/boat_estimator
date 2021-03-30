@@ -36,7 +36,7 @@ class EKF:
       ft = DynamicModel()
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
       At = ekf.update_Jacobian_A(self.beleif,imu.gyros)
-      # comp_filter.run(self.beleif,imu,dt,self.alpha)
+      comp_filter.run(self.beleif,imu,dt,self.alpha)
       ekf.propagate(self.beleif,self.params.Rt,ft,At,dt)
 
    def gps_callback(self,gps):

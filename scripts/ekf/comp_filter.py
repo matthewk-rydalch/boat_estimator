@@ -1,20 +1,14 @@
 import numpy as np
 
-def run(beleif,imu,dt,alpha):
-     accel = imu.accelerometers - beleif.ba
-     omega = imu.gyros - beleif.bg
+def run(beleif,imu,dt,kp,ki):
+     gravity = np.array([[0.0,0.0,9.81]]).T
+     qAccel = np.array([[0.0,0.0,0.0]]).T
+     qAccel[0] = np.arctan2(imu.accelerometers.item(1)-beleif.Ba.item(1),imu.accelerometers.item(2)-beleif.Ba.item(2))
+     qAccel[1] = np.arcsin(imu.accelerometers.item(0)-beleif.Ba.item(0)/gravity.item(2))
+     qError = qAccel - beleif.q
+     qError[2][0] = 0.0
+     dBg = -ki*qError*dt
+     beleif.bg = beleif.bg + dBg
+     dq = imu.gyro - beleif.bg + kp*qError
 
-     sphi = np.sin(beleif.q.item(0))
-     cphi = np.cos(beleif.q.item(0))
-     cth = np.cos(beleif.q.item(1))
-     tth = np.tan(beleif.q.item(1))
-     attitudeModelInversion = np.array([[1.0, sphi * tth, cphi * tth],
-                                        [0.0, cphi, -sphi],
-                                        [0.0, sphi / cth, cphi / cth]])
-     dq = attitudeModelInversion @ omega
-     gyroRoll = beleif.q[0] + dq[0]*dt
-     gyroPitch = beleif.q[1] + dq[1]*dt
-     accelRoll = np.arctan2(accel[0],accel[2])
-     accelPitch = np.arctan2(accel[1],accel[2])
-     beleif.q[0] = gyroRoll*alpha + accelRoll*(1-alpha)
-     beleif.q[1] = gyroPitch*alpha + accelPitch*(1 - alpha)
+     beleif.q = beleif.q + dq*dt
