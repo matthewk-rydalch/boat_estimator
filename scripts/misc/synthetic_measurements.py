@@ -5,47 +5,27 @@ import navpy
 from scipy.spatial.transform import Rotation as R
 
 def compute_truth(t,truth):
-    truth.position[0] = 0.0
-    xDot = 0.0
-    xDDot = 0.0
 
-    truth.position[1] = 0.5*t
-    yDot = 0.5
-    yDDot = 0.0
+    truth.position[0] = 2*t + 0.5*np.cos(t/2.0) - 3.0
+    xDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
+    xDDot = -0.5*np.cos(t/2.0)/4.0
 
-    truth.position[2] = 0.5*t
-    zDot = 0.5
-    zDDot = 0.0
+    truth.position[1] = 0.3*t -0.5*np.sin(t/2.0) + 5.0
+    yDot = 0.3 + -0.5*np.cos(t/2.0)/2.0
+    yDDot = 0.5*np.sin(t/2.0)/4.0
 
-    # truth.orientation[0] = 0.0
-    # phiDot = 0.0
-
-    truth.orientation[1] = 0.0
-    thetaDot = 0.0
-
-    truth.orientation[2] = 0.0
-    psiDot = 0.0
-
-    # truth.position[0] = 2*t + 0.5*np.cos(t/2.0) - 3.0
-    # xDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
-    # xDDot = -0.5*np.cos(t/2.0)/4.0
-
-    # truth.position[1] = 0.3*t -0.5*np.sin(t/2.0) + 5.0
-    # yDot = 0.3 + -0.5*np.cos(t/2.0)/2.0
-    # yDDot = 0.5*np.sin(t/2.0)/4.0
-
-    # truth.position[2] = 0.5*np.sin(t/2.0) - 1.0
-    # zDot = 0.5*np.cos(t/2.0)/2.0
-    # zDDot = -0.5*np.sin(t/2.0)/4.0
+    truth.position[2] = 0.5*np.sin(t/2.0) - 1.0
+    zDot = 0.5*np.cos(t/2.0)/2.0
+    zDDot = -0.5*np.sin(t/2.0)/4.0
 
     truth.orientation[0] = 0.15*np.sin(t/2.0)
     phiDot = 0.15*np.cos(t/2.0)/2.0
 
-    # truth.orientation[1] = 0.15*np.sin(t/2.0)
-    # thetaDot = 0.15*np.cos(t/2.0)/2.0
+    truth.orientation[1] = 0.15*np.sin(t/2.0)
+    thetaDot = 0.15*np.cos(t/2.0)/2.0
 
-    # truth.orientation[2] = -0.15*np.sin(t/2.0)
-    # psiDot = -0.15*np.cos(t/2.0)/2.0
+    truth.orientation[2] = -0.15*np.sin(t/2.0)
+    psiDot = -0.15*np.cos(t/2.0)/2.0
 
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
     Ri2b = Rb2i.inv()
