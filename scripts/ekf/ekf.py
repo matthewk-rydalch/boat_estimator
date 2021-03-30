@@ -9,13 +9,14 @@ from states_covariance import StatesCovariance
 
 def propagate(beleif,Rt,ft,At,dt):
      beleif.p = beleif.p + ft.dp*dt
-     beleif.q = beleif.q + ft.dq*dt
+     # beleif.q = beleif.q + ft.dq*dt
+     beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
      beleif.v = beleif.v + ft.dv*dt
      beleif.ba = beleif.ba + ft.dba*dt
      beleif.bg = beleif.bg + ft.dbg*dt
 
-     print('beleif ba = ', beleif.ba)
-     print('beleif bg = ', beleif.bg)
+     # print('beleif ba = ', beleif.ba)
+     # print('beleif bg = ', beleif.bg)
      # print('beleif.P = ', beleif.P)
      beleif.P = At@beleif.P@At.T + Rt
 
