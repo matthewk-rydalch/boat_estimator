@@ -21,7 +21,7 @@ class TestComplimentaryFilter(unittest.TestCase):
         gyros = [0.0,0.0,0.0]
         imu = ImuMsg(0.0,accelerometers,gyros)
         dt = 0.1
-        alpha = 0.98
+        alpha = 1.0
         comp_filter.run(beleif,imu,dt,alpha)
 
         qExpected = np.array([[1.0,1.0,0.0]]).T
