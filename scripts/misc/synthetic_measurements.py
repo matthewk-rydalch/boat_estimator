@@ -18,14 +18,23 @@ def compute_truth(t,truth):
     zDot = 0.5*np.cos(t/2.0)/2.0
     zDDot = -0.5*np.sin(t/2.0)/4.0
 
-    truth.orientation[0] = 0.15*np.sin(t/2.0)
-    phiDot = 0.15*np.cos(t/2.0)/2.0
+    # truth.orientation[0] = 0.2
+    # phiDot = 0.0
 
-    truth.orientation[1] = 0.15*np.sin(t/2.0)
-    thetaDot = 0.15*np.cos(t/2.0)/2.0
+    # truth.orientation[1] = 0.0
+    # thetaDot = 0.0
 
-    truth.orientation[2] = -0.15*np.sin(t/2.0)
-    psiDot = -0.15*np.cos(t/2.0)/2.0
+    # truth.orientation[2] = 0.0
+    # psiDot = 0.0
+
+    truth.orientation[0] = 0.05*np.sin(t/2.0)
+    phiDot = 0.05*np.cos(t/2.0)/2.0
+
+    truth.orientation[1] = 0.05*np.sin(t/2.0)
+    thetaDot = 0.05*np.cos(t/2.0)/2.0
+
+    truth.orientation[2] = -0.05*np.sin(t/2.0)
+    psiDot = -0.05*np.cos(t/2.0)/2.0
 
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
     Ri2b = Rb2i.inv()

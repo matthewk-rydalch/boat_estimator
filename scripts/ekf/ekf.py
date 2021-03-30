@@ -16,8 +16,7 @@ def propagate(beleif,Rt,ft,At,dt):
      beleif.bg = beleif.bg + ft.dbg*dt
 
      # print('beleif ba = ', beleif.ba)
-     # print('beleif bg = ', beleif.bg)
-     # print('beleif.P = ', beleif.P)
+     print('beleif bg = ', beleif.bg)
      beleif.P = At@beleif.P@At.T + Rt
 
 def update(beleif,Qt,zt,ht,Ct):

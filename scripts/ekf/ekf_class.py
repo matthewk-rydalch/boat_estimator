@@ -23,7 +23,7 @@ class EKF:
       self.imuPrevTime = 0.0
       self.firstImu = True
       self.kp = 0.02
-      self.ki = 0.001
+      self.ki = 0.0
 
    def imu_callback(self,imu):
       #TODO: Add covariance values
