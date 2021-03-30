@@ -22,7 +22,8 @@ class EKF:
       self.altRef = 0.0
       self.imuPrevTime = 0.0
       self.firstImu = True
-      self.alpha = 1.0
+      self.kp = 0.02
+      self.ki = 0.1
 
    def imu_callback(self,imu):
       #TODO: Add covariance values
@@ -36,7 +37,7 @@ class EKF:
       ft = DynamicModel()
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
       At = ekf.update_Jacobian_A(self.beleif,imu.gyros)
-      comp_filter.run(self.beleif,imu,dt,self.alpha)
+      # comp_filter.run(self.beleif,imu,dt,self.kp,self.ki)
       ekf.propagate(self.beleif,self.params.Rt,ft,At,dt)
 
    def gps_callback(self,gps):

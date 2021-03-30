@@ -5,25 +5,56 @@ import navpy
 from scipy.spatial.transform import Rotation as R
 
 def compute_truth(t,truth):
-    truth.position[0] = 0.8*np.cos(t) - 3.0
-    truth.position[1] = -0.5*np.sin(t) + 1.0
-    truth.position[2] = np.sin(t) + 3.0
-    truth.orientation[0] = 0.02*np.sin(t)
-    truth.orientation[1] = 0.03*np.sin(t)
-    truth.orientation[2] = -0.01*np.sin(t)
+    truth.position[0] = 0.0
+    xDot = 0.0
+    xDDot = 0.0
+
+    truth.position[1] = 0.5*t
+    yDot = 0.5
+    yDDot = 0.0
+
+    truth.position[2] = 0.5*t
+    zDot = 0.5
+    zDDot = 0.0
+
+    # truth.orientation[0] = 0.0
+    # phiDot = 0.0
+
+    truth.orientation[1] = 0.0
+    thetaDot = 0.0
+
+    truth.orientation[2] = 0.0
+    psiDot = 0.0
+
+    # truth.position[0] = 2*t + 0.5*np.cos(t/2.0) - 3.0
+    # xDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
+    # xDDot = -0.5*np.cos(t/2.0)/4.0
+
+    # truth.position[1] = 0.3*t -0.5*np.sin(t/2.0) + 5.0
+    # yDot = 0.3 + -0.5*np.cos(t/2.0)/2.0
+    # yDDot = 0.5*np.sin(t/2.0)/4.0
+
+    # truth.position[2] = 0.5*np.sin(t/2.0) - 1.0
+    # zDot = 0.5*np.cos(t/2.0)/2.0
+    # zDDot = -0.5*np.sin(t/2.0)/4.0
+
+    truth.orientation[0] = 0.15*np.sin(t/2.0)
+    phiDot = 0.15*np.cos(t/2.0)/2.0
+
+    # truth.orientation[1] = 0.15*np.sin(t/2.0)
+    # thetaDot = 0.15*np.cos(t/2.0)/2.0
+
+    # truth.orientation[2] = -0.15*np.sin(t/2.0)
+    # psiDot = -0.15*np.cos(t/2.0)/2.0
+
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
-    
-    xDot = -0.8*np.sin(t)
-    yDot = -0.5*np.cos(t)
-    zDot = np.cos(t)
-    bodyVelocity = Rb2i.apply([xDot,yDot,zDot])
+    Ri2b = Rb2i.inv()
+
+    bodyVelocity = Ri2b.apply([xDot,yDot,zDot])
     truth.velocity[0] = bodyVelocity[0]
     truth.velocity[1] = bodyVelocity[1]
     truth.velocity[2] = bodyVelocity[2]
     
-    phiDot = 0.02*np.cos(t)
-    thetaDot = 0.03*np.cos(t)
-    psiDot = -0.01*np.cos(t)
     sth = np.sin(truth.orientation[1])
     cth = np.cos(truth.orientation[1])
     cphi = np.cos(truth.orientation[0])
@@ -32,10 +63,7 @@ def compute_truth(t,truth):
     truth.angularVelocity[1] = cphi*thetaDot + sphi*cth*psiDot
     truth.angularVelocity[2] = -sphi*thetaDot + cphi*cth*psiDot
 
-    xDDot = -0.8*np.cos(t)
-    yDDot = 0.5*np.sin(t)
-    zDDot = -np.sin(t)
-    bodyAcceleration = Rb2i.apply([xDDot,yDDot,zDDot])
+    bodyAcceleration = Ri2b.apply([xDDot,yDDot,zDDot])
     truth.acceleration[0] = bodyAcceleration[0]
     truth.acceleration[1] = bodyAcceleration[1]
     truth.acceleration[2] = bodyAcceleration[2]
@@ -45,15 +73,12 @@ def compute_imu(truth,imu):
     Ri2b = Rb2i.inv()
 
     imu.gyros = truth.angularVelocity
-    velocityBody = Ri2b.apply(np.squeeze(truth.velocity))
 
-    corriolisEffect = np.cross(np.squeeze(truth.angularVelocity),velocityBody)
     gravity = np.array([[0.0,0.0,9.81]]).T
-    feltAccelerationInertial = truth.acceleration - gravity + np.array([corriolisEffect]).T
-    accelBody = Ri2b.apply(np.squeeze(feltAccelerationInertial))
-    imu.accelerometers[0] = accelBody[0]
-    imu.accelerometers[1] = accelBody[1]
-    imu.accelerometers[2] = accelBody[2]
+    feltAcceleration = truth.acceleration - Ri2b.apply(gravity.T).T #should not include corriolis effect!
+    imu.accelerometers[0] = feltAcceleration[0]
+    imu.accelerometers[1] = feltAcceleration[1]
+    imu.accelerometers[2] = feltAcceleration[2]
 
 def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
     ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)

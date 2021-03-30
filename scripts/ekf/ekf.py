@@ -9,8 +9,8 @@ from states_covariance import StatesCovariance
 
 def propagate(beleif,Rt,ft,At,dt):
      beleif.p = beleif.p + ft.dp*dt
-     # beleif.q = beleif.q + ft.dq*dt
-     beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
+     beleif.q = beleif.q + ft.dq*dt
+     # beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
      beleif.v = beleif.v + ft.dv*dt
      beleif.ba = beleif.ba + ft.dba*dt
      beleif.bg = beleif.bg + ft.dbg*dt
@@ -35,6 +35,7 @@ def update(beleif,Qt,zt,ht,Ct):
 
 def update_dynamic_model(ft,beleif,ut,gravity,dt):
      #TODO: Not convinced that there isn't an issue with velocity model
+     #TODO fix belief spelling everywhere
      accel = ut[0] - beleif.ba
      omega = ut[1] - beleif.bg
      Rb2i = R.from_euler('xyz',beleif.q.squeeze())
@@ -46,7 +47,7 @@ def update_dynamic_model(ft,beleif,ut,gravity,dt):
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
-     ft.dp = Ri2b.apply(beleif.v.T).T
+     ft.dp = Rb2i.apply(beleif.v.T).T
      ft.dq = attitudeModelInversion @ omega
      ft.dv = accel + Ri2b.apply(gravity.T).T - np.cross(omega.T,beleif.v.T).T
      ft.dba = np.array([[0.0,0.0,0.0]]).T
