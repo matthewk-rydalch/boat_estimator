@@ -38,6 +38,13 @@ sigmaProcess: [0.003,  # pn
                1.0,     # bgy
                1.0],    # bgz
 
+  sigmaImu: [0.0003,  #ax
+             0.0003,  #ay
+             0.0003,  #az
+             0.0003,  #p
+             0.0003,  #q
+             0.0003], #r
+
 sigmaGps: [0.4,     #horizontal
            0.7,     #vertical
            0.4,     #speed

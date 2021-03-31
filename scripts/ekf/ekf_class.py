@@ -34,9 +34,10 @@ class EKF:
       ut = [imu.accelerometers,imu.gyros]
       ft = DynamicModel()
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
-      At = ekf.update_Jacobian_A(self.beleif,imu.gyros)
+      At = ekf.update_jacobian_A(self.beleif,imu.gyros)
+      Bt = ekf.update_jacobian_B(self.beleif)
       comp_filter.run(self.beleif,imu,dt,self.params.kp,self.params.ki)
-      ekf.propagate(self.beleif,self.params.Rt,ft,At,dt)
+      ekf.propagate(self.beleif,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)
 
    def gps_callback(self,gps):
       #TODO: Add covariance values

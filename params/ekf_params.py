@@ -35,7 +35,7 @@ class EKFParams:
         # print('P0 = ', self.P0)
 
         sigmaProcess = rospy.get_param('~sigmaProcess',[0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,1.0,1.0,1.0,1.0,1.0,1.0])
-        self.Rt = 1.0 * np.diag([
+        self.RProcess = 1.0 * np.diag([
                         sigmaProcess[0]**2,  # pn
                         sigmaProcess[1]**2,  # pe
                         sigmaProcess[2]**2,  # pd
@@ -52,7 +52,18 @@ class EKFParams:
                         sigmaProcess[13]**2,  # bgy
                         sigmaProcess[14]**2,  # bgz
                         ])
-        # print('Rt = ', self.Rt)
+        # print('RProcess = ', self.RProcess)
+
+        sigmaImu = rospy.get_param('~sigmaImu',[0.0003,0.0003,0.0003,0.0003,0.0003,0.0003])
+        self.RImu = 1.0 * np.diag([
+                        sigmaImu[0]**2,  # ax
+                        sigmaImu[1]**2,  # ay
+                        sigmaImu[2]**2,  # az
+                        sigmaImu[3]**2,  # p
+                        sigmaImu[4]**2,  # q
+                        sigmaImu[5]**2,  # r
+                        ])
+        # print('RImu = ', self.RImu)
 
         sigmaGps = rospy.get_param('~sigmaGps',[0.4,0.7,0.4,0.02])
         self.QtGps = np.diag([

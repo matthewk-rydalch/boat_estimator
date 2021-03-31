@@ -7,7 +7,7 @@ sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 from states_covariance import StatesCovariance
 
-def propagate(beleif,Rt,ft,At,dt):
+def propagate(beleif,RProcess,RImu,ft,At,Bt,dt):
      beleif.p = beleif.p + ft.dp*dt
      # beleif.q = beleif.q + ft.dq*dt
      beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
@@ -15,11 +15,12 @@ def propagate(beleif,Rt,ft,At,dt):
      beleif.ba = beleif.ba + ft.dba*dt
      beleif.bg = beleif.bg + ft.dbg*dt
 
-     print('beleif ba = ', beleif.ba)
-     print('beleif bg = ', beleif.bg)
+     # print('beleif ba = ', beleif.ba)
+     # print('beleif bg = ', beleif.bg)
      Ad = np.identity(15) + At*dt
-     # Bd = Bt*dt
-     beleif.P = Ad@beleif.P@Ad.T + Rt*dt**2
+     Bd = Bt*dt
+     # beleif.P = Ad@beleif.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
+     beleif.P = At@beleif.P@At.T + RProcess*dt**2
 
 def update(beleif,Qt,zt,ht,Ct):
      Lt = beleif.P@Ct.T@np.linalg.inv(Ct@beleif.P@Ct.T+Qt)
@@ -64,7 +65,7 @@ def update_compass_measurement_model(beleif):
      h = np.array([[beleif.q.item(2)]]).T
      return h
 
-def update_Jacobian_A(beleif,omega):
+def update_jacobian_A(beleif,omega):
      #TODO: check Jacobian more thouroughly
      g = np.array([[0.0,0.0,9.81]]).T
      spsi = np.sin(beleif.q.item(2))
@@ -116,6 +117,40 @@ def update_Jacobian_A(beleif,omega):
      At = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
      return At
 
+def update_jacobian_B(beleif):
+     sphi = np.sin(beleif.q.item(0))
+     cphi = np.cos(beleif.q.item(0))
+     cth = np.cos(beleif.q.item(1))
+     tth = np.tan(beleif.q.item(1))
+     attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
+                                  [0.0, cphi, -sphi],
+                                  [0.0, sphi/cth, cphi/cth]])
+
+     dpda = np.zeros((3,3))
+     dpdw = np.zeros((3,3))
+     dpdu = np.concatenate((dpda,dpdw),axis=1)
+
+     dqda = np.zeros((3,3))
+     dqdw = attitudeModelInversion
+     dqdu = np.concatenate((dqda,dqdw),axis=1)
+
+     dvda = np.identity(3)
+     dvdw = np.array([[0.0,beleif.v.item(2),-beleif.v.item(1)],
+                      [-beleif.v.item(2),0.0,beleif.v.item(0)],
+                      [beleif.v.item(1),-beleif.v.item(0),0.0]])
+     dvdu = np.concatenate((dvda,dvdw),axis=1)
+
+     dBada = np.identity(3)
+     dBadw = np.identity(3)
+     dBadu = np.concatenate((dBada,dBadw),axis=1)
+
+     dBgda = np.identity(3)
+     dBgdw = np.identity(3)
+     dBgdu = np.concatenate((dBgda,dBgdw),axis=1)
+
+     Bt = np.concatenate((dpdu,dqdu,dvdu,dBadu,dBgdu),axis=0)
+
+     return Bt
 
 def get_jacobian_C_gps():
      dpdp = np.identity(3)
