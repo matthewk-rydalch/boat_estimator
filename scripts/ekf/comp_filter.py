@@ -21,5 +21,4 @@ def run(beleif,imu,dt,kp,ki):
      beleif.bg = beleif.bg + dBg
      omega = imu.gyros - beleif.bg
      dq = attitudeModelInversion @ omega + kp*qError
-     # dq = kp*qError
      beleif.q = beleif.q + dq*dt

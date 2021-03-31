@@ -17,16 +17,16 @@ class EKFParams:
         self.baCov0 = np.array([[10.0,10.0,10.0]]).T
         self.bgCov0 = np.array([[10.0,10.0,10.0]]).T
 
-        RtDiag = [0.01,0.01,0.01, \
-                  0.0001,0.0001,0.0001, \
-                  0.001,0.001,0.001, \
+        RtDiag = [0.00001,0.00001,0.00001, \
+                  0.00001,0.00001,0.00001, \
+                  0.00001,0.00001,0.00001, \
                   1.0,1.0,1.0, \
                   1.0,1.0,1.0]
         self.Rt = np.diag(RtDiag)
-        QtGpsDiag = [0.01,0.01,0.01,0.01,0.01,0.01]
-        # QtGpsDiag = [0.4,0.4,0.7,0.4,0.4,0.4]
+        # QtGpsDiag = [0.01,0.01,0.01,0.01,0.01,0.01]
+        QtGpsDiag = [0.4,0.4,0.7,0.4,0.4,0.4]
         self.QtGps = np.diag(QtGpsDiag)
-        self.QtGpsCompass = np.array([[0.01]])
+        self.QtGpsCompass = np.array([[0.02]])
 
         self.gravity = np.array([[0.0,0.0,9.81]]).T
 
