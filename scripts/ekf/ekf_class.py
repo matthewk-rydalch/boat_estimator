@@ -15,15 +15,13 @@ class EKF:
    def __init__(self):
       self.params = EKFParams()
       self.beleif = StatesCovariance(self.params.p0,self.params.q0,self.params.v0,self.params.ba0,self.params.bg0, \
-         self.params.pCov0,self.params.qCov0,self.params.vCov0,self.params.baCov0,self.params.bgCov0)
+         self.params.P0)
       self.refLlaSet = False
       self.latRef = 0.0
       self.lonRef = 0.0
       self.altRef = 0.0
       self.imuPrevTime = 0.0
       self.firstImu = True
-      self.kp = 0.1
-      self.ki = 0.0
 
    def imu_callback(self,imu):
       #TODO: Add covariance values
@@ -37,7 +35,7 @@ class EKF:
       ft = DynamicModel()
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
       At = ekf.update_Jacobian_A(self.beleif,imu.gyros)
-      comp_filter.run(self.beleif,imu,dt,self.kp,self.ki)
+      comp_filter.run(self.beleif,imu,dt,self.params.kp,self.params.ki)
       ekf.propagate(self.beleif,self.params.Rt,ft,At,dt)
 
    def gps_callback(self,gps):

@@ -1,0 +1,52 @@
+ekf1: {
+    
+p0: [1.0,0.0,0.0],
+q0: [0.0,0.0,0.0],
+v0: [0.0,0.0,0.0],
+ba0: [0.0,0.0,0.0],
+bg0: [0.0,0.0,0.0],
+
+sigma0: [3.0,  # pn
+         3.0,  # pe
+         3.0,  # pd
+         3.0,  # phi
+         3.0,  # theta
+         3.0,  # psi
+         3.0,  # u
+         3.0,  # v
+         3.0,  # w
+         3.0,  # bax
+         3.0,  # bay
+         3.0,  # baz
+         3.0,  # bgx
+         3.0,  # bgy
+         3.0], # bgz
+
+sigmaProcess: [0.003,  # pn
+               0.003,  # pe
+               0.003,  # pd
+               0.003,  # phi
+               0.003,  # theta
+               0.003,  # psi
+               0.003,  # u
+               0.003,  # v
+               0.003,  # w
+               1.0,     #bax
+               1.0,     #bay
+               1.0,     #baz
+               1.0,     # bgx
+               1.0,     # bgy
+               1.0],    # bgz
+
+sigmaGps: [0.4,     #horizontal
+           0.7,     #vertical
+           0.4,     #speed
+           0.02],   #rtk compass
+
+gravity: [0.0,0.0,9.81],
+
+compFiltKp: 0.1,
+compFiltKi: 0.0,
+
+}
+

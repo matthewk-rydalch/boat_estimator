@@ -1,7 +1,7 @@
 import numpy as np
 
 class StatesCovariance:
-   def __init__(self,pMeters,qDegrees,vMetersPerSecond,baMetersPerSecondSquared,bgDegreesPerSecond,Pp,Pq,Pv,Pba,Pbg):
+   def __init__(self,pMeters,qDegrees,vMetersPerSecond,baMetersPerSecondSquared,bgDegreesPerSecond,PCovariance):
       #TODO need to make units clear and type (numpy array?)
       self.p = pMeters
       self.q = qDegrees
@@ -9,19 +9,4 @@ class StatesCovariance:
       self.ba = baMetersPerSecondSquared
       self.bg = bgDegreesPerSecond
 
-      self.P = np.array([[Pp.item(0),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,Pp.item(1),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,Pp.item(2),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,Pq.item(0),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,Pq.item(1),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,Pq.item(2),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,Pv.item(0),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,Pv.item(1),0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,Pv.item(2),0.0,0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,Pba.item(0),0.0,0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,Pba.item(1),0.0,0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,Pba.item(2),0.0,0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,Pbg.item(0),0.0,0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,Pbg.item(1),0.0],
-                         [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,Pbg.item(2)]])
-      # self.P = 5.0*np.ones((15,15))
+      self.P = PCovariance
