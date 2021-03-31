@@ -1,16 +1,16 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="bag_out_filename"    value="compare_gains"/>
+    <arg name="bag_out_filename"    value="compare_params"/>
     <arg name="boat_imu"            value="/imu"/>
     <arg name="boat_PosVelEcef"     value="/gps"/>
     <arg name="compass_relPos"      value="/gps_compass"/>
     <arg name="ref_lla"             value="/ref_lla"/>
-    <arg name="gains1_param_file"   value="gains1"/>
-    <arg name="gains2_param_file"   value="gains2"/>
+    <arg name="params1_file"        value="params1"/>
+    <arg name="params2_file"        value="params2"/>
 
-    <group ns="gains1">
-        <rosparam command="load" file="$(find boat_estimator)/params/$(arg gains1_param_file).yaml"/>
+    <group ns="params1">
+        <rosparam command="load" file="$(find boat_estimator)/params/$(arg params1_file).yaml"/>
         <node name="ekf1" pkg="boat_estimator" type="ekf_ros.py" output="screen">
             <remap from="imu" to="$(arg boat_imu)"/>
             <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
@@ -19,8 +19,8 @@
         </node>
     </group>
 
-    <group ns="gains2">
-        <rosparam command="load" file="$(find boat_estimator)/params/$(arg gains2_param_file).yaml"/>
+    <group ns="params2">
+        <rosparam command="load" file="$(find boat_estimator)/params/$(arg params2_file).yaml"/>
         <node name="ekf2" pkg="boat_estimator" type="ekf_ros.py" output="screen">
             <remap from="imu" to="$(arg boat_imu)"/>
             <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>

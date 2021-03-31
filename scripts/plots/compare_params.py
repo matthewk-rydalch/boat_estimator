@@ -9,19 +9,19 @@ import navpy
 from scipy.spatial.transform import Rotation as R
 
 def main():
-	gains1OdomTopic = '/gains1/boat_odom'
-	gains2OdomTopic = '/gains2/boat_odom'
+	params1OdomTopic = '/params1/boat_odom'
+	params2OdomTopic = '/params2/boat_odom'
 	truthTopic = '/truth'
 	imuTopic = '/imu'
 	gpsTopic = '/gps'
 	gpsCompassTopic = '/gps_compass'
 	refLlaTopic = '/ref_lla'
-	gains1Data = Parser(gains1OdomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
-	gains2Data = Parser(gains2OdomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
-	filename = 'compare_gains.bag'
+	params1Data = Parser(params1OdomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
+	params2Data = Parser(params2OdomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
+	filename = 'compare_params.bag'
 	bag = rosbag.Bag('/home/matt/data/px4flight/sim/' + filename)
 
-	odom1,odom2,truth = get_data(gains1Data,gains2Data,bag)
+	odom1,odom2,truth = get_data(params1Data,params2Data,bag)
 	
 	odomEuler1 = quat2euler(odom1)
 	odomEuler2 = quat2euler(odom2)
