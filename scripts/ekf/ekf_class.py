@@ -22,7 +22,7 @@ class EKF:
       self.altRef = 0.0
       self.imuPrevTime = 0.0
       self.firstImu = True
-      self.kp = 0.02
+      self.kp = 0.1
       self.ki = 0.0
 
    def imu_callback(self,imu):

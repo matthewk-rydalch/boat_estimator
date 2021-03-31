@@ -38,6 +38,8 @@ def main():
 	get_v_data(truth,odom)
 	get_w_data(truth,odom)
 
+	plt.show()
+
 def get_data(data, bag):
 	odom = data.get_odom(bag)
 	truth = data.get_truth(bag)
@@ -123,15 +125,15 @@ def get_yaw_data(truth,odom):
 	plot_2(fig_num, truth.time, truth.psi, 'truth_yaw', odom.time, odom.psi, 'estimated_yaw')
 
 def get_u_data(truth,odom):
-	fig_num = 1
+	fig_num = 7
 	plot_2(fig_num, truth.time, truth.velocity[0], 'truth_u', odom.time, odom.velocity[0], 'estimated_u')
 
 def get_v_data(truth,odom):
-	fig_num = 2
+	fig_num = 8
 	plot_2(fig_num, truth.time, truth.velocity[1], 'truth_v', odom.time, odom.velocity[1], 'estimated_v')
 
 def get_w_data(truth,odom):
-	fig_num = 3
+	fig_num = 9
 	plot_2(fig_num, truth.time, truth.velocity[2], 'truth_w', odom.time, odom.velocity[2], 'estimated_w')
 
 def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
@@ -140,7 +142,6 @@ def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
 	plt.plot(t_x, x, label = xlabel)
 	plt.plot(t_y, y, label = ylabel)
 	plt.legend(loc = "upper right")
-	plt.show()
 
 class GpsNed:
 	def __init__(self,time,position,velocity):

@@ -18,6 +18,18 @@ def compute_truth(t,truth):
     zDot = 0.5*np.cos(t/2.0)/2.0
     zDDot = -0.5*np.sin(t/2.0)/4.0
 
+    # truth.position[0] = 0.0
+    # xDot = 0.0
+    # xDDot = 0.0
+
+    # truth.position[1] = 0.0
+    # yDot = 0.0
+    # yDDot = 0.0
+
+    # truth.position[2] = 0.0
+    # zDot = 0.0
+    # zDDot = 0.0
+
     # truth.orientation[0] = 0.2
     # phiDot = 0.0
 

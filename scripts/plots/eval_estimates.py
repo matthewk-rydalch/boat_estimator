@@ -25,6 +25,8 @@ def main():
 	get_east_data(odom,gps)
 	get_down_data(odom,gps)
 
+	plt.show()
+
 
 def get_data(data, bag):
 	truth = data.get_truth(bag)
@@ -112,7 +114,7 @@ def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
 	plt.plot(t_x, x, label = xlabel)
 	plt.plot(t_y, y, label = ylabel)
 	plt.legend(loc = "upper right")
-	plt.show()
+	# plt.show()
 
 class GpsNed:
 	def __init__(self,time,position,velocity):

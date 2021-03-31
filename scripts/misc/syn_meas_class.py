@@ -82,7 +82,7 @@ class SyntheticMeasurements:
 
         synthetic_measurements.compute_imu(self.truth,self.imu)
         # synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
-        synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
+        # synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
 
     def gpsCallback(self,event):

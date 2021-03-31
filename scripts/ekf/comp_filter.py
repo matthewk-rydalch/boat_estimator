@@ -10,18 +10,16 @@ def run(beleif,imu,dt,kp,ki):
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
-     Rb2v2 = R.from_euler('xyz',[0.0,0.0,beleif.q[0]])
      gravity = np.array([[0.0,0.0,9.81]]).T
-     aBody = -imu.accelerometers + beleif.ba
      qAccel = np.array([[0.0,0.0,0.0]]).T
+     aBody = -imu.accelerometers + beleif.ba
      qAccel[0] = np.arctan2(aBody.item(1),aBody.item(2))
-     aV2 = Rb2v2.apply(aBody.T).T
-     qAccel[1] = np.arcsin(aV2.item(0)/gravity.item(2))
+     qAccel[1] = np.arcsin(aBody.item(0)/-gravity.item(2))
      qError = qAccel - beleif.q
-     print('qError = ', qError)
      qError[2][0] = 0.0
      dBg = attitudeModelInversion.T@(-ki*qError*dt)
      beleif.bg = beleif.bg + dBg
      omega = imu.gyros - beleif.bg
      dq = attitudeModelInversion @ omega + kp*qError
+     # dq = kp*qError
      beleif.q = beleif.q + dq*dt
