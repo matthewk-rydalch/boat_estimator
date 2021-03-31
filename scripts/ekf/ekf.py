@@ -15,9 +15,11 @@ def propagate(beleif,Rt,ft,At,dt):
      beleif.ba = beleif.ba + ft.dba*dt
      beleif.bg = beleif.bg + ft.dbg*dt
 
-     # print('beleif ba = ', beleif.ba)
-     # print('beleif bg = ', beleif.bg)
-     beleif.P = At@beleif.P@At.T + Rt
+     print('beleif ba = ', beleif.ba)
+     print('beleif bg = ', beleif.bg)
+     Ad = np.identity(15) + At*dt
+     # Bd = Bt*dt
+     beleif.P = Ad@beleif.P@Ad.T + Rt*dt**2
 
 def update(beleif,Qt,zt,ht,Ct):
      Lt = beleif.P@Ct.T@np.linalg.inv(Ct@beleif.P@Ct.T+Qt)
