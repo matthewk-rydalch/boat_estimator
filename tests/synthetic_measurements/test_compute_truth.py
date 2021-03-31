@@ -21,6 +21,9 @@ class TestDynamics(unittest.TestCase):
         synthetic_measurements.compute_truth(t,truth)
         self.assert_truths(truth,expectedTruth)
 
+    # def test_dynamics(self):
+    #     t = 
+
     def assert_truths(self,truth,expectedTruth):
         for i in range(3):
             self.assertAlmostEqual(truth.position.item(i),expectedTruth.position.item(i))

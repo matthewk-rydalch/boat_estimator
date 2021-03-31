@@ -30,6 +30,21 @@ class SyntheticMeasurements:
         self.gps = GpsMsg()
         self.gpsCompass = GpsCompassMsg
 
+        self.accelerometerAccuracyStdDev = 0.025
+        self.gyroAccuracyStdDev = 0.0023
+        self.gpsHorizontalAccuracyStdDev = 0.2
+        self.gpsVerticalAccuracyStdDev = 0.4
+        self.gpsSpeedAccuracyStdDev = 0.2
+        self.gpsCompassAccuracyStdDev = 0.02 #depends on baseline. This also uses RTK
+
+        self.gpsNoise = [0.0,0.0,0.0,0.0,0.0,0.0]
+        self.gpsCompassNoise = 0.0
+        
+        # self.accelerometerBias = [0.1,-0.05,-0.02]
+        # self.accelerometerBias = [0.0,0.0,0.0]
+        # self.gyroBias = [0.0,0.0,0.0]
+        # self.gyroBias = [0.01,0.08,-0.02]
+
         #TODO: Add variation to the periods?
         self.imuTs = 1.0/200.0
         self.gpsTs = 1.0/5.0
@@ -66,8 +81,8 @@ class SyntheticMeasurements:
         self.publish_truth(stamp,self.truth)
 
         synthetic_measurements.compute_imu(self.truth,self.imu)
-        # self.add_imu_noise()
-        # self.add_imu_bias()
+        synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
+        # synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
 
     def gpsCallback(self,event):
@@ -82,11 +97,12 @@ class SyntheticMeasurements:
             self.refLlaSent = True
         
         synthetic_measurements.compute_gps(self.truth,self.gps,self.latRef,self.lonRef,self.altRef,self.originEcef)
-        # self.add_gps_noise()
+        synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev,self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.gpsNoise)
+        # synthetic_measurements.add_gps_random_walk()
         self.publish_gps(stamp,self.gps)
 
         synthetic_measurements.compute_gps_compass(self.truth,self.gpsCompass)
-        # self.add_gps_compass_noise()
+        synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.gpsCompassNoise)
         self.publish_gps_compass(stamp,self.gpsCompass)
 
     def publish_truth(self,stamp,truth):
@@ -121,8 +137,8 @@ class SyntheticMeasurements:
 
     def publish_gps(self,stamp,gps):
         self.gpsRos.header.stamp = stamp
-        self.gpsRos.position = gps.position
-        self.gpsRos.velocity = gps.velocity
+        self.gpsRos.position = gps.positionEcef
+        self.gpsRos.velocity = gps.velocityEcef
 
         self.gps_pub_.publish(self.gpsRos)
 

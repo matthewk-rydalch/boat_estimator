@@ -19,11 +19,10 @@ def main():
 	filename = 'syn_meas.bag'
 	bag = rosbag.Bag('/home/matt/data/px4flight/sim/' + filename)
 
-	odom,truth,imu,gps,gpsCompass,refLla = get_data(data, bag)
+	truth,imu,gps,gpsCompass,refLla = get_data(data, bag)
 	
-	# imuIntegrated = integrateImu(imu,truth)
-	# gpsNed = ecef2ned(gps,refLla)
-	odomEuler = quat2euler(odom)
+	imuIntegrated = integrateImu(imu,truth)
+	gpsNed = ecef2ned(gps,refLla)
 	truthEuler = quat2euler(truth)
 
 	get_north_data(truth,odom)
@@ -39,7 +38,7 @@ def main():
 	get_w_data(truth,odom)
 
 def get_data(data, bag):
-	odom = data.get_odom(bag)
+
 	truth = data.get_truth(bag)
 	imu = data.get_imu(bag)
 	gps = data.get_gps(bag)

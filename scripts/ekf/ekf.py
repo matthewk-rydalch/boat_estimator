@@ -9,11 +9,14 @@ from states_covariance import StatesCovariance
 
 def propagate(beleif,Rt,ft,At,dt):
      beleif.p = beleif.p + ft.dp*dt
-     beleif.q = beleif.q + ft.dq*dt
+     # beleif.q = beleif.q + ft.dq*dt
+     beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
      beleif.v = beleif.v + ft.dv*dt
      beleif.ba = beleif.ba + ft.dba*dt
      beleif.bg = beleif.bg + ft.dbg*dt
 
+     # print('beleif ba = ', beleif.ba)
+     # print('beleif bg = ', beleif.bg)
      beleif.P = At@beleif.P@At.T + Rt
 
 def update(beleif,Qt,zt,ht,Ct):
@@ -25,10 +28,13 @@ def update(beleif,Qt,zt,ht,Ct):
      beleif.ba = beleif.ba + dx[9:12]
      beleif.bg = beleif.bg + dx[12:15]
 
+     # print('dx meas = ', dx)
+
      beleif.P = (np.identity(15) - Lt@Ct)@beleif.P
 
 def update_dynamic_model(ft,beleif,ut,gravity,dt):
      #TODO: Not convinced that there isn't an issue with velocity model
+     #TODO fix belief spelling everywhere
      accel = ut[0] - beleif.ba
      omega = ut[1] - beleif.bg
      Rb2i = R.from_euler('xyz',beleif.q.squeeze())
@@ -40,7 +46,7 @@ def update_dynamic_model(ft,beleif,ut,gravity,dt):
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
-     ft.dp = Ri2b.apply(beleif.v.T).T
+     ft.dp = Rb2i.apply(beleif.v.T).T
      ft.dq = attitudeModelInversion @ omega
      ft.dv = accel + Ri2b.apply(gravity.T).T - np.cross(omega.T,beleif.v.T).T
      ft.dba = np.array([[0.0,0.0,0.0]]).T
@@ -108,6 +114,7 @@ def update_Jacobian_A(beleif,omega):
      At = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
      return At
 
+
 def get_jacobian_C_gps():
      dpdp = np.identity(3)
      dpdq = np.zeros((3,3))
@@ -136,5 +143,11 @@ def get_jacobian_C_compass():
      Ct = np.concatenate((dpsidp,dpsidq,dpsidv,dpsidba,dpsidbg),axis=1)
 
      return Ct
+
+def get_skew_symetric_matrix(v):
+     m = np.array([[0.0,-v.item(2),v.item(1)],
+                   [v.item(2),0.0,-v.item(0)],
+                   [-v.item(1),v.item(0),0.0]])
+     return m
      
 

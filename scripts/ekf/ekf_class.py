@@ -7,6 +7,7 @@ sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 from ekf_params import EKFParams
 import ekf
+import comp_filter
 from states_covariance import StatesCovariance
 from dynamic_model import DynamicModel
 
@@ -21,6 +22,8 @@ class EKF:
       self.altRef = 0.0
       self.imuPrevTime = 0.0
       self.firstImu = True
+      self.kp = 0.1
+      self.ki = 0.0
 
    def imu_callback(self,imu):
       #TODO: Add covariance values
@@ -34,6 +37,7 @@ class EKF:
       ft = DynamicModel()
       ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
       At = ekf.update_Jacobian_A(self.beleif,imu.gyros)
+      comp_filter.run(self.beleif,imu,dt,self.kp,self.ki)
       ekf.propagate(self.beleif,self.params.Rt,ft,At,dt)
 
    def gps_callback(self,gps):
