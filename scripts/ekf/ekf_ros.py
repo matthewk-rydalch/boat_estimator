@@ -5,6 +5,7 @@ from scipy.spatial.transform import Rotation as R
 
 import sys
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/structs')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/params')
 
 from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import Imu
@@ -16,12 +17,14 @@ from sensors import ImuMsg
 from sensors import GpsMsg
 from sensors import GpsCompassMsg
 
+from ekf_params import EKFParams
 from ekf_class import EKF
 
 class EKFRos:
     def __init__(self):
         self.odomEstimate = Odometry()
-        self.ekf = EKF()
+        params = EKFParams()
+        self.ekf = EKF(params)
 
         self.boat_estimate_pub_ = rospy.Publisher('boat_odom', Odometry, queue_size=5, latch=True)
         self.imu_sub_ = rospy.Subscriber('imu', Imu, self.imuCallback, queue_size=5)

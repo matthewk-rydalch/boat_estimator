@@ -2,18 +2,16 @@ import navpy
 import numpy as np
 
 import sys
-sys.path.append('/home/matt/px4_ws/src/boat_estimator/params')
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
-from ekf_params import EKFParams
 import ekf
 import comp_filter
 from states_covariance import StatesCovariance
 from dynamic_model import DynamicModel
 
 class EKF:
-   def __init__(self):
-      self.params = EKFParams()
+   def __init__(self,params):
+      self.params = params
       self.beleif = StatesCovariance(self.params.p0,self.params.q0,self.params.v0,self.params.ba0,self.params.bg0, \
          self.params.P0)
       self.refLlaSet = False
@@ -32,9 +30,8 @@ class EKF:
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time
       ut = [imu.accelerometers,imu.gyros]
-      ft = DynamicModel()
-      ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
-      At = ekf.update_jacobian_A(self.beleif,imu.gyros)
+      ft = DynamicModel(ekf.update_dynamic_model(self.beleif,ut))
+      At = ekf.calculate_numerical_jacobian_A(ekf.update_dynamic_model,self.beleif,ut)
       Bt = ekf.update_jacobian_B(self.beleif)
       comp_filter.run(self.beleif,imu,dt,self.params.kp,self.params.ki)
       ekf.propagate(self.beleif,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)
