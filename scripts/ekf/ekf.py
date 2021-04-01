@@ -16,7 +16,8 @@ def propagate(beleif,RProcess,RImu,ft,At,Bt,dt):
 
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
-     beleif.P = Ad@beleif.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
+     # beleif.P = Ad@beleif.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
+     beleif.P = Ad@beleif.P@Ad.T + RProcess*dt**2
 
 def update(beleif,Qt,zt,ht,Ct):
      Lt = beleif.P@Ct.T@np.linalg.inv(Ct@beleif.P@Ct.T+Qt)
@@ -28,7 +29,7 @@ def update(beleif,Qt,zt,ht,Ct):
      beleif.bg = beleif.bg + dx[12:15]
 
      print('beleif.ba = ', beleif.ba)
-     print('beleif.bg = ', beleif.bg)
+     # print('beleif.bg = ', beleif.bg)
 
      beleif.P = (np.identity(15) - Lt@Ct)@beleif.P
 
