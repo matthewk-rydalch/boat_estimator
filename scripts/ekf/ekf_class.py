@@ -29,9 +29,9 @@ class EKF:
          return
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time
-      ut = [imu.accelerometers,imu.gyros]
-      ft = DynamicModel(ekf.update_dynamic_model(self.beleif,ut))
-      At = ekf.calculate_numerical_jacobian_A(ekf.update_dynamic_model,self.beleif,ut)
+      ft = DynamicModel(ekf.update_dynamic_model(self.beleif,imu))
+      At = ekf.calculate_numerical_jacobian_A(ekf.update_dynamic_model,self.beleif,imu)
+      # Bt = ekf.calculate_numerical_jacobian_B(ekf.update_dynamic_model,self.beleif,imu)
       Bt = ekf.update_jacobian_B(self.beleif)
       comp_filter.run(self.beleif,imu,dt,self.params.kp,self.params.ki)
       ekf.propagate(self.beleif,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)

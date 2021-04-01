@@ -41,7 +41,6 @@ class EKFRos:
         accelerometersMetersPerSecondSquared = [msg.linear_acceleration.x,msg.linear_acceleration.y,msg.linear_acceleration.z]
         imu = ImuMsg(timeSeconds,accelerometersMetersPerSecondSquared,gyrosDegreesPerSecond)
 
-        #TODO: Turn imu back on and get it working properly
         self.ekf.imu_callback(imu)
         self.publish_odom_estimate()
 

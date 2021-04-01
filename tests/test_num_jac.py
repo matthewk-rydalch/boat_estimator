@@ -7,6 +7,7 @@ from scipy.spatial.transform import Rotation as R
 import unittest
 import ekf
 from states_covariance import StatesCovariance
+from sensors import ImuMsg
 
 class TestNumericalJacobian(unittest.TestCase):
     def test_zeros(self):
@@ -17,11 +18,11 @@ class TestNumericalJacobian(unittest.TestCase):
         bg = np.zeros((3,1))
         cov = np.identity(15)
         beleif = StatesCovariance(p,q,v,ba,bg,cov)
-        accelerometers = np.array([[0.0,0.0,-9.81]]).T
-        gyros = np.zeros((3,1))
-        ut = [accelerometers,gyros]
+        accelerometers = [0.0,0.0,-9.81]
+        gyros = [0.0,0.0,0.0]
+        ut = ImuMsg(0.0,accelerometers,gyros)
         ft = ekf.update_dynamic_model
-        At = ekf.calculate_numerical_jacobian(ft, beleif, ut)
+        At = ekf.calculate_numerical_jacobian_A(ft, beleif, ut)
         AtExpected = np.array([[ 0., 0., 0.,  0.      ,  0.      , 0.,  1., 0., 0.,  0.,  0.,  0.,  0., 0.,  0.],
                                [ 0., 0., 0.,  0.      ,  0.      , 0.,  0., 1., 0.,  0.,  0.,  0.,  0., 0.,  0.],
                                [ 0., 0., 0.,  0.      ,  0.      , 0.,  0., 0., 1.,  0.,  0.,  0.,  0., 0.,  0.],

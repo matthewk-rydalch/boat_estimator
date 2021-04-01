@@ -27,12 +27,15 @@ def update(beleif,Qt,zt,ht,Ct):
      beleif.ba = beleif.ba + dx[9:12]
      beleif.bg = beleif.bg + dx[12:15]
 
+     print('beleif.ba = ', beleif.ba)
+     print('beleif.bg = ', beleif.bg)
+
      beleif.P = (np.identity(15) - Lt@Ct)@beleif.P
 
 def update_dynamic_model(beleif,ut):
      #TODO fix belief spelling everywhere
-     accel = ut[0] - beleif.ba
-     omega = ut[1] - beleif.bg
+     accel = ut.accelerometers - beleif.ba
+     omega = ut.gyros - beleif.bg
      Rb2i = R.from_euler('xyz',beleif.q.squeeze())
      Ri2b = Rb2i.inv()
      sphi = np.sin(beleif.q.item(0))
@@ -59,17 +62,17 @@ def update_compass_measurement_model(beleif):
      h = np.array([[beleif.q.item(2)]]).T
      return h
 
-def calculate_numerical_jacobian_A(fun, x, measurement):
-    ft = fun(x, measurement)
+def calculate_numerical_jacobian_A(fun, xt, ut):
+    ft = fun(xt, ut)
     m = len(ft)
-    n = x.m
+    n = xt.m
     eps = 0.01
     J = np.zeros((m, n))
     test = np.zeros((15,0))
     for i in range(0, n):
-        x_eps = x.get_copy()
+        x_eps = xt.get_copy()
         x_eps[i] = x_eps[i] + eps
-        f_eps = fun(x_eps, measurement)
+        f_eps = fun(x_eps, ut)
         test = np.concatenate((test,f_eps),axis=1)
         df = (f_eps - ft) / eps
         J[:, i] = df[:, 0]
