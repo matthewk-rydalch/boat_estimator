@@ -80,7 +80,7 @@ class SyntheticMeasurements:
         self.publish_truth(stamp,self.truth)
 
         synthetic_measurements.compute_imu(self.truth,self.imu)
-        # synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
+        synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
         synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
 
@@ -96,12 +96,12 @@ class SyntheticMeasurements:
             self.refLlaSent = True
         
         synthetic_measurements.compute_gps(self.truth,self.gps,self.latRef,self.lonRef,self.altRef,self.originEcef)
-        # synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev,self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.gpsNoise)
+        synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev,self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.gpsNoise)
         # synthetic_measurements.add_gps_random_walk()
         self.publish_gps(stamp,self.gps)
 
         synthetic_measurements.compute_gps_compass(self.truth,self.gpsCompass)
-        # synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.gpsCompassNoise)
+        synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.gpsCompassNoise)
         self.publish_gps_compass(stamp,self.gpsCompass)
 
     def publish_truth(self,stamp,truth):
@@ -125,12 +125,12 @@ class SyntheticMeasurements:
 
     def publish_imu(self,stamp,imu):
         self.imuRos.header.stamp = stamp
-        self.imuRos.angular_velocity.x = imu.gyros[0]
-        self.imuRos.angular_velocity.y = imu.gyros[1]
-        self.imuRos.angular_velocity.z = imu.gyros[2]
         self.imuRos.linear_acceleration.x = imu.accelerometers[0]
         self.imuRos.linear_acceleration.y = imu.accelerometers[1]
         self.imuRos.linear_acceleration.z = imu.accelerometers[2]
+        self.imuRos.angular_velocity.x = imu.gyros[0]
+        self.imuRos.angular_velocity.y = imu.gyros[1]
+        self.imuRos.angular_velocity.z = imu.gyros[2]
 
         self.imu_pub_.publish(self.imuRos)
 

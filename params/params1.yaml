@@ -25,25 +25,25 @@ sigma0: [100.0,  # pn
 sigmaProcess: [2.0,  # pn
                2.0,  # pe
                2.0,  # pd
-               2.0,  # phi
-               2.0,  # theta
-               2.0,  # psi
+               0.2,  # phi
+               0.2,  # theta
+               0.2,  # psi
                2.0,  # u
                2.0,  # v
                2.0,  # w
-               4.0,     #bax
-               4.0,     #bay
-               4.0,     #baz
-               4.0,     # bgx
-               4.0,     # bgy
-               4.0],    # bgz
+               2.0,     #bax
+               2.0,     #bay
+               2.0,     #baz
+               1.0,     # bgx
+               1.0,     # bgy
+               1.0],    # bgz
 
-  sigmaImu: [0.0003,  #ax
-             0.0003,  #ay
-             0.0003,  #az
-             0.0003,  #p
-             0.0003,  #q
-             0.0003], #r
+  sigmaImu: [0.001,  #ax
+             0.001,  #ay
+             0.001,  #az
+             0.001,  #p
+             0.001,  #q
+             0.001], #r
 
 sigmaGps: [0.4,     #horizontal
            0.7,     #vertical

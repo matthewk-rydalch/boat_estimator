@@ -22,28 +22,28 @@ sigma0: [100.0,  # pn
          0.03,  # bgy
          0.03], # bgz
 
-sigmaProcess: [0.003,  # pn
-               0.003,  # pe
-               0.003,  # pd
-               0.003,  # phi
-               0.003,  # theta
-               0.003,  # psi
-               0.003,  # u
-               0.003,  # v
-               0.003,  # w
-               1.0,     #bax
-               1.0,     #bay
-               1.0,     #baz
+sigmaProcess: [2.0,  # pn
+               2.0,  # pe
+               2.0,  # pd
+               0.2,  # phi
+               0.2,  # theta
+               0.2,  # psi
+               2.0,  # u
+               2.0,  # v
+               2.0,  # w
+               0.4,     #bax
+               0.4,     #bay
+               0.4,     #baz
                1.0,     # bgx
                1.0,     # bgy
                1.0],    # bgz
 
-  sigmaImu: [0.0003,  #ax
-             0.0003,  #ay
-             0.0003,  #az
-             0.0003,  #p
-             0.0003,  #q
-             0.0003], #r
+  sigmaImu: [0.001,  #ax
+             0.001,  #ay
+             0.001,  #az
+             0.001,  #p
+             0.001,  #q
+             0.001], #r
 
 sigmaGps: [0.4,     #horizontal
            0.7,     #vertical

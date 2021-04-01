@@ -16,10 +16,12 @@ def propagate(beleif,RProcess,RImu,ft,At,Bt,dt):
 
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
-     # beleif.P = Ad@beleif.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
-     beleif.P = Ad@beleif.P@Ad.T + RProcess*dt**2
+     beleif.P = Ad@beleif.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
+     print('ba = ', beleif.ba)
+     # beleif.P = Ad@beleif.P@Ad.T + RProcess*dt**2
 
 def update(beleif,Qt,zt,ht,Ct):
+     #print statements in here are breaking the program.  No idea why.
      Lt = beleif.P@Ct.T@np.linalg.inv(Ct@beleif.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      beleif.p = beleif.p + dx[0:3]
@@ -28,15 +30,18 @@ def update(beleif,Qt,zt,ht,Ct):
      beleif.ba = beleif.ba + dx[9:12]
      beleif.bg = beleif.bg + dx[12:15]
 
-     print('beleif.ba = ', beleif.ba)
+     # print('beleif.ba = ', beleif.ba)
      # print('beleif.bg = ', beleif.bg)
 
      beleif.P = (np.identity(15) - Lt@Ct)@beleif.P
+     # print('update q = ',beleif.q)
+
 
 def update_dynamic_model(beleif,ut):
      #TODO fix belief spelling everywhere
      accel = ut.accelerometers - beleif.ba
      omega = ut.gyros - beleif.bg
+     # print('prop q = ',beleif.q)
      Rb2i = R.from_euler('xyz',beleif.q.squeeze())
      Ri2b = Rb2i.inv()
      sphi = np.sin(beleif.q.item(0))
