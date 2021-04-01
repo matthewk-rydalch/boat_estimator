@@ -17,14 +17,14 @@ from sensors import ImuMsg
 from sensors import GpsMsg
 from sensors import GpsCompassMsg
 
-from ekf_params import EKFParams
-from ekf_class import EKF
+from estimator_params_class import EstimatorParams
+from estimator_class import Estimator
 
-class EKFRos:
+class EstimatorRos:
     def __init__(self):
         self.odomEstimate = Odometry()
-        params = EKFParams()
-        self.ekf = EKF(params)
+        params = EstimatorParams()
+        self.estimator = Estimator(params)
 
         self.boat_estimate_pub_ = rospy.Publisher('boat_odom', Odometry, queue_size=5, latch=True)
         self.imu_sub_ = rospy.Subscriber('imu', Imu, self.imuCallback, queue_size=5)
@@ -41,7 +41,7 @@ class EKFRos:
         accelerometersMetersPerSecondSquared = [msg.linear_acceleration.x,msg.linear_acceleration.y,msg.linear_acceleration.z]
         imu = ImuMsg(timeSeconds,accelerometersMetersPerSecondSquared,gyrosDegreesPerSecond)
 
-        self.ekf.imu_callback(imu)
+        self.estimator.imu_callback(imu)
         self.publish_odom_estimate()
 
     def posVelEcefCallback(self,msg):
@@ -49,43 +49,43 @@ class EKFRos:
         velocityEcefMetersPerSecond = msg.velocity
         gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond)
  
-        self.ekf.gps_callback(gps)
+        self.estimator.gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
         #TODO Name this something else?  Need to check and see if what we are receiving really is heading or if it is yaw
         headingDeg = msg.relPosHeading
         gpsCompass = GpsCompassMsg(headingDeg)
 
-        self.ekf.gps_compass_callback(gpsCompass)
+        self.estimator.gps_compass_callback(gpsCompass)
 
     def refLlaCallback(self,msg):
-        self.ekf.set_ref_lla_callback(msg.x,msg.y,msg.z)
+        self.estimator.set_ref_lla_callback(msg.x,msg.y,msg.z)
 
     def publish_odom_estimate(self):
         self.odomEstimate.header.stamp = rospy.Time.now()
 
-        self.odomEstimate.pose.pose.position.x = self.ekf.beleif.p[0]
-        self.odomEstimate.pose.pose.position.y = self.ekf.beleif.p[1]
-        self.odomEstimate.pose.pose.position.z = self.ekf.beleif.p[2]
+        self.odomEstimate.pose.pose.position.x = self.estimator.belief.p[0]
+        self.odomEstimate.pose.pose.position.y = self.estimator.belief.p[1]
+        self.odomEstimate.pose.pose.position.z = self.estimator.belief.p[2]
 
-        quat = R.from_euler('xyz', self.ekf.beleif.q.T, degrees=False).as_quat()
+        quat = R.from_euler('xyz', self.estimator.belief.q.T, degrees=False).as_quat()
         self.odomEstimate.pose.pose.orientation.x = quat.item(0)
         self.odomEstimate.pose.pose.orientation.y = quat.item(1)
         self.odomEstimate.pose.pose.orientation.z = quat.item(2)
         self.odomEstimate.pose.pose.orientation.w = quat.item(3)
 
         #These are in the body frame I beleive
-        self.odomEstimate.twist.twist.linear.x = self.ekf.beleif.v[0]
-        self.odomEstimate.twist.twist.linear.y = self.ekf.beleif.v[1]
-        self.odomEstimate.twist.twist.linear.z = self.ekf.beleif.v[2]
+        self.odomEstimate.twist.twist.linear.x = self.estimator.belief.v[0]
+        self.odomEstimate.twist.twist.linear.y = self.estimator.belief.v[1]
+        self.odomEstimate.twist.twist.linear.z = self.estimator.belief.v[2]
 
         self.boat_estimate_pub_.publish(self.odomEstimate)
 
 
 if __name__ == '__main__':
-    rospy.init_node('ekf_ros', anonymous=True)
+    rospy.init_node('estimator_ros', anonymous=True)
     try:
-        ekfRos = EKFRos()
+        estimatorRos = EstimatorRos()
     except:
         rospy.ROSInterruptException
     pass

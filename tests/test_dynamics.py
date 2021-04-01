@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/ekf')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/estimator')
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/structs')
 import numpy as np
 
@@ -16,7 +16,7 @@ class TestDynamics(unittest.TestCase):
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
         cov0 = np.identity(15)
-        beleif = StatesCovariance(p0,q0,v0,ba0,bg0,cov0)
+        belief = StatesCovariance(p0,q0,v0,ba0,bg0,cov0)
         acclerometers = np.zeros((3,1))
         gyros = np.zeros((3,1))
         ut = [acclerometers,gyros]
@@ -26,7 +26,7 @@ class TestDynamics(unittest.TestCase):
         dbaExpected = np.zeros((3,1))
         dbgExpected = np.zeros((3,1))
         expectedDynamics = np.concatenate((dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected),axis=0)
-        ft = ekf.update_dynamic_model(beleif,ut)
+        ft = ekf.update_dynamic_model(belief,ut)
         self.assert_dynamics_equal(ft,expectedDynamics)
 
     def test_inputs_equal_ones(self):
@@ -36,7 +36,7 @@ class TestDynamics(unittest.TestCase):
         ba0 = np.zeros((3,1))
         bg0 = np.zeros((3,1))
         cov0 = np.identity(15)
-        beleif = StatesCovariance(p0,q0,v0,ba0,bg0,cov0)
+        belief = StatesCovariance(p0,q0,v0,ba0,bg0,cov0)
         accelerometers = np.array([[1.0,1.0,1.0]]).T
         gyros = np.array([[1.0,1.0,1.0]]).T
         ut = [accelerometers,gyros]
@@ -46,7 +46,7 @@ class TestDynamics(unittest.TestCase):
         dbaExpected = np.zeros((3,1))
         dbgExpected = np.zeros((3,1))
         expectedDynamics = np.concatenate((dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected),axis=0)
-        ft = ekf.update_dynamic_model(beleif,ut)
+        ft = ekf.update_dynamic_model(belief,ut)
         self.assert_dynamics_equal(ft,expectedDynamics)
 
 #TODO: fix this test
@@ -57,7 +57,7 @@ class TestDynamics(unittest.TestCase):
     #     ba0 = np.zeros((3,1))
     #     bg0 = np.zeros((3,1))
     #     cov0 = np.identity(15)
-    #     beleif = StatesCovariance(p0,q0,v0,ba0,bg0,cov0)
+    #     belief = StatesCovariance(p0,q0,v0,ba0,bg0,cov0)
     #     accelerometers = np.array([[-3.0,2.0,-1.0]]).T
     #     gyros = np.array([[4.0,-1.0,-1.0]]).T
     #     ut = [accelerometers,gyros]
@@ -67,7 +67,7 @@ class TestDynamics(unittest.TestCase):
     #     dbaExpected = np.array([[0.0,0.0,0.0]]).T
     #     dbgExpected = np.array([[0.0,0.0,0.0]]).T
     #     expectedDynamics = np.concatenate((dpExpected,dqExpected,dvExpected,dbaExpected,dbgExpected),axis=0)
-    #     ft = ekf.update_dynamic_model(beleif,ut)
+    #     ft = ekf.update_dynamic_model(belief,ut)
     #     self.assert_dynamics_equal(ft,expectedDynamics)
 
     def assert_dynamics_equal(self,ft,expectedDynamics):

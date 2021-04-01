@@ -6,10 +6,10 @@
     <arg name="boat_PosVelEcef"     value="/gps"/>
     <arg name="compass_relPos"      value="/gps_compass"/>
     <arg name="ref_lla"             value="/ref_lla"/>
-    <arg name="params1_file"        value="params1"/>
+    <arg name="params_file"        value="params"/>
 
-    <rosparam command="load" file="$(find boat_estimator)/params/$(arg params1_file).yaml"/>
-    <node name="ekf1" pkg="boat_estimator" type="ekf_ros.py" output="screen">
+    <rosparam command="load" file="$(find boat_estimator)/params/$(arg params_file).yaml"/>
+    <node name="boat_estimator" pkg="boat_estimator" type="estimator_ros.py" output="screen">
         <remap from="imu" to="$(arg boat_imu)"/>
         <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
         <remap from="compass_relPos" to="$(arg compass_relPos)"/>

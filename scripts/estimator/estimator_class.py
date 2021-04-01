@@ -9,10 +9,10 @@ import comp_filter
 from states_covariance import StatesCovariance
 from dynamic_model import DynamicModel
 
-class EKF:
+class Estimator:
    def __init__(self,params):
       self.params = params
-      self.beleif = StatesCovariance(self.params.p0,self.params.q0,self.params.v0,self.params.ba0,self.params.bg0, \
+      self.belief = StatesCovariance(self.params.p0,self.params.q0,self.params.v0,self.params.ba0,self.params.bg0, \
          self.params.P0)
       self.refLlaSet = False
       self.latRef = 0.0
@@ -29,12 +29,12 @@ class EKF:
          return
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time
-      ft = DynamicModel(ekf.update_dynamic_model(self.beleif,imu))
-      At = ekf.calculate_numerical_jacobian_A(ekf.update_dynamic_model,self.beleif,imu)
-      # Bt = ekf.calculate_numerical_jacobian_B(ekf.update_dynamic_model,self.beleif,imu)
-      Bt = ekf.update_jacobian_B(self.beleif)
-      comp_filter.run(self.beleif,imu,dt,self.params.kp,self.params.ki)
-      ekf.propagate(self.beleif,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)
+      ft = DynamicModel(ekf.update_dynamic_model(self.belief,imu))
+      At = ekf.calculate_numerical_jacobian_A(ekf.update_dynamic_model,self.belief,imu)
+      # Bt = ekf.calculate_numerical_jacobian_B(ekf.update_dynamic_model,self.belief,imu)
+      Bt = ekf.update_jacobian_B(self.belief)
+      comp_filter.run(self.belief,imu,dt,self.params.kp,self.params.ki,self.params.gravity)
+      ekf.propagate(self.belief,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)
 
    def gps_callback(self,gps):
       #TODO: Add covariance values
@@ -49,20 +49,20 @@ class EKF:
       velocityNed1D = navpy.ecef2ned(gps.velocityEcef, self.latRef, self.lonRef, self.altRef)
       velocityNed = np.array([velocityNed1D]).T
       zt = np.concatenate((positionNed,velocityNed),axis=0)
-      ht = ekf.update_gps_measurement_model(self.beleif)
+      ht = ekf.update_gps_measurement_model(self.belief)
       #TODO: Should probably set up the C jacobians in the parameter file
       Ct = ekf.get_jacobian_C_gps()
-      ekf.update(self.beleif,self.params.QtGps,zt,ht,Ct)
+      ekf.update(self.belief,self.params.QtGps,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
       #TODO: Add covariance values
       #TODO: Add flag check
       #TODO: Do I need to take into account the current orientation of the vehicle?
       zt = gpsCompass.heading
-      ht = ekf.update_compass_measurement_model(self.beleif)
+      ht = ekf.update_compass_measurement_model(self.belief)
       #TODO: Should probably set up the C jacobians in the parameter file
       Ct = ekf.get_jacobian_C_compass()
-      ekf.update(self.beleif,self.params.QtGpsCompass,zt,ht,Ct)
+      ekf.update(self.belief,self.params.QtGpsCompass,zt,ht,Ct)
 
    def set_ref_lla_callback(self,latDegrees,lonDegrees,altMeters):
       self.latRef = latDegrees

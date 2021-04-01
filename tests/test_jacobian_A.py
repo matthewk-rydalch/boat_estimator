@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/ekf')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/estimator')
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/structs')
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -16,7 +16,7 @@ class TestJacobianA(unittest.TestCase):
         ba = np.zeros((3,1))
         bg = np.zeros((3,1))
         cov = np.array([[1.0,1.0,1.0]]).T
-        beleif = StatesCovariance(p,q,v,ba,bg,cov,cov,cov,cov,cov)
+        belief = StatesCovariance(p,q,v,ba,bg,cov,cov,cov,cov,cov)
         accelerometers = np.zeros((3,1))
         gyros = np.zeros((3,1))
         u = [accelerometers,gyros]
@@ -27,7 +27,7 @@ class TestJacobianA(unittest.TestCase):
         expectedA[6][4] = 9.81
         expectedA[7][3] = -9.81
         expectedA[6:9,9:12] = -np.identity(3)
-        At = ekf.update_Jacobian_A(beleif,u[1])
+        At = ekf.update_Jacobian_A(belief,u[1])
         self.assert_jacobian_equal(At,expectedA)
 
     def test_inputs_equal_ones(self):
@@ -37,7 +37,7 @@ class TestJacobianA(unittest.TestCase):
         ba = np.zeros((3,1))
         bg = np.zeros((3,1))
         cov = np.array([[1.0,1.0,1.0]]).T
-        beleif = StatesCovariance(p,q,v,ba,bg,cov,cov,cov,cov,cov)
+        belief = StatesCovariance(p,q,v,ba,bg,cov,cov,cov,cov,cov)
         accelerometers = np.array([[1.0,1.0,1.0]]).T
         gyros = np.array([[1.0,1.0,1.0]]).T
         u = [accelerometers,gyros]
@@ -58,7 +58,7 @@ class TestJacobianA(unittest.TestCase):
                               [1.0,0.0,-1.0],
                               [-1.0,1.0,0.0]]
         expectedA[6:9,9:12] = -np.identity(3)
-        At = ekf.update_Jacobian_A(beleif,u[1])
+        At = ekf.update_Jacobian_A(belief,u[1])
         self.assert_jacobian_equal(At,expectedA)
 
     def assert_jacobian_equal(self,At,expectedA):

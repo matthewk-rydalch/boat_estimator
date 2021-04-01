@@ -7,65 +7,66 @@ sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 from states_covariance import StatesCovariance
 
-def propagate(beleif,RProcess,RImu,ft,At,Bt,dt):
-     beleif.p = beleif.p + ft.dp*dt
-     beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
-     beleif.v = beleif.v + ft.dv*dt
-     beleif.ba = beleif.ba + ft.dba*dt
-     beleif.bg = beleif.bg + ft.dbg*dt
+def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
+     belief.p = belief.p + ft.dp*dt
+     belief.q[2] = belief.q[2] + ft.dq[2]*dt
+     belief.v = belief.v + ft.dv*dt
+     belief.ba = belief.ba + ft.dba*dt
+     belief.bg = belief.bg + ft.dbg*dt
 
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
-     beleif.P = Ad@beleif.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
-     print('ba = ', beleif.ba)
-     # beleif.P = Ad@beleif.P@Ad.T + RProcess*dt**2
+     belief.P = Ad@belief.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
+     print('ba = ', belief.ba)
+     # belief.P = Ad@belief.P@Ad.T + RProcess*dt**2
 
-def update(beleif,Qt,zt,ht,Ct):
+def update(belief,Qt,zt,ht,Ct):
+     #TODO:Figure out why this sometimes breaks.  Print statements and rosbags seem to break it.
      #print statements in here are breaking the program.  No idea why.
-     Lt = beleif.P@Ct.T@np.linalg.inv(Ct@beleif.P@Ct.T+Qt)
+     Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
-     beleif.p = beleif.p + dx[0:3]
-     beleif.q = beleif.q + dx[3:6]
-     beleif.v = beleif.v + dx[6:9]
-     beleif.ba = beleif.ba + dx[9:12]
-     beleif.bg = beleif.bg + dx[12:15]
+     belief.p = belief.p + dx[0:3]
+     belief.q = belief.q + dx[3:6]
+     belief.v = belief.v + dx[6:9]
+     belief.ba = belief.ba + dx[9:12]
+     belief.bg = belief.bg + dx[12:15]
 
-     # print('beleif.ba = ', beleif.ba)
-     # print('beleif.bg = ', beleif.bg)
+     # print('belief.ba = ', belief.ba)
+     # print('belief.bg = ', belief.bg)
 
-     beleif.P = (np.identity(15) - Lt@Ct)@beleif.P
-     # print('update q = ',beleif.q)
+     belief.P = (np.identity(15) - Lt@Ct)@belief.P
+     # print('update q = ',belief.q)
 
 
-def update_dynamic_model(beleif,ut):
+def update_dynamic_model(belief,ut):
      #TODO fix belief spelling everywhere
-     accel = ut.accelerometers - beleif.ba
-     omega = ut.gyros - beleif.bg
-     # print('prop q = ',beleif.q)
-     Rb2i = R.from_euler('xyz',beleif.q.squeeze())
+     accel = ut.accelerometers - belief.ba
+     omega = ut.gyros - belief.bg
+     # print('prop q = ',belief.q)
+     Rb2i = R.from_euler('xyz',belief.q.squeeze())
      Ri2b = Rb2i.inv()
-     sphi = np.sin(beleif.q.item(0))
-     cphi = np.cos(beleif.q.item(0))
-     cth = np.cos(beleif.q.item(1))
-     tth = np.tan(beleif.q.item(1))
+     sphi = np.sin(belief.q.item(0))
+     cphi = np.cos(belief.q.item(0))
+     cth = np.cos(belief.q.item(1))
+     tth = np.tan(belief.q.item(1))
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
-     dp = Rb2i.apply(beleif.v.T).T
+     dp = Rb2i.apply(belief.v.T).T
      dq = attitudeModelInversion @ omega
-     dv = accel + Ri2b.apply(np.array([[0.0,0.0,9.81]])).T - np.cross(omega.T,beleif.v.T).T
+     dv = accel + Ri2b.apply(np.array([[0.0,0.0,9.81]])).T - np.cross(omega.T,belief.v.T).T
      dba = np.array([[0.0,0.0,0.0]]).T
      dbg = np.array([[0.0,0.0,0.0]]).T
      ft = np.concatenate((dp,dq,dv,dba,dbg),axis=0)
 
      return ft
 
-def update_gps_measurement_model(beleif):
-     h = np.concatenate((beleif.p,beleif.v),axis=0)
+def update_gps_measurement_model(belief):
+     h = np.concatenate((belief.p,belief.v),axis=0)
      return h
 
-def update_compass_measurement_model(beleif):
-     h = np.array([[beleif.q.item(2)]]).T
+def update_compass_measurement_model(belief):
+     h = np.array([[belief.q.item(2)]]).T
      return h
 
 def calculate_numerical_jacobian_A(fun, xt, ut):
@@ -84,11 +85,11 @@ def calculate_numerical_jacobian_A(fun, xt, ut):
         J[:, i] = df[:, 0]
     return J
 
-def update_jacobian_B(beleif):
-    sphi = np.sin(beleif.q.item(0))
-    cphi = np.cos(beleif.q.item(0))
-    cth = np.cos(beleif.q.item(1))
-    tth = np.tan(beleif.q.item(1))
+def update_jacobian_B(belief):
+    sphi = np.sin(belief.q.item(0))
+    cphi = np.cos(belief.q.item(0))
+    cth = np.cos(belief.q.item(1))
+    tth = np.tan(belief.q.item(1))
     attitudeModelInversion = np.array([[1.0, sphi * tth, cphi * tth],
                                        [0.0, cphi, -sphi],
                                        [0.0, sphi / cth, cphi / cth]])
@@ -102,9 +103,9 @@ def update_jacobian_B(beleif):
     dqdu = np.concatenate((dqda, dqdw), axis=1)
 
     dvda = np.identity(3)
-    dvdw = np.array([[0.0, beleif.v.item(2), -beleif.v.item(1)],
-                     [-beleif.v.item(2), 0.0, beleif.v.item(0)],
-                     [beleif.v.item(1), -beleif.v.item(0), 0.0]])
+    dvdw = np.array([[0.0, belief.v.item(2), -belief.v.item(1)],
+                     [-belief.v.item(2), 0.0, belief.v.item(0)],
+                     [belief.v.item(1), -belief.v.item(0), 0.0]])
     dvdu = np.concatenate((dvda, dvdw), axis=1)
 
     dBada = np.identity(3)
