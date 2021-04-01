@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/ekf')
+sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/estimator')
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/scripts/structs')
 import numpy as np
 from scipy.spatial.transform import Rotation as R
@@ -17,12 +17,12 @@ class TestNumericalJacobian(unittest.TestCase):
         ba = np.zeros((3,1))
         bg = np.zeros((3,1))
         cov = np.identity(15)
-        beleif = StatesCovariance(p,q,v,ba,bg,cov)
+        belief = StatesCovariance(p,q,v,ba,bg,cov)
         accelerometers = [0.0,0.0,-9.81]
         gyros = [0.0,0.0,0.0]
         ut = ImuMsg(0.0,accelerometers,gyros)
         ft = ekf.update_dynamic_model
-        At = ekf.calculate_numerical_jacobian_A(ft, beleif, ut)
+        At = ekf.calculate_numerical_jacobian_A(ft, belief, ut)
         AtExpected = np.array([[ 0., 0., 0.,  0.      ,  0.      , 0.,  1., 0., 0.,  0.,  0.,  0.,  0., 0.,  0.],
                                [ 0., 0., 0.,  0.      ,  0.      , 0.,  0., 1., 0.,  0.,  0.,  0.,  0., 0.,  0.],
                                [ 0., 0., 0.,  0.      ,  0.      , 0.,  0., 0., 1.,  0.,  0.,  0.,  0., 0.,  0.],
@@ -47,7 +47,7 @@ class TestNumericalJacobian(unittest.TestCase):
     #     ba = np.zeros((3,1))
     #     bg = np.zeros((3,1))
     #     cov = np.array([[1.0,1.0,1.0]]).T
-    #     beleif = StatesCovariance(p,q,v,ba,bg,cov,cov,cov,cov,cov)
+    #     belief = StatesCovariance(p,q,v,ba,bg,cov,cov,cov,cov,cov)
     #     accelerometers = np.array([[1.0,1.0,1.0]]).T
     #     gyros = np.array([[1.0,1.0,1.0]]).T
     #     u = [accelerometers,gyros]
@@ -56,7 +56,7 @@ class TestNumericalJacobian(unittest.TestCase):
     #     expectedA[0:3,3:6] = [[np.sin(0.1)*1.081, np.cos(0.1)*1.081, np.sin(0.1)*(0.1)-np.cos(0.1)*0.1],
     #                           [0.0, np.sin(0.1)*1.081, np.cos(0.1)*0.1-np.sin(0.1)*0.1],
     #                           [0.1,-0.1,0.0]]
-    #     expectedA[0:3,6:9] = R.from_rotvec([0.1,0.1,0.1]).as_matrix()
+    #     expectedA[0:3,6:9] = R.from_euler([0.1,0.1,0.1]).as_matrix()
     #     expectedA[3:6,3:6] = [[0.0,1.0,0.0],
     #                           [1.0,0.0,0.0],
     #                           [1.0,0.0,0.0]]
@@ -68,7 +68,7 @@ class TestNumericalJacobian(unittest.TestCase):
     #                           [1.0,0.0,-1.0],
     #                           [-1.0,1.0,0.0]]
     #     expectedA[6:9,9:12] = -np.identity(3)
-    #     At = ekf.update_Jacobian_A(beleif,u[1])
+    #     At = ekf.update_Jacobian_A(belief,u[1])
     #     self.assert_jacobian_equal(At,expectedA)
 
     def assert_jacobian_equal(self,At,expectedA):

@@ -1,4 +1,4 @@
-ekf1: {
+boat_estimator2: {
     
 p0: [0.0,0.0,0.0],
 q0: [0.0,0.0,0.0],
@@ -31,9 +31,9 @@ sigmaProcess: [2.0,  # pn
                2.0,  # u
                2.0,  # v
                2.0,  # w
-               2.0,     #bax
-               2.0,     #bay
-               2.0,     #baz
+               0.4,     #bax
+               0.4,     #bay
+               0.4,     #baz
                1.0,     # bgx
                1.0,     # bgy
                1.0],    # bgz
