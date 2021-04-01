@@ -13,10 +13,10 @@ class TruthMsg:
 
 class ImuMsg:
     def __init__(self,timeSeconds = 0.0,accelerometersMetersPerSecondSquared = [0.0,0.0,0.0], \
-                    gyrosDegreesPerSecond = [0.0,0.0,0.0]):
+                    gyrosRadiansPerSecond = [0.0,0.0,0.0]):
         self.time = timeSeconds
         self.accelerometers = np.array([accelerometersMetersPerSecondSquared]).T
-        self.gyros = np.array([gyrosDegreesPerSecond]).T
+        self.gyros = np.array([gyrosRadiansPerSecond]).T
 
     def __getitem__(self, key):
         switcher = {

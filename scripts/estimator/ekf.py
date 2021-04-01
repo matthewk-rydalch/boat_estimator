@@ -15,7 +15,7 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      belief.P = Ad@belief.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):
-     #TODO:Figure out why this sometimes breaks.  Print statements and rosbags seem to break it.
+     #TODO:Figure out why this sometimes breaks.  Print statements and rosbags seem to break it.  It is fairly random
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      belief.p = belief.p + dx[0:3]
@@ -24,18 +24,12 @@ def update(belief,Qt,zt,ht,Ct):
      belief.ba = belief.ba + dx[9:12]
      belief.bg = belief.bg + dx[12:15]
 
-     # print('belief.ba = ', belief.ba)
-     # print('belief.bg = ', belief.bg)
-
      belief.P = (np.identity(15) - Lt@Ct)@belief.P
-     # print('update q = ',belief.q)
 
-
-def update_dynamic_model(belief,ut):
-     #TODO fix belief spelling everywhere
+def update_dynamic_model(belief,ut,gravity):
      accel = ut.accelerometers - belief.ba
      omega = ut.gyros - belief.bg
-     # print('prop q = ',belief.q)
+
      Rb2i = R.from_euler('xyz',belief.q.squeeze())
      Ri2b = Rb2i.inv()
      sphi = np.sin(belief.q.item(0))
@@ -45,9 +39,10 @@ def update_dynamic_model(belief,ut):
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
+
      dp = Rb2i.apply(belief.v.T).T
      dq = attitudeModelInversion @ omega
-     dv = accel + Ri2b.apply(np.array([[0.0,0.0,9.81]])).T - np.cross(omega.T,belief.v.T).T
+     dv = accel + Ri2b.apply(gravity.T).T - np.cross(omega.T,belief.v.T).T
      dba = np.array([[0.0,0.0,0.0]]).T
      dbg = np.array([[0.0,0.0,0.0]]).T
      ft = np.concatenate((dp,dq,dv,dba,dbg),axis=0)
@@ -62,19 +57,19 @@ def update_compass_measurement_model(belief):
      h = np.array([[belief.q.item(2)]]).T
      return h
 
-def calculate_numerical_jacobian_A(fun, xt, ut):
-    ft = fun(xt, ut)
+def calculate_numerical_jacobian_A(get_dynamics_function, xt, ut, gravity):
+    ft = get_dynamics_function(xt, ut, gravity)
     m = len(ft)
     n = xt.m
-    eps = 0.01
+    epsilon = 0.01
     J = np.zeros((m, n))
     test = np.zeros((15,0))
     for i in range(0, n):
-        x_eps = xt.get_copy()
-        x_eps.add_to_item(i,eps)
-        f_eps = fun(x_eps, ut)
-        test = np.concatenate((test,f_eps),axis=1)
-        df = (f_eps - ft) / eps
+        xkPlusOne = xt.get_copy()
+        xkPlusOne.add_to_item(i,epsilon)
+        fkPlusOne = get_dynamics_function(xkPlusOne, ut, gravity)
+        test = np.concatenate((test,fkPlusOne),axis=1)
+        df = (fkPlusOne - ft) / epsilon
         J[:, i] = df[:, 0]
     return J
 
@@ -141,11 +136,3 @@ def get_jacobian_C_compass():
      Ct = np.concatenate((dpsidp,dpsidq,dpsidv,dpsidba,dpsidbg),axis=1)
 
      return Ct
-
-def get_skew_symetric_matrix(v):
-     m = np.array([[0.0,-v.item(2),v.item(1)],
-                   [v.item(2),0.0,-v.item(0)],
-                   [-v.item(1),v.item(0),0.0]])
-     return m
-     
-

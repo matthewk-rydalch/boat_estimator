@@ -37,9 +37,9 @@ class EstimatorRos:
 
     def imuCallback(self,msg):
         timeSeconds = msg.header.stamp.secs + msg.header.stamp.nsecs*1E-9
-        gyrosDegreesPerSecond = [msg.angular_velocity.x,msg.angular_velocity.y,msg.angular_velocity.z] #TODO:check!  This is probably radians
+        gyrosRadiansPerSecond = [msg.angular_velocity.x,msg.angular_velocity.y,msg.angular_velocity.z]
         accelerometersMetersPerSecondSquared = [msg.linear_acceleration.x,msg.linear_acceleration.y,msg.linear_acceleration.z]
-        imu = ImuMsg(timeSeconds,accelerometersMetersPerSecondSquared,gyrosDegreesPerSecond)
+        imu = ImuMsg(timeSeconds,accelerometersMetersPerSecondSquared,gyrosRadiansPerSecond)
 
         self.estimator.imu_callback(imu)
         self.publish_odom_estimate()
@@ -52,7 +52,7 @@ class EstimatorRos:
         self.estimator.gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
-        #TODO Name this something else?  Need to check and see if what we are receiving really is heading or if it is yaw
+        #TODO Need to check and see if what we are receiving really is heading or if it is the z rotation in a frame that is rolled and pitched.  It is probably heading.
         headingDeg = msg.relPosHeading
         gpsCompass = GpsCompassMsg(headingDeg)
 
@@ -74,7 +74,6 @@ class EstimatorRos:
         self.odomEstimate.pose.pose.orientation.z = quat.item(2)
         self.odomEstimate.pose.pose.orientation.w = quat.item(3)
 
-        #These are in the body frame I beleive
         self.odomEstimate.twist.twist.linear.x = self.estimator.belief.v[0]
         self.odomEstimate.twist.twist.linear.y = self.estimator.belief.v[1]
         self.odomEstimate.twist.twist.linear.z = self.estimator.belief.v[2]

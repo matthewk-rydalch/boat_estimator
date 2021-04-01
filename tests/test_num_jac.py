@@ -56,7 +56,7 @@ class TestNumericalJacobian(unittest.TestCase):
     #     expectedA[0:3,3:6] = [[np.sin(0.1)*1.081, np.cos(0.1)*1.081, np.sin(0.1)*(0.1)-np.cos(0.1)*0.1],
     #                           [0.0, np.sin(0.1)*1.081, np.cos(0.1)*0.1-np.sin(0.1)*0.1],
     #                           [0.1,-0.1,0.0]]
-    #     expectedA[0:3,6:9] = R.from_rotvec([0.1,0.1,0.1]).as_matrix()
+    #     expectedA[0:3,6:9] = R.from_euler([0.1,0.1,0.1]).as_matrix()
     #     expectedA[3:6,3:6] = [[0.0,1.0,0.0],
     #                           [1.0,0.0,0.0],
     #                           [1.0,0.0,0.0]]
