@@ -1,21 +1,18 @@
 from rosbag_parser import Parser
-from rosbag_parser import Gps
-from IPython.core.debugger import set_trace 
+# from IPython.core.debugger import set_trace 
 import matplotlib.pyplot as plt
 import rosbag
 import numpy as np
-from collections import namedtuple
-import navpy
 from scipy.spatial.transform import Rotation as R
 
 def main():
 	params1OdomTopic = '/params1/boat_odom'
 	params2OdomTopic = '/params2/boat_odom'
 	truthTopic = '/truth'
-	imuTopic = '/imu'
-	gpsTopic = '/gps'
-	gpsCompassTopic = '/gps_compass'
-	refLlaTopic = '/ref_lla'
+	imuTopic = '/dummyTopic'
+	gpsTopic = '/dummyTopic'
+	gpsCompassTopic = '/dummyTopic'
+	refLlaTopic = '/dummyTopic'
 	params1Data = Parser(params1OdomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
 	params2Data = Parser(params2OdomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
 	filename = 'compare_params.bag'
