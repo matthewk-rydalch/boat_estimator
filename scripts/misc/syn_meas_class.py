@@ -23,7 +23,7 @@ class SyntheticMeasurements:
         self.imuRos = Imu()
         self.gpsRos = PosVelEcef()
         self.gpsCompassRos = RelPos()
-        self.refLla = Vector3()
+        self.refLlaRos = Vector3()
 
         self.truth = TruthMsg()
         self.imu = ImuMsg()
@@ -37,13 +37,13 @@ class SyntheticMeasurements:
         self.gpsSpeedAccuracyStdDev = 0.2
         self.gpsCompassAccuracyStdDev = 0.02 #depends on baseline. This also uses RTK
 
+        #These are to remember noise of previous update.  They are used in the low pass filter
         self.gpsNoise = [0.0,0.0,0.0,0.0,0.0,0.0]
         self.gpsCompassNoise = 0.0
         
         self.accelerometerBias = [0.1,-0.05,-0.02]
         self.gyroBias = [0.01,0.08,-0.02]
 
-        #TODO: Add variation to the periods?
         self.imuTs = 1.0/200.0
         self.gpsTs = 1.0/5.0
 
@@ -56,12 +56,14 @@ class SyntheticMeasurements:
         self.altRef = 1387.0
         self.originEcef = navpy.lla2ecef(self.latRef,self.lonRef,self.altRef)
 
+        self.gravity = np.array([[0.0,0.0,9.81]]).T
+        self.lowPassFilterAlpha = 0.9
+
         self.truth_pub_ = rospy.Publisher('truth',Odometry,queue_size=5,latch=True)
         self.imu_pub_ = rospy.Publisher('imu',Imu,queue_size=5,latch=True)
         self.gps_pub_ = rospy.Publisher('gps',PosVelEcef,queue_size=5,latch=True)
         self.gps_compass_pub_ = rospy.Publisher('gps_compass',RelPos,queue_size=5,latch=True)
         self.ref_lla_pub_ = rospy.Publisher('ref_lla',Vector3,queue_size=5,latch=True)
-        self.bias_pub_ = rospy
 
         self.truth_rate_timer_ = rospy.Timer(rospy.Duration(self.imuTs), self.truthCallback)
         self.gps_rate_timer_ = rospy.Timer(rospy.Duration(self.gpsTs), self.gpsCallback)
@@ -79,7 +81,7 @@ class SyntheticMeasurements:
         synthetic_measurements.compute_truth(timeSeconds,self.truth)
         self.publish_truth(stamp,self.truth)
 
-        synthetic_measurements.compute_imu(self.truth,self.imu)
+        synthetic_measurements.compute_imu(self.truth,self.imu,self.gravity)
         synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
         synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
@@ -89,19 +91,21 @@ class SyntheticMeasurements:
             return
         stamp = rospy.Time.now()
         if not self.refLlaSent:
-            self.refLla.x = self.latRef
-            self.refLla.y = self.lonRef
-            self.refLla.z = self.altRef
-            self.ref_lla_pub_.publish(self.refLla)
+            self.refLlaRos.x = self.latRef
+            self.refLlaRos.y = self.lonRef
+            self.refLlaRos.z = self.altRef
+            self.ref_lla_pub_.publish(self.refLlaRos)
             self.refLlaSent = True
         
         synthetic_measurements.compute_gps(self.truth,self.gps,self.latRef,self.lonRef,self.altRef,self.originEcef)
-        synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev,self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.gpsNoise)
-        # synthetic_measurements.add_gps_random_walk()
+        synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
+            self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
+        # TODO: Add gps random walk
         self.publish_gps(stamp,self.gps)
 
         synthetic_measurements.compute_gps_compass(self.truth,self.gpsCompass)
-        synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.gpsCompassNoise)
+        synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.lowPassFilterAlpha, \
+            self.gpsCompassNoise)
         self.publish_gps_compass(stamp,self.gpsCompass)
 
     def publish_truth(self,stamp,truth):
