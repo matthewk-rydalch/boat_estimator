@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 
 def run(belief,imu,dt,kp,ki,gravity):
      #I added the attitude model inversion.  It seemed to help.  It is not from Dr. Beard

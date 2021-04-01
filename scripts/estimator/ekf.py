@@ -1,14 +1,9 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-import navpy
-
-import sys
-sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
-
-from states_covariance import StatesCovariance
 
 def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      belief.p = belief.p + ft.dp*dt
+     #belief.q[0:1] are estimated with the complementary filter
      belief.q[2] = belief.q[2] + ft.dq[2]*dt
      belief.v = belief.v + ft.dv*dt
      belief.ba = belief.ba + ft.dba*dt
@@ -16,13 +11,11 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
 
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
+
      belief.P = Ad@belief.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
-     print('ba = ', belief.ba)
-     # belief.P = Ad@belief.P@Ad.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):
      #TODO:Figure out why this sometimes breaks.  Print statements and rosbags seem to break it.
-     #print statements in here are breaking the program.  No idea why.
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      belief.p = belief.p + dx[0:3]
@@ -78,7 +71,7 @@ def calculate_numerical_jacobian_A(fun, xt, ut):
     test = np.zeros((15,0))
     for i in range(0, n):
         x_eps = xt.get_copy()
-        x_eps[i] = x_eps[i] + eps
+        x_eps.add_to_item(i,eps)
         f_eps = fun(x_eps, ut)
         test = np.concatenate((test,f_eps),axis=1)
         df = (f_eps - ft) / eps
