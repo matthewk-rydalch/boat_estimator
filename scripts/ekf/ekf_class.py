@@ -2,28 +2,24 @@ import navpy
 import numpy as np
 
 import sys
-sys.path.append('/home/matt/px4_ws/src/boat_estimator/params')
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
-from ekf_params import EKFParams
 import ekf
 import comp_filter
 from states_covariance import StatesCovariance
 from dynamic_model import DynamicModel
 
 class EKF:
-   def __init__(self):
-      self.params = EKFParams()
+   def __init__(self,params):
+      self.params = params
       self.beleif = StatesCovariance(self.params.p0,self.params.q0,self.params.v0,self.params.ba0,self.params.bg0, \
-         self.params.pCov0,self.params.qCov0,self.params.vCov0,self.params.baCov0,self.params.bgCov0)
+         self.params.P0)
       self.refLlaSet = False
       self.latRef = 0.0
       self.lonRef = 0.0
       self.altRef = 0.0
       self.imuPrevTime = 0.0
       self.firstImu = True
-      self.kp = 0.1
-      self.ki = 0.0
 
    def imu_callback(self,imu):
       #TODO: Add covariance values
@@ -33,12 +29,12 @@ class EKF:
          return
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time
-      ut = [imu.accelerometers,imu.gyros]
-      ft = DynamicModel()
-      ekf.update_dynamic_model(ft,self.beleif,ut,self.params.gravity,dt)
-      At = ekf.update_Jacobian_A(self.beleif,imu.gyros)
-      comp_filter.run(self.beleif,imu,dt,self.kp,self.ki)
-      ekf.propagate(self.beleif,self.params.Rt,ft,At,dt)
+      ft = DynamicModel(ekf.update_dynamic_model(self.beleif,imu))
+      At = ekf.calculate_numerical_jacobian_A(ekf.update_dynamic_model,self.beleif,imu)
+      # Bt = ekf.calculate_numerical_jacobian_B(ekf.update_dynamic_model,self.beleif,imu)
+      Bt = ekf.update_jacobian_B(self.beleif)
+      comp_filter.run(self.beleif,imu,dt,self.params.kp,self.params.ki)
+      ekf.propagate(self.beleif,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)
 
    def gps_callback(self,gps):
       #TODO: Add covariance values

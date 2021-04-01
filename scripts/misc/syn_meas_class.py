@@ -40,10 +40,8 @@ class SyntheticMeasurements:
         self.gpsNoise = [0.0,0.0,0.0,0.0,0.0,0.0]
         self.gpsCompassNoise = 0.0
         
-        # self.accelerometerBias = [0.1,-0.05,-0.02]
-        # self.accelerometerBias = [0.0,0.0,0.0]
-        # self.gyroBias = [0.0,0.0,0.0]
-        # self.gyroBias = [0.01,0.08,-0.02]
+        self.accelerometerBias = [0.1,-0.05,-0.02]
+        self.gyroBias = [0.01,0.08,-0.02]
 
         #TODO: Add variation to the periods?
         self.imuTs = 1.0/200.0
@@ -63,6 +61,7 @@ class SyntheticMeasurements:
         self.gps_pub_ = rospy.Publisher('gps',PosVelEcef,queue_size=5,latch=True)
         self.gps_compass_pub_ = rospy.Publisher('gps_compass',RelPos,queue_size=5,latch=True)
         self.ref_lla_pub_ = rospy.Publisher('ref_lla',Vector3,queue_size=5,latch=True)
+        self.bias_pub_ = rospy
 
         self.truth_rate_timer_ = rospy.Timer(rospy.Duration(self.imuTs), self.truthCallback)
         self.gps_rate_timer_ = rospy.Timer(rospy.Duration(self.gpsTs), self.gpsCallback)
@@ -82,7 +81,7 @@ class SyntheticMeasurements:
 
         synthetic_measurements.compute_imu(self.truth,self.imu)
         synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
-        # synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
+        synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
 
     def gpsCallback(self,event):
@@ -126,12 +125,12 @@ class SyntheticMeasurements:
 
     def publish_imu(self,stamp,imu):
         self.imuRos.header.stamp = stamp
-        self.imuRos.angular_velocity.x = imu.gyros[0]
-        self.imuRos.angular_velocity.y = imu.gyros[1]
-        self.imuRos.angular_velocity.z = imu.gyros[2]
         self.imuRos.linear_acceleration.x = imu.accelerometers[0]
         self.imuRos.linear_acceleration.y = imu.accelerometers[1]
         self.imuRos.linear_acceleration.z = imu.accelerometers[2]
+        self.imuRos.angular_velocity.x = imu.gyros[0]
+        self.imuRos.angular_velocity.y = imu.gyros[1]
+        self.imuRos.angular_velocity.z = imu.gyros[2]
 
         self.imu_pub_.publish(self.imuRos)
 

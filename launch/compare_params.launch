@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="bag_out_filename"    value="compare_params"/>
+    <arg name="boat_imu"            value="/imu"/>
+    <arg name="boat_PosVelEcef"     value="/gps"/>
+    <arg name="compass_relPos"      value="/gps_compass"/>
+    <arg name="ref_lla"             value="/ref_lla"/>
+    <arg name="params1_file"        value="params1"/>
+    <arg name="params2_file"        value="params2"/>
+
+    <group ns="params1">
+        <rosparam command="load" file="$(find boat_estimator)/params/$(arg params1_file).yaml"/>
+        <node name="ekf1" pkg="boat_estimator" type="ekf_ros.py" output="screen">
+            <remap from="imu" to="$(arg boat_imu)"/>
+            <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
+            <remap from="compass_relPos" to="$(arg compass_relPos)"/>
+            <remap from="ref_lla" to="$(arg ref_lla)"/>
+        </node>
+    </group>
+
+    <group ns="params2">
+        <rosparam command="load" file="$(find boat_estimator)/params/$(arg params2_file).yaml"/>
+        <node name="ekf2" pkg="boat_estimator" type="ekf_ros.py" output="screen">
+            <remap from="imu" to="$(arg boat_imu)"/>
+            <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
+            <remap from="compass_relPos" to="$(arg compass_relPos)"/>
+            <remap from="ref_lla" to="$(arg ref_lla)"/>
+        </node>
+    </group>
+
+    <node name="syn_meas" pkg="boat_estimator" type="syn_meas_class.py" output="screen"/>
+
+    <node pkg="rosbag" type="record" name="record" output="screen" args="-O ../data/px4flight/sim/$(arg bag_out_filename).bag --all"/>
+</launch>

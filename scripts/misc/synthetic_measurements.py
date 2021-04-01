@@ -6,12 +6,12 @@ from scipy.spatial.transform import Rotation as R
 
 def compute_truth(t,truth):
 
-    truth.position[0] = 2*t + 0.5*np.cos(t/2.0) - 3.0
+    truth.position[0] = 2.0*t + 0.5*np.cos(t/2.0) - 3.0
     xDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
     xDDot = -0.5*np.cos(t/2.0)/4.0
 
-    truth.position[1] = 0.3*t -0.5*np.sin(t/2.0) + 5.0
-    yDot = 0.3 + -0.5*np.cos(t/2.0)/2.0
+    truth.position[1] = 2.0*t -0.5*np.sin(t/2.0) + 5.0
+    yDot = 2.0 + -0.5*np.cos(t/2.0)/2.0
     yDDot = 0.5*np.sin(t/2.0)/4.0
 
     truth.position[2] = 0.5*np.sin(t/2.0) - 1.0

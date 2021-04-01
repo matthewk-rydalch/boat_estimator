@@ -7,19 +7,21 @@ sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 from states_covariance import StatesCovariance
 
-def propagate(beleif,Rt,ft,At,dt):
+def propagate(beleif,RProcess,RImu,ft,At,Bt,dt):
      beleif.p = beleif.p + ft.dp*dt
-     # beleif.q = beleif.q + ft.dq*dt
      beleif.q[2] = beleif.q[2] + ft.dq[2]*dt
      beleif.v = beleif.v + ft.dv*dt
      beleif.ba = beleif.ba + ft.dba*dt
      beleif.bg = beleif.bg + ft.dbg*dt
 
-     # print('beleif ba = ', beleif.ba)
-     # print('beleif bg = ', beleif.bg)
-     beleif.P = At@beleif.P@At.T + Rt
+     Ad = np.identity(15) + At*dt
+     Bd = Bt*dt
+     beleif.P = Ad@beleif.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
+     print('ba = ', beleif.ba)
+     # beleif.P = Ad@beleif.P@Ad.T + RProcess*dt**2
 
 def update(beleif,Qt,zt,ht,Ct):
+     #print statements in here are breaking the program.  No idea why.
      Lt = beleif.P@Ct.T@np.linalg.inv(Ct@beleif.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      beleif.p = beleif.p + dx[0:3]
@@ -28,15 +30,18 @@ def update(beleif,Qt,zt,ht,Ct):
      beleif.ba = beleif.ba + dx[9:12]
      beleif.bg = beleif.bg + dx[12:15]
 
-     # print('dx meas = ', dx)
+     # print('beleif.ba = ', beleif.ba)
+     # print('beleif.bg = ', beleif.bg)
 
      beleif.P = (np.identity(15) - Lt@Ct)@beleif.P
+     # print('update q = ',beleif.q)
 
-def update_dynamic_model(ft,beleif,ut,gravity,dt):
-     #TODO: Not convinced that there isn't an issue with velocity model
+
+def update_dynamic_model(beleif,ut):
      #TODO fix belief spelling everywhere
-     accel = ut[0] - beleif.ba
-     omega = ut[1] - beleif.bg
+     accel = ut.accelerometers - beleif.ba
+     omega = ut.gyros - beleif.bg
+     # print('prop q = ',beleif.q)
      Rb2i = R.from_euler('xyz',beleif.q.squeeze())
      Ri2b = Rb2i.inv()
      sphi = np.sin(beleif.q.item(0))
@@ -46,11 +51,12 @@ def update_dynamic_model(ft,beleif,ut,gravity,dt):
      attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
-     ft.dp = Rb2i.apply(beleif.v.T).T
-     ft.dq = attitudeModelInversion @ omega
-     ft.dv = accel + Ri2b.apply(gravity.T).T - np.cross(omega.T,beleif.v.T).T
-     ft.dba = np.array([[0.0,0.0,0.0]]).T
-     ft.dbg = np.array([[0.0,0.0,0.0]]).T
+     dp = Rb2i.apply(beleif.v.T).T
+     dq = attitudeModelInversion @ omega
+     dv = accel + Ri2b.apply(np.array([[0.0,0.0,9.81]])).T - np.cross(omega.T,beleif.v.T).T
+     dba = np.array([[0.0,0.0,0.0]]).T
+     dbg = np.array([[0.0,0.0,0.0]]).T
+     ft = np.concatenate((dp,dq,dv,dba,dbg),axis=0)
 
      return ft
 
@@ -62,58 +68,56 @@ def update_compass_measurement_model(beleif):
      h = np.array([[beleif.q.item(2)]]).T
      return h
 
-def update_Jacobian_A(beleif,omega):
-     #TODO: check Jacobian more thouroughly
-     g = np.array([[0.0,0.0,9.81]]).T
-     spsi = np.sin(beleif.q.item(2))
-     cpsi = np.cos(beleif.q.item(2))
+def calculate_numerical_jacobian_A(fun, xt, ut):
+    ft = fun(xt, ut)
+    m = len(ft)
+    n = xt.m
+    eps = 0.01
+    J = np.zeros((m, n))
+    test = np.zeros((15,0))
+    for i in range(0, n):
+        x_eps = xt.get_copy()
+        x_eps[i] = x_eps[i] + eps
+        f_eps = fun(x_eps, ut)
+        test = np.concatenate((test,f_eps),axis=1)
+        df = (f_eps - ft) / eps
+        J[:, i] = df[:, 0]
+    return J
 
-     dpdp = np.zeros((3,3))
-     dpdq = np.array([[spsi*beleif.v.item(2), cpsi*beleif.v.item(2), spsi*beleif.v.item(0)-cpsi*beleif.v.item(1)],
-                      [0.0, spsi*beleif.v.item(2), cpsi*beleif.v.item(0)-spsi*beleif.v.item(1)],
-                      [beleif.v.item(1),-beleif.v.item(0),0.0]])
-     dpdv = R.from_rotvec(beleif.q.squeeze()).as_matrix()
-     dpdBa = np.zeros((3,3))
-     dpdBg = np.zeros((3,3))
-     dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdBa,dpdBg),axis=1)
+def update_jacobian_B(beleif):
+    sphi = np.sin(beleif.q.item(0))
+    cphi = np.cos(beleif.q.item(0))
+    cth = np.cos(beleif.q.item(1))
+    tth = np.tan(beleif.q.item(1))
+    attitudeModelInversion = np.array([[1.0, sphi * tth, cphi * tth],
+                                       [0.0, cphi, -sphi],
+                                       [0.0, sphi / cth, cphi / cth]])
 
-     dqdp = np.zeros((3,3))
-     dqdq = np.array([[0.0,omega.item(1),0.0],
-                      [omega.item(2),0.0,0.0],
-                      [omega.item(1),0.0,0.0]])
-     dqdv = np.zeros((3,3))
-     dqdBa = np.zeros((3,3))
-     dqdBg = -np.identity(3)
-     dqdx = np.concatenate((dqdp, dqdq, dqdv, dqdBa, dqdBg), axis=1)
+    dpda = np.zeros((3, 3))
+    dpdw = np.zeros((3, 3))
+    dpdu = np.concatenate((dpda, dpdw), axis=1)
 
-     dvdp = np.zeros((3,3))
-     dvdq = np.array([[spsi, cpsi, 0.0],
-                      [spsi-cpsi, spsi, 0.0],
-                      [0.0,0.0,0.0]])*g.item(2)
-     dvdv = np.array([[0.0,-omega.item(2),omega.item(1)],
-                      [omega.item(2), 0.0, -omega.item(0)],
-                      [-omega.item(1),omega.item(0),0.0]])
-     dvdBa = -np.identity(3)
-     dvdBg = np.zeros((3,3))
-     dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdBa, dvdBg), axis=1)
+    dqda = np.zeros((3, 3))
+    dqdw = attitudeModelInversion
+    dqdu = np.concatenate((dqda, dqdw), axis=1)
 
-     dBadp = np.zeros((3,3))
-     dBadq = np.zeros((3,3))
-     dBadv = np.zeros((3,3))
-     dBadBa = np.zeros((3,3))
-     dBadBg = np.zeros((3,3))
-     dBadx = np.concatenate((dBadp, dBadq, dBadv, dBadBa, dBadBg), axis=1)
+    dvda = np.identity(3)
+    dvdw = np.array([[0.0, beleif.v.item(2), -beleif.v.item(1)],
+                     [-beleif.v.item(2), 0.0, beleif.v.item(0)],
+                     [beleif.v.item(1), -beleif.v.item(0), 0.0]])
+    dvdu = np.concatenate((dvda, dvdw), axis=1)
 
-     dBgdp = np.zeros((3,3))
-     dBgdq = np.zeros((3,3))
-     dBgdv = np.zeros((3,3))
-     dBgdBa = np.zeros((3,3))
-     dBgdBg = np.zeros((3,3))
-     dBgdx = np.concatenate((dBgdp, dBgdq, dBgdv, dBgdBa, dBgdBg), axis=1)
+    dBada = np.identity(3)
+    dBadw = np.identity(3)
+    dBadu = np.concatenate((dBada, dBadw), axis=1)
 
-     At = np.concatenate((dpdx,dqdx,dvdx,dBadx,dBgdx),axis=0)
-     return At
+    dBgda = np.identity(3)
+    dBgdw = np.identity(3)
+    dBgdu = np.concatenate((dBgda, dBgdw), axis=1)
 
+    Bt = np.concatenate((dpdu, dqdu, dvdu, dBadu, dBgdu), axis=0)
+
+    return Bt
 
 def get_jacobian_C_gps():
      dpdp = np.identity(3)
