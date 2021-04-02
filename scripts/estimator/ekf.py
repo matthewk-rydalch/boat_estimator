@@ -3,7 +3,7 @@ from scipy.spatial.transform import Rotation as R
 
 def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      belief.p = belief.p + ft.dp*dt
-     #belief.q[0:1] are estimated with the complementary filter
+     # #belief.q[0:1] are estimated with the complementary filter
      belief.q[2] = belief.q[2] + ft.dq[2]*dt
      belief.v = belief.v + ft.dv*dt
      belief.ba = belief.ba + ft.dba*dt
@@ -18,7 +18,6 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
 
-     print('belief.ba = ', belief.ba)
      belief.P = Ad@belief.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):

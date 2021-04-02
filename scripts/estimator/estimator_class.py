@@ -62,7 +62,7 @@ class Estimator:
       ht = ekf.update_compass_measurement_model(self.belief)
       Ct = ekf.get_jacobian_C_compass()
       
-      ekf.update(self.belief,self.params.QtGpsCompass,zt,ht,Ct)
+      # ekf.update(self.belief,self.params.QtGpsCompass,zt,ht,Ct)
 
    def set_ref_lla_callback(self,latDegrees,lonDegrees,altMeters):
       self.latRef = latDegrees
