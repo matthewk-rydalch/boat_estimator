@@ -13,7 +13,6 @@ def run(belief,ut,dt,kp,ki,gravity):
      aBody = -ut.accelerometers + belief.ba
      qAccel = np.array([[0.0,0.0,0.0]]).T
      qAccel[0] = np.arctan2(aBody.item(1),aBody.item(2))
-     print('aBody0 = ', aBody.item(0))
      qAccel[1] = np.arcsin(aBody.item(0)/-gravity.item(2)) #TODO should this be arctan?  Then it wouldn't break due to domain.
      qAccel[2] = belief.q[2] #We update this with rtk compassing
      qError = qAccel - belief.q
@@ -22,8 +21,5 @@ def run(belief,ut,dt,kp,ki,gravity):
      belief.bg = belief.bg + dBg
      omega = ut.gyros - belief.bg
 
-     print('omega = ', omega)
-     print('qError = ', qError)
      dq = attitudeModelInversion @ omega + kp*qError
-     print('dq = ', dq)
      belief.q = belief.q + dq*dt

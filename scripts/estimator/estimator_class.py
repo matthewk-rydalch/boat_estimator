@@ -51,7 +51,7 @@ class Estimator:
 
       zt = np.concatenate((positionNed,velocityNed),axis=0)
       ht = ekf.update_gps_measurement_model(self.belief)
-      Ct = ekf.get_jacobian_C_gps()
+      Ct = ekf.calculate_numerical_jacobian_C_gps(ekf.update_gps_measurement_model,self.belief)
 
       ekf.update(self.belief,self.params.QtGps,zt,ht,Ct)
 
