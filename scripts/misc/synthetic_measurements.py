@@ -26,6 +26,27 @@ def compute_truth(t,truth):
     truth.orientation[2] = -0.05*np.sin(t/2.0)
     psiDot = -0.05*np.cos(t/2.0)/2.0
 
+    # truth.position[0] = 0.0
+    # xDot = 0.0
+    # xDDot = 0.0
+
+    # truth.position[1] = 0.0
+    # yDot = 0.0
+    # yDDot = 0.0
+
+    # truth.position[2] = 0.0
+    # zDot = 0.0
+    # zDDot = 0.0
+
+    # truth.orientation[0] = 0.0
+    # phiDot = 0.0
+
+    # truth.orientation[1] = 0.0
+    # thetaDot = 0.0
+
+    # truth.orientation[2] = 0.0
+    # psiDot = 0.0
+
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
     Ri2b = Rb2i.inv()
 
@@ -59,9 +80,13 @@ def compute_imu(truth,imu,gravity):
     imu.accelerometers[2] = feltAcceleration[2]
 
 def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
+    Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
+
     ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
     gps.positionEcef = ecefPositionRelative + originEcef
-    gps.velocityEcef = navpy.ned2ecef(truth.velocity,latRef,lonRef,altRef)
+    
+    trueVelocityNed = Rb2i.apply(truth.velocity.T).T
+    gps.velocityEcef = navpy.ned2ecef(trueVelocityNed,latRef,lonRef,altRef)
 
 def compute_gps_compass(truth,gpsCompass):
     gpsCompass.heading = truth.orientation[2]

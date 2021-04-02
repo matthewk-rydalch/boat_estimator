@@ -9,6 +9,12 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      belief.ba = belief.ba + ft.dba*dt
      belief.bg = belief.bg + ft.dbg*dt
 
+     # belief.p = np.zeros((3,1))
+     # belief.q = np.zeros((3,1))
+     # belief.v = np.zeros((3,1))
+     # belief.ba = np.zeros((3,1))
+     # belief.bg = np.zeros((3,1))
+
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
 
@@ -18,6 +24,9 @@ def update(belief,Qt,zt,ht,Ct):
      #TODO:Figure out why this sometimes breaks.  Print statements and rosbags seem to break it.  It is fairly random
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
+     # belief.p[0] = zt[0]
+     # belief.p[1] = zt[1]
+     # belief.p[2] = zt[2]
      belief.p = belief.p + dx[0:3]
      belief.q = belief.q + dx[3:6]
      belief.v = belief.v + dx[6:9]
@@ -50,7 +59,9 @@ def update_dynamic_model(belief,ut,gravity):
      return ft
 
 def update_gps_measurement_model(belief):
-     h = np.concatenate((belief.p,belief.v),axis=0)
+     Rb2i = R.from_euler('xyz',belief.q.squeeze())
+     beliefVelocityNed = Rb2i.apply(belief.v.T).T
+     h = np.concatenate((belief.p,beliefVelocityNed),axis=0)
      return h
 
 def update_compass_measurement_model(belief):
@@ -63,14 +74,12 @@ def calculate_numerical_jacobian_A(get_dynamics_function, xt, ut, gravity):
     n = xt.m
     epsilon = 0.01
     J = np.zeros((m, n))
-    test = np.zeros((15,0))
     for i in range(0, n):
         xkPlusOne = xt.get_copy()
         xkPlusOne.add_to_item(i,epsilon)
         fkPlusOne = get_dynamics_function(xkPlusOne, ut, gravity)
-        test = np.concatenate((test,fkPlusOne),axis=1)
-        df = (fkPlusOne - ft) / epsilon
-        J[:, i] = df[:, 0]
+        dfde = (fkPlusOne - ft) / epsilon
+        J[:, i] = dfde[:, 0]
     return J
 
 def update_jacobian_B(belief):
@@ -108,24 +117,39 @@ def update_jacobian_B(belief):
 
     return Bt
 
-def get_jacobian_C_gps():
-     dpdp = np.identity(3)
-     dpdq = np.zeros((3,3))
-     dpdv = np.zeros((3,3))
-     dpdba = np.zeros((3,3))
-     dpdbg = np.zeros((3,3))
-     dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdba,dpdbg),axis=1)
+# def get_jacobian_C_gps():
+#      #TODO this will change with the measurement model, once it has rotated velocity into the ned frame
+#      dpdp = np.identity(3)
+#      dpdq = np.zeros((3,3))
+#      dpdv = np.zeros((3,3))
+#      dpdba = np.zeros((3,3))
+#      dpdbg = np.zeros((3,3))
+#      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdba,dpdbg),axis=1)
 
-     dvdp = np.zeros((3,3))
-     dvdq = np.zeros((3,3))
-     dvdv = np.identity(3)
-     dvdba = np.zeros((3,3))
-     dvdbg = np.zeros((3,3))
-     dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdba, dvdbg), axis=1)
+#      dvdp = np.zeros((3,3))
+#      dvdq = np.zeros((3,3))
+#      dvdv = np.identity(3)
+#      dvdba = np.zeros((3,3))
+#      dvdbg = np.zeros((3,3))
+#      dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdba, dvdbg), axis=1)
 
-     Ct = np.concatenate((dpdx,dvdx),axis=0)
+#      Ct = np.concatenate((dpdx,dvdx),axis=0)
      
-     return Ct
+#      return Ct
+
+def calculate_numerical_jacobian_C_gps(get_gps_measurement_model, xt):
+    ht = get_gps_measurement_model(xt)
+    m = len(ht)
+    n = xt.m
+    epsilon = 0.01
+    J = np.zeros((m, n))
+    for i in range(0, n):
+        xkPlusOne = xt.get_copy()
+        xkPlusOne.add_to_item(i,epsilon)
+        hkPlusOne = get_gps_measurement_model(xkPlusOne)
+        dhde = (hkPlusOne - ht) / epsilon
+        J[:, i] = dhde[:, 0]
+    return J
 
 def get_jacobian_C_compass():
      dpsidp = np.zeros((1,3))
