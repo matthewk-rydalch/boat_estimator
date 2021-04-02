@@ -9,8 +9,8 @@ def compute_truth(t,truth):
     xDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
     xDDot = -0.5*np.cos(t/2.0)/4.0
 
-    truth.position[1] = 2.0*t -0.5*np.sin(t/2.0) + 5.0
-    yDot = 2.0 + -0.5*np.cos(t/2.0)/2.0
+    truth.position[1] = -2.0*t -0.5*np.sin(t/2.0) + 5.0
+    yDot = -2.0 + -0.5*np.cos(t/2.0)/2.0
     yDDot = 0.5*np.sin(t/2.0)/4.0
 
     truth.position[2] = 0.5*np.sin(t/2.0) - 1.0
@@ -23,7 +23,7 @@ def compute_truth(t,truth):
     truth.orientation[1] = 0.05*np.sin(t/2.0)
     thetaDot = 0.05*np.cos(t/2.0)/2.0
 
-    truth.orientation[2] = -0.05*np.sin(t/2.0)
+    truth.orientation[2] = -0.05*np.sin(t/2.0) + np.pi
     psiDot = -0.05*np.cos(t/2.0)/2.0
 
     # truth.position[0] = 0.0
@@ -85,6 +85,7 @@ def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
     ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
     gps.positionEcef = ecefPositionRelative + originEcef
     
+    Rb2i = R.from_euler('xyz',truth.orientation.squeeze())
     trueVelocityNed = Rb2i.apply(truth.velocity.T).T
     gps.velocityEcef = navpy.ned2ecef(trueVelocityNed,latRef,lonRef,altRef)
 

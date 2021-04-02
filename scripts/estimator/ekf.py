@@ -18,6 +18,7 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
 
+     print('belief.ba = ', belief.ba)
      belief.P = Ad@belief.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):
@@ -35,7 +36,8 @@ def update(belief,Qt,zt,ht,Ct):
 
      belief.P = (np.identity(15) - Lt@Ct)@belief.P
 
-def update_dynamic_model(belief,ut,gravity):
+def update_dynamic_model(belief,ut):
+     gravity = np.array([[0.0,0.0,9.81]]).T
      accel = ut.accelerometers - belief.ba
      omega = ut.gyros - belief.bg
 
@@ -67,21 +69,7 @@ def update_gps_measurement_model(belief):
 def update_compass_measurement_model(belief):
      h = np.array([[belief.q.item(2)]]).T
      return h
-
-def calculate_numerical_jacobian_A(get_dynamics_function, xt, ut, gravity):
-    ft = get_dynamics_function(xt, ut, gravity)
-    m = len(ft)
-    n = xt.m
-    epsilon = 0.01
-    J = np.zeros((m, n))
-    for i in range(0, n):
-        xkPlusOne = xt.get_copy()
-        xkPlusOne.add_to_item(i,epsilon)
-        fkPlusOne = get_dynamics_function(xkPlusOne, ut, gravity)
-        dfde = (fkPlusOne - ft) / epsilon
-        J[:, i] = dfde[:, 0]
-    return J
-
+    
 def update_jacobian_B(belief):
     sphi = np.sin(belief.q.item(0))
     cphi = np.cos(belief.q.item(0))
@@ -117,40 +105,6 @@ def update_jacobian_B(belief):
 
     return Bt
 
-# def get_jacobian_C_gps():
-#      #TODO this will change with the measurement model, once it has rotated velocity into the ned frame
-#      dpdp = np.identity(3)
-#      dpdq = np.zeros((3,3))
-#      dpdv = np.zeros((3,3))
-#      dpdba = np.zeros((3,3))
-#      dpdbg = np.zeros((3,3))
-#      dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdba,dpdbg),axis=1)
-
-#      dvdp = np.zeros((3,3))
-#      dvdq = np.zeros((3,3))
-#      dvdv = np.identity(3)
-#      dvdba = np.zeros((3,3))
-#      dvdbg = np.zeros((3,3))
-#      dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdba, dvdbg), axis=1)
-
-#      Ct = np.concatenate((dpdx,dvdx),axis=0)
-     
-#      return Ct
-
-def calculate_numerical_jacobian_C_gps(get_gps_measurement_model, xt):
-    ht = get_gps_measurement_model(xt)
-    m = len(ht)
-    n = xt.m
-    epsilon = 0.01
-    J = np.zeros((m, n))
-    for i in range(0, n):
-        xkPlusOne = xt.get_copy()
-        xkPlusOne.add_to_item(i,epsilon)
-        hkPlusOne = get_gps_measurement_model(xkPlusOne)
-        dhde = (hkPlusOne - ht) / epsilon
-        J[:, i] = dhde[:, 0]
-    return J
-
 def get_jacobian_C_compass():
      dpsidp = np.zeros((1,3))
      dpsidq = np.array([[0.0,0.0,1.0]])
@@ -160,3 +114,17 @@ def get_jacobian_C_compass():
      Ct = np.concatenate((dpsidp,dpsidq,dpsidv,dpsidba,dpsidbg),axis=1)
 
      return Ct
+
+def get_numerical_jacobian(fun, xk, zk):
+    fk = fun(xk, zk)
+    m = fk.shape[0]
+    n = xk.m
+    epsilon = 0.01
+    J = np.zeros((m, n))
+    for i in range(0, n):
+        xkPlusOne = xk.get_copy()
+        xkPlusOne.add_to_item(i,epsilon)
+        fkPlusOne = fun(xkPlusOne, zk)
+        dfdx = (fkPlusOne - fk) / epsilon
+        J[:, i] = dfdx[:, 0]
+    return J
