@@ -59,8 +59,9 @@ def update_dynamic_model(belief,ut,gravity):
      return ft
 
 def update_gps_measurement_model(belief):
-     #TODO:Need to rotate belief.v into the ned or ecef frame to match the measurement
-     h = np.concatenate((belief.p,belief.v),axis=0)
+     Rb2i = R.from_euler('xyz',belief.q)
+     beliefVelocityNed = Rb2i.apply(belief.v)
+     h = np.concatenate((belief.p,beliefVelocityNed),axis=0)
      return h
 
 def update_compass_measurement_model(belief):
@@ -73,12 +74,12 @@ def calculate_numerical_jacobian_A(get_dynamics_function, xt, ut, gravity):
     n = xt.m
     epsilon = 0.01
     J = np.zeros((m, n))
-    test = np.zeros((15,0))
+#     test = np.zeros((15,0))
     for i in range(0, n):
         xkPlusOne = xt.get_copy()
         xkPlusOne.add_to_item(i,epsilon)
         fkPlusOne = get_dynamics_function(xkPlusOne, ut, gravity)
-        test = np.concatenate((test,fkPlusOne),axis=1)
+     #    test = np.concatenate((test,fkPlusOne),axis=1)
         df = (fkPlusOne - ft) / epsilon
         J[:, i] = df[:, 0]
     return J
@@ -137,6 +138,22 @@ def get_jacobian_C_gps():
      Ct = np.concatenate((dpdx,dvdx),axis=0)
      
      return Ct
+
+# def calculate_numerical_jacobian_Cgps(get_gps_measurement_model, xt):
+#     ht = get_gps_measurement_model(xt)
+#     m = len(ht)
+#     n = xt.m
+#     epsilon = 0.01
+#     J = np.zeros((m, n))
+#     test = np.zeros((15,0))
+#     for i in range(0, n):
+#         xkPlusOne = xt.get_copy()
+#         xkPlusOne.add_to_item(i,epsilon)
+#         fkPlusOne = get_dynamics_function(xkPlusOne, ut, gravity)
+#         test = np.concatenate((test,fkPlusOne),axis=1)
+#         df = (fkPlusOne - ft) / epsilon
+#         J[:, i] = df[:, 0]
+#     return J
 
 def get_jacobian_C_compass():
      dpsidp = np.zeros((1,3))

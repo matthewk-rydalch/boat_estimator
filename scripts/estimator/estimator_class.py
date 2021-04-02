@@ -48,7 +48,6 @@ class Estimator:
       positionNed = np.array([positionNed1D]).T
       velocityNed1D = navpy.ecef2ned(gps.velocityEcef, self.latRef, self.lonRef, self.altRef)
       velocityNed = np.array([velocityNed1D]).T
-      #TODO: Need to rotate velocity into the body frame
 
       zt = np.concatenate((positionNed,velocityNed),axis=0)
       ht = ekf.update_gps_measurement_model(self.belief)
