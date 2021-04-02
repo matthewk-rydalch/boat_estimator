@@ -35,7 +35,7 @@ class SyntheticMeasurements:
         self.gpsHorizontalAccuracyStdDev = 0.2
         self.gpsVerticalAccuracyStdDev = 0.4
         self.gpsSpeedAccuracyStdDev = 0.2
-        self.gpsCompassAccuracyStdDev = 0.02 #depends on baseline. This also uses RTK
+        self.gpsCompassAccuracyDegStdDev = 1.0 #depends on baseline. This also uses RTK
 
         #These are to remember noise of previous update.  They are used in the low pass filter
         self.gpsNoise = [0.0,0.0,0.0,0.0,0.0,0.0]
@@ -104,7 +104,7 @@ class SyntheticMeasurements:
         self.publish_gps(stamp,self.gps)
 
         synthetic_measurements.compute_gps_compass(self.truth,self.gpsCompass)
-        synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyStdDev,self.lowPassFilterAlpha, \
+        synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyDegStdDev,self.lowPassFilterAlpha, \
             self.gpsCompassNoise)
         self.publish_gps_compass(stamp,self.gpsCompass)
 

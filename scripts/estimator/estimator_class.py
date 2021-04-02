@@ -58,11 +58,11 @@ class Estimator:
    def gps_compass_callback(self,gpsCompass):
       #TODO: Add flag check
       #TODO: Do I need to take into account the current orientation of the vehicle?
-      zt = gpsCompass.heading
+      zt = gpsCompass.heading*np.pi/180.0
       ht = ekf.update_compass_measurement_model(self.belief)
       Ct = ekf.get_jacobian_C_compass()
       
-      # ekf.update(self.belief,self.params.QtGpsCompass,zt,ht,Ct)
+      ekf.update(self.belief,self.params.QtGpsCompass,zt,ht,Ct)
 
    def set_ref_lla_callback(self,latDegrees,lonDegrees,altMeters):
       self.latRef = latDegrees
