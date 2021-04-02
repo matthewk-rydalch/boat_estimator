@@ -9,6 +9,12 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      belief.ba = belief.ba + ft.dba*dt
      belief.bg = belief.bg + ft.dbg*dt
 
+     # belief.p = np.zeros((3,1))
+     # belief.q = np.zeros((3,1))
+     # belief.v = np.zeros((3,1))
+     # belief.ba = np.zeros((3,1))
+     # belief.bg = np.zeros((3,1))
+
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
 
@@ -19,6 +25,9 @@ def update(belief,Qt,zt,ht,Ct):
      #TODO:Figure out why this sometimes breaks.  Print statements and rosbags seem to break it.  It is fairly random
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
+     # belief.p[0] = zt[0]
+     # belief.p[1] = zt[1]
+     # belief.p[2] = zt[2]
      belief.p = belief.p + dx[0:3]
      belief.q = belief.q + dx[3:6]
      belief.v = belief.v + dx[6:9]
@@ -51,16 +60,16 @@ def update_dynamic_model(belief,ut):
 
      return ft
 
-def update_gps_measurement_model(belief,gps):
+def update_gps_measurement_model(belief):
      Rb2i = R.from_euler('xyz',belief.q.squeeze())
-     beliefVNed = Rb2i.apply(belief.v.T).T
-     h = np.concatenate((belief.p,beliefVNed),axis=0)
+     beliefVelocityNed = Rb2i.apply(belief.v.T).T
+     h = np.concatenate((belief.p,beliefVelocityNed),axis=0)
      return h
 
 def update_compass_measurement_model(belief):
      h = np.array([[belief.q.item(2)]]).T
      return h
-
+    
 def update_jacobian_B(belief):
     sphi = np.sin(belief.q.item(0))
     cphi = np.cos(belief.q.item(0))
