@@ -30,7 +30,6 @@ class Estimator:
       self.imuPrevTime = imu.time
 
       ft = DynamicModel(ekf.update_dynamic_model(self.belief,imu))
-      # At = ekf.calculate_numerical_jacobian_A(ekf.update_dynamic_model,self.belief,imu)
       At = ekf.get_numerical_jacobian(ekf.update_dynamic_model,self.belief,imu)
       Bt = ekf.update_jacobian_B(self.belief)
 
@@ -52,7 +51,6 @@ class Estimator:
 
       zt = np.concatenate((positionNed,velocityNed),axis=0)
       ht = ekf.update_gps_measurement_model(self.belief,gps)
-      # Ct = ekf.get_jacobian_C_gps()
       Ct = ekf.get_numerical_jacobian(ekf.update_gps_measurement_model,self.belief,gps)
 
       ekf.update(self.belief,self.params.QtGps,zt,ht,Ct)

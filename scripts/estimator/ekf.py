@@ -54,28 +54,12 @@ def update_dynamic_model(belief,ut):
 def update_gps_measurement_model(belief,gps):
      Rb2i = R.from_euler('xyz',belief.q.squeeze())
      beliefVNed = Rb2i.apply(belief.v.T).T
-     h = np.concatenate((belief.p,belief.v),axis=0)
+     h = np.concatenate((belief.p,beliefVNed),axis=0)
      return h
 
 def update_compass_measurement_model(belief):
      h = np.array([[belief.q.item(2)]]).T
      return h
-
-def calculate_numerical_jacobian_A(get_dynamics_function, xt, ut):
-    ft = get_dynamics_function(xt, ut)
-    m = len(ft)
-    n = xt.m
-    epsilon = 0.01
-    J = np.zeros((m, n))
-    test = np.zeros((15,0))
-    for i in range(0, n):
-        xkPlusOne = xt.get_copy()
-        xkPlusOne.add_to_item(i,epsilon)
-        fkPlusOne = get_dynamics_function(xkPlusOne, ut)
-        test = np.concatenate((test,fkPlusOne),axis=1)
-        df = (fkPlusOne - ft) / epsilon
-        J[:, i] = df[:, 0]
-    return J
 
 def update_jacobian_B(belief):
     sphi = np.sin(belief.q.item(0))
@@ -111,25 +95,6 @@ def update_jacobian_B(belief):
     Bt = np.concatenate((dpdu, dqdu, dvdu, dBadu, dBgdu), axis=0)
 
     return Bt
-
-def get_jacobian_C_gps():
-     dpdp = np.identity(3)
-     dpdq = np.zeros((3,3))
-     dpdv = np.zeros((3,3))
-     dpdba = np.zeros((3,3))
-     dpdbg = np.zeros((3,3))
-     dpdx = np.concatenate((dpdp,dpdq,dpdv,dpdba,dpdbg),axis=1)
-
-     dvdp = np.zeros((3,3))
-     dvdq = np.zeros((3,3))
-     dvdv = np.identity(3)
-     dvdba = np.zeros((3,3))
-     dvdbg = np.zeros((3,3))
-     dvdx = np.concatenate((dvdp, dvdq, dvdv, dvdba, dvdbg), axis=1)
-
-     Ct = np.concatenate((dpdx,dvdx),axis=0)
-     
-     return Ct
 
 def get_jacobian_C_compass():
      dpsidp = np.zeros((1,3))
