@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="bag_in_filename"     value="flightC"/>
+    <arg name="bag_in_filename"     value="flightB"/>
     <arg name="bag_out_filename"    value="compare_roscopter"/>
     <arg name="boat_imu"            value="/boat/imu"/>
     <arg name="boat_PosVelEcef"     value="/boat/PosVelEcef"/>
