@@ -15,12 +15,12 @@ sigma0: [100.0,  # pn
          2.0,  # u
          2.0,  # v
          2.0,  # w
-         1.0,  # bax     0.3 worked better for all biases,        
-         1.0,  # bay     but I think this is more true and would perform
-         1.0,  # baz     better for high biases
-         1.0,  # bgx
-         1.0,  # bgy
-         1.0], # bgz
+         0.3,  # bax     0.3 worked better for all biases,        
+         0.3,  # bay     but I think this is more true and would perform
+         0.3,  # baz     better for high biases
+         0.3,  # bgx
+         0.3,  # bgy
+         0.3], # bgz
 
 sigmaProcess: [2.0,  # pn
                2.0,  # pe

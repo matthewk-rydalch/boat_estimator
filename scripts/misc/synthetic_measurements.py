@@ -61,7 +61,10 @@ def compute_imu(truth,imu,gravity):
 def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
     ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
     gps.positionEcef = ecefPositionRelative + originEcef
-    gps.velocityEcef = navpy.ned2ecef(truth.velocity,latRef,lonRef,altRef)
+
+    Rb2i = R.from_euler('xyz',truth.orientation.squeeze())
+    trueVelocityNed = Rb2i.apply(truth.velocity.T).T
+    gps.velocityEcef = navpy.ned2ecef(trueVelocityNed,latRef,lonRef,altRef)
 
 def compute_gps_compass(truth,gpsCompass):
     gpsCompass.heading = truth.orientation[2]

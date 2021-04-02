@@ -41,7 +41,7 @@ class SyntheticMeasurements:
         self.gpsNoise = [0.0,0.0,0.0,0.0,0.0,0.0]
         self.gpsCompassNoise = 0.0
         
-        self.accelerometerBias = [0.1,-0.05,-0.02]
+        self.accelerometerBias = [0.3,-0.5,-0.2]
         self.gyroBias = [0.01,0.08,-0.02]
 
         self.imuTs = 1.0/200.0

@@ -52,6 +52,8 @@ def update_dynamic_model(belief,ut):
      return ft
 
 def update_gps_measurement_model(belief,gps):
+     Rb2i = R.from_euler('xyz',belief.q.squeeze())
+     beliefVNed = Rb2i.apply(belief.v.T).T
      h = np.concatenate((belief.p,belief.v),axis=0)
      return h
 
