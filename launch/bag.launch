@@ -2,7 +2,7 @@
 
 <launch>
     <arg name="bag_in_filename"     value="flightC"/>
-    <arg name="bag_out_filename"    value="boat_est"/>
+    <arg name="bag_out_filename"    value="compare_roscopter"/>
     <arg name="boat_imu"            value="/boat/imu"/>
     <arg name="boat_PosVelEcef"     value="/boat/PosVelEcef"/>
     <arg name="compass_relPos"      value="/boat/compass/RelPos"/>

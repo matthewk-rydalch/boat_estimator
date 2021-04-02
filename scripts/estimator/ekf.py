@@ -6,8 +6,14 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      #belief.q[0:1] are estimated with the complementary filter
      belief.q[2] = belief.q[2] + ft.dq[2]*dt
      belief.v = belief.v + ft.dv*dt
-     belief.ba = belief.ba + ft.dba*dt
-     belief.bg = belief.bg + ft.dbg*dt
+     # belief.ba = belief.ba + ft.dba*dt
+     # belief.bg = belief.bg + ft.dbg*dt
+
+     # belief.p = np.zeros((3,1))
+     # belief.q = np.zeros((3,1))
+     # belief.v = np.zeros((3,1))
+     # belief.ba = np.zeros((3,1))
+     # belief.bg = np.zeros((3,1))
 
      Ad = np.identity(15) + At*dt
      Bd = Bt*dt
@@ -18,11 +24,14 @@ def update(belief,Qt,zt,ht,Ct):
      #TODO:Figure out why this sometimes breaks.  Print statements and rosbags seem to break it.  It is fairly random
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
+     # belief.p[0] = zt[0]
+     # belief.p[1] = zt[1]
+     # belief.p[2] = zt[2]
      belief.p = belief.p + dx[0:3]
      belief.q = belief.q + dx[3:6]
      belief.v = belief.v + dx[6:9]
-     belief.ba = belief.ba + dx[9:12]
-     belief.bg = belief.bg + dx[12:15]
+     # belief.ba = belief.ba + dx[9:12]
+     # belief.bg = belief.bg + dx[12:15]
 
      belief.P = (np.identity(15) - Lt@Ct)@belief.P
 
@@ -50,6 +59,7 @@ def update_dynamic_model(belief,ut,gravity):
      return ft
 
 def update_gps_measurement_model(belief):
+     #TODO:Need to rotate belief.v into the ned or ecef frame to match the measurement
      h = np.concatenate((belief.p,belief.v),axis=0)
      return h
 
@@ -109,6 +119,7 @@ def update_jacobian_B(belief):
     return Bt
 
 def get_jacobian_C_gps():
+     #TODO this will change with the measurement model, once it has rotated velocity into the ned frame
      dpdp = np.identity(3)
      dpdq = np.zeros((3,3))
      dpdv = np.zeros((3,3))

@@ -5,26 +5,47 @@ import navpy
 from scipy.spatial.transform import Rotation as R
 
 def compute_truth(t,truth):
-    truth.position[0] = 2.0*t + 0.5*np.cos(t/2.0) - 3.0
-    xDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
-    xDDot = -0.5*np.cos(t/2.0)/4.0
+    # truth.position[0] = 2.0*t + 0.5*np.cos(t/2.0) - 3.0
+    # xDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
+    # xDDot = -0.5*np.cos(t/2.0)/4.0
 
-    truth.position[1] = 2.0*t -0.5*np.sin(t/2.0) + 5.0
-    yDot = 2.0 + -0.5*np.cos(t/2.0)/2.0
-    yDDot = 0.5*np.sin(t/2.0)/4.0
+    # truth.position[1] = 2.0*t -0.5*np.sin(t/2.0) + 5.0
+    # yDot = 2.0 + -0.5*np.cos(t/2.0)/2.0
+    # yDDot = 0.5*np.sin(t/2.0)/4.0
 
-    truth.position[2] = 0.5*np.sin(t/2.0) - 1.0
-    zDot = 0.5*np.cos(t/2.0)/2.0
-    zDDot = -0.5*np.sin(t/2.0)/4.0
+    # truth.position[2] = 0.5*np.sin(t/2.0) - 1.0
+    # zDot = 0.5*np.cos(t/2.0)/2.0
+    # zDDot = -0.5*np.sin(t/2.0)/4.0
 
-    truth.orientation[0] = 0.05*np.sin(t/2.0)
-    phiDot = 0.05*np.cos(t/2.0)/2.0
+    # truth.orientation[0] = 0.05*np.sin(t/2.0)
+    # phiDot = 0.05*np.cos(t/2.0)/2.0
 
-    truth.orientation[1] = 0.05*np.sin(t/2.0)
-    thetaDot = 0.05*np.cos(t/2.0)/2.0
+    # truth.orientation[1] = 0.05*np.sin(t/2.0)
+    # thetaDot = 0.05*np.cos(t/2.0)/2.0
 
-    truth.orientation[2] = -0.05*np.sin(t/2.0)
-    psiDot = -0.05*np.cos(t/2.0)/2.0
+    # truth.orientation[2] = -0.05*np.sin(t/2.0)
+    # psiDot = -0.05*np.cos(t/2.0)/2.0
+
+    truth.position[0] = 0.0
+    xDot = 0.0
+    xDDot = 0.0
+
+    truth.position[1] = 0.0
+    yDot = 0.0
+    yDDot = 0.0
+
+    truth.position[2] = 0.0
+    zDot = 0.0
+    zDDot = 0.0
+
+    truth.orientation[0] = 0.0
+    phiDot = 0.0
+
+    truth.orientation[1] = 0.0
+    thetaDot = 0.0
+
+    truth.orientation[2] = 0.0
+    psiDot = 0.0
 
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
     Ri2b = Rb2i.inv()
@@ -59,6 +80,9 @@ def compute_imu(truth,imu,gravity):
     imu.accelerometers[2] = feltAcceleration[2]
 
 def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
+    #TODO need to rotate true velocity into the inertial frame before using it to compute velocity ecef
+    Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
+    Ri2b = Rb2i.inv()
     ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
     gps.positionEcef = ecefPositionRelative + originEcef
     gps.velocityEcef = navpy.ned2ecef(truth.velocity,latRef,lonRef,altRef)
