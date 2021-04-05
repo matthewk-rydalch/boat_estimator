@@ -5,13 +5,37 @@ import numpy as np
 from geometry_msgs.msg import Pose
 
 class Parser:
-	def __init__(self,odomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic):
+	def __init__(self,estRelPosTopic,odomTopic,truthTopic,imuTopic,ubloxRelPosTopic,gpsTopic,gpsCompassTopic,refLlaTopic):
+		self.estRelPosTopic = estRelPosTopic
 		self.odomTopic = odomTopic
 		self.truthTopic = truthTopic
 		self.imuTopic = imuTopic
+		self.ubloxRelPosTopic = ubloxRelPosTopic
 		self.gpsTopic = gpsTopic
 		self.gpsCompassTopic = gpsCompassTopic
 		self.refLlaTopic = refLlaTopic
+
+	def get_ublox_relPos(self, bag):
+		sec = []
+		nsec = []
+		pn = []
+		pe = []
+		pd = []
+		pnHp = []
+		peHp = []
+		pdHp = []
+
+		for topic, msg, t in bag.read_messages(topics=[self.ubloxRelPosTopic]):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			pn.append(msg.relPosNED[0])
+			pe.append(msg.relPosNED[1])
+			pd.append(msg.relPosNED[2])
+			pnHp.append(msg.relPosHPNED[0])
+			peHp.append(msg.relPosHPNED[1])
+			pdHp.append(msg.relPosHPNED[2])
+
+		return RelPos(sec,nsec,pn,pe,pd,pnHp,peHp,pdHp)
 
 	def get_odom(self, bag):
 		sec = []
@@ -95,6 +119,22 @@ class Parser:
 
 		return Imu(sec,nsec,ax,ay,az,wx,wy,wz)
 
+	def get_estimated_relPos(self, bag):
+		sec = []
+		nsec = []
+		pn = []
+		pe = []
+		pd = []
+
+		for topic, msg, t in bag.read_messages(topics=[self.estRelPosTopic]):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			pn.append(msg.vector.x)
+			pe.append(msg.vector.y)
+			pd.append(msg.vector.z)
+
+		return RelPos(sec,nsec,pn,pe,pd)
+
 	def get_gps(self, bag):
 		sec = []
 		nsec = []
@@ -135,9 +175,9 @@ class Parser:
 		alt = []
 
 		for topic, msg, t in bag.read_messages(topics=[self.refLlaTopic]):
-			lat.append(msg.x)
-			lon.append(msg.y)
-			alt.append(msg.z)
+			lat.append(msg.lla[0])
+			lon.append(msg.lla[1])
+			alt.append(msg.lla[2])
 
 		return refLla(lat,lon,alt)
 
@@ -155,6 +195,15 @@ class Imu:
 		self.time = np.array(sec)+np.array(nsec)*1E-9
 		self.accel = np.array([ax,ay,az])
 		self.omega = np.array([wx,wy,wz])
+
+class RelPos:
+	def __init__(self,sec,nsec,pn,pe,pd,pnHp=0.0,peHp=0.0,pdHp=0.0):
+		self.time = np.array(sec)+np.array(nsec)*1E-9
+		
+		pn = np.array(pn) + np.array(pnHp)
+		pe = np.array(pe) + np.array(peHp)
+		pd = np.array(pd) + np.array(pdHp)
+		self.position = np.array([pn,pe,pd])
 
 class Gps:
 	def __init__(self,sec,nsec,px,py,pz,vx,vy,vz):
