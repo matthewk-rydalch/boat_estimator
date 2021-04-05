@@ -17,7 +17,6 @@
         <remap from="rover_posVelEcef" to="$(arg rover_PosVelEcef)"/>
         <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
         <remap from="compass_relPos" to="$(arg compass_relPos)"/>
-        <remap from="ref_lla" to="$(arg ref_lla)"/>
     </node>
 
     <node name="syn_meas" pkg="boat_estimator" type="syn_meas_class.py" output="screen"/>

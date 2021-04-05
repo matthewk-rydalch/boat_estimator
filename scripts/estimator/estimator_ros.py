@@ -37,7 +37,6 @@ class EstimatorRos:
         self.rover_pos_vel_ecef_sub_ = rospy.Subscriber('rover_posVelEcef', PosVelEcef, self.roverPosVelEcefCallback, queue_size=5)
         self.base_pos_vel_ecef_sub_ = rospy.Subscriber('base_posVelEcef', PosVelEcef, self.basePosVelEcefCallback, queue_size=5)
         self.comp_relPos_sub_ = rospy.Subscriber('compass_relPos', RelPos, self.compassRelPosCallback, queue_size=5)
-        self.ref_lla_sub_ = rospy.Subscriber('ref_lla',Vector3, self.refLlaCallback,queue_size=5) #TODO Figure out how to get this in real scenario
 
         while not rospy.is_shutdown():
             rospy.spin()
@@ -60,14 +59,16 @@ class EstimatorRos:
     def roverPosVelEcefCallback(self,msg):
         positionEcefMeters = msg.position
         velocityEcefMetersPerSecond = msg.velocity
-        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond)
+        latLonAltDegM = msg.lla
+        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond,latLonAltDegM)
  
         self.estimator.rover_gps_callback(gps)
 
     def basePosVelEcefCallback(self,msg):
         positionEcefMeters = msg.position
         velocityEcefMetersPerSecond = msg.velocity
-        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond)
+        latLonAltDegM = msg.lla
+        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond,latLonAltDegM)
  
         self.estimator.base_gps_callback(gps)
 
@@ -77,9 +78,6 @@ class EstimatorRos:
         gpsCompass = GpsCompassMsg(headingDeg)
 
         self.estimator.gps_compass_callback(gpsCompass)
-
-    def refLlaCallback(self,msg):
-        self.estimator.set_ref_lla_callback(msg.x,msg.y,msg.z)
 
     def publish_estimates(self):
         timeStamp = rospy.Time.now()
@@ -109,7 +107,6 @@ class EstimatorRos:
         self.odomEstimate.twist.twist.linear.z = self.estimator.belief.v[2]
 
         self.boat_estimate_pub_.publish(self.odomEstimate)
-
 
 if __name__ == '__main__':
     rospy.init_node('estimator_ros', anonymous=True)

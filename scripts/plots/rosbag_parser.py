@@ -175,9 +175,9 @@ class Parser:
 		alt = []
 
 		for topic, msg, t in bag.read_messages(topics=[self.refLlaTopic]):
-			lat.append(msg.x)
-			lon.append(msg.y)
-			alt.append(msg.z)
+			lat.append(msg.lla[0])
+			lon.append(msg.lla[1])
+			alt.append(msg.lla[2])
 
 		return refLla(lat,lon,alt)
 

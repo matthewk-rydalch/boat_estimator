@@ -48,7 +48,13 @@ class Estimator:
    def rover_gps_callback(self,gps):
       #TODO: Add flag checks
       if not self.refLlaSet:
-         return
+         self.latRef = gps.lla[0]
+         self.lonRef = gps.lla[1]
+         self.altRef = gps.lla[2]
+         refEcef1D = navpy.lla2ecef(self.latRef,self.lonRef,self.altRef)
+         self.refEcef = np.array([refEcef1D]).T
+         self.refLlaSet = True
+         print('ref lla = ', self.latRef, ' ', self.lonRef, ' ', self.altRef)
 
       velocityNed1D = navpy.ecef2ned(gps.velocityEcef, self.latRef, self.lonRef, self.altRef)
       velocityNed = np.array([velocityNed1D]).T
@@ -84,11 +90,3 @@ class Estimator:
       Ct = ekf.get_jacobian_C_compass()
       
       ekf.update(self.belief,self.params.QtRtkCompass,zt,ht,Ct)
-
-   def set_ref_lla_callback(self,latDegrees,lonDegrees,altMeters):
-      self.latRef = latDegrees
-      self.lonRef = lonDegrees
-      self.altRef = altMeters
-      refEcef1D = navpy.lla2ecef(self.latRef,self.lonRef,self.altRef)
-      self.refEcef = np.array([refEcef1D]).T
-      self.refLlaSet = True

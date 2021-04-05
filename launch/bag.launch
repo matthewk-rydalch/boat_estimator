@@ -24,10 +24,5 @@
         <remap from="ref_lla" to="$(arg ref_lla)"/>
     </node>
 
-    <node name="ref_lla_temp" pkg="boat_estimator" type="ref_lla_temp.py" output="screen">
-        <remap from="rover_posVelEcef" to="$(arg rover_posVelEcef)"/>
-    </node>
-    <!--TODO: Figure out how to get this in real world scenario-->
-
     <node pkg="rosbag" type="record" name="record" output="screen" args="-O ../data/px4flight/sim/$(arg bag_out_filename).bag --all"/>
 </launch>

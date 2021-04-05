@@ -13,7 +13,7 @@ def main():
 	ubloxRelPosTopic = '/rover/RelPos'
 	gpsTopic = '/boat/PosVelEcef'
 	gpsCompassTopic = '/boat/compass/RelPos'
-	refLlaTopic = '/ref_lla'
+	refLlaTopic = '/rover/PosVelEcef'
 	data = Parser(estRelPosTopic,odomTopic,truthTopic,imuTopic,ubloxRelPosTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
 	filename = 'compare_roscopter.bag'
 	bag = rosbag.Bag('/home/matt/data/px4flight/sim/' + filename)
@@ -24,9 +24,9 @@ def main():
 	get_prn_data(ubloxRelPos,estRelPos)
 	get_pre_data(ubloxRelPos,estRelPos)
 	get_prd_data(ubloxRelPos,estRelPos)
-	get_pn_data(ubloxRelPos,estRelPos)
-	get_pe_data(ubloxRelPos,estRelPos)
-	get_pd_data(ubloxRelPos,estRelPos)
+	get_pn_data(odom,gpsNed)
+	get_pe_data(odom,gpsNed)
+	get_pd_data(odom,gpsNed)
 
 	plt.show()
 
@@ -45,6 +45,9 @@ def get_data(data, bag):
 	gps.time = gps.time - gps.time[0]
 	
 	refLla = data.get_ref_lla(bag)
+	refLla.lat = refLla.lat.item(0)
+	refLla.lon = refLla.lon.item(0)
+	refLla.alt = refLla.alt.item(0)
 
 	return ubloxRelPos, estRelPos, odom,gps,refLla
 
