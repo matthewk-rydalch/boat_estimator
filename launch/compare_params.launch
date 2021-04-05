@@ -3,6 +3,8 @@
 <launch>
     <arg name="bag_out_filename"    value="compare_params"/>
     <arg name="boat_imu"            value="/imu"/>
+    <arg name="base_2_rover_relPos" value="/base_2_rover_relPos"/>
+    <arg name="rover_PosVelEcef"    value="/rover_gps"/>
     <arg name="boat_PosVelEcef"     value="/gps"/>
     <arg name="compass_relPos"      value="/gps_compass"/>
     <arg name="ref_lla"             value="/ref_lla"/>
@@ -13,6 +15,8 @@
         <rosparam command="load" file="$(find boat_estimator)/params/$(arg params1_file).yaml"/>
         <node name="boat_estimator" pkg="boat_estimator" type="estimator_ros.py" output="screen">
             <remap from="imu" to="$(arg boat_imu)"/>
+            <remap from="base_2_rover_relPos" to="$(arg base_2_rover_relPos)"/>
+            <remap from="rover_posVelEcef" to="$(arg rover_PosVelEcef)"/>
             <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
             <remap from="compass_relPos" to="$(arg compass_relPos)"/>
             <remap from="ref_lla" to="$(arg ref_lla)"/>
@@ -23,6 +27,8 @@
         <rosparam command="load" file="$(find boat_estimator)/params/$(arg params2_file).yaml"/>
         <node name="boat_estimator2" pkg="boat_estimator" type="estimator_ros.py" output="screen">
             <remap from="imu" to="$(arg boat_imu)"/>
+            <remap from="base_2_rover_relPos" to="$(arg base_2_rover_relPos)"/>
+            <remap from="rover_posVelEcef" to="$(arg rover_PosVelEcef)"/>
             <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
             <remap from="compass_relPos" to="$(arg compass_relPos)"/>
             <remap from="ref_lla" to="$(arg ref_lla)"/>

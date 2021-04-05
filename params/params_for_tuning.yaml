@@ -1,12 +1,20 @@
-boat_estimator2: {
-    
+boat_estimator: {
+
+pr0: [0.0,0.0,0.0],
+vr0: [0.0,0.0,0.0],
 p0: [0.0,0.0,0.0],
 q0: [0.0,0.0,0.0],
 v0: [0.0,0.0,0.0],
 ba0: [0.0,0.0,0.0],
 bg0: [0.0,0.0,0.0],
 
-sigma0: [100.0,  # pn
+sigma0: [100.0,  # prn
+         100.0,  # pre
+         100.0,  # prd
+         2.0,  # vrn
+         2.0,  # vre
+         2.0,  # vrd
+         100.0,  # pn
          100.0,  # pe
          100.0,  # pd
          360.0,  # phiDeg
@@ -15,14 +23,20 @@ sigma0: [100.0,  # pn
          2.0,  # u
          2.0,  # v
          2.0,  # w
-         1.0,  # bax
-         1.0,  # bay
-         1.0,  # baz
-         1.0,  # bgx
-         1.0,  # bgy
-         1.0], # bgz
+         0.3,  # bax     0.3 worked better for all biases,        
+         0.3,  # bay     but I think this is more true and would perform
+         0.3,  # baz     better for high biases
+         0.3,  # bgx
+         0.3,  # bgy
+         0.3], # bgz
 
-sigmaProcess: [2.0,  # pn
+sigmaProcess: [2.0,  # prn
+               2.0,  # pre
+               2.0,  # prd
+               2.0,  # vrn
+               2.0,  # vre
+               2.0,  # vrd
+               2.0,  # pn
                2.0,  # pe
                2.0,  # pd
                2.0,  # phi
@@ -48,6 +62,8 @@ sigmaProcess: [2.0,  # pn
 sigmaGps: [0.4,     #horizontal
            0.7,     #vertical
            0.4,     #speed
+           0.02,    #rtk horizontal
+           0.04,    #rtk veritical
            0.02],   #rtk compass
 
 gravity: [0.0,0.0,9.81],
@@ -56,4 +72,3 @@ compFiltKp: 0.1,
 compFiltKi: 0.0,
 
 }
-

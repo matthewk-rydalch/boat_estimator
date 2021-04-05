@@ -18,6 +18,10 @@ class ImuMsg:
         self.accelerometers = np.array([accelerometersMetersPerSecondSquared]).T
         self.gyros = np.array([gyrosRadiansPerSecond]).T
 
+class RelPosMsg:
+    def __init__(self,base2RoverRelativePositionNedMeters = [0.0,0.0,0.0]):
+        self.base2RoverRelPos = np.array([base2RoverRelativePositionNedMeters]).T
+
 class GpsMsg:
     def __init__(self,positionEcefMeters = [0.0,0.0,0.0],velocityEcefMetersPerSecond = [0.0,0.0,0.0]):
         self.positionEcef = np.array([positionEcefMeters]).T
