@@ -6,69 +6,50 @@ import numpy as np
 import navpy
 
 def main():
+	estRelPosTopic = '/boat_relPos'
 	odomTopic = '/boat_odom'
 	truthTopic = '/dummyTopic'
 	imuTopic = '/boat/imu'
+	ubloxRelPosTopic = '/rover/RelPos'
 	gpsTopic = '/boat/PosVelEcef'
 	gpsCompassTopic = '/boat/compass/RelPos'
-	refLlaTopic = '/ref_lla'
-	data = Parser(odomTopic,truthTopic,imuTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
+	refLlaTopic = '/rover/PosVelEcef'
+	data = Parser(estRelPosTopic,odomTopic,truthTopic,imuTopic,ubloxRelPosTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
 	filename = 'compare_roscopter.bag'
 	bag = rosbag.Bag('/home/matt/data/px4flight/sim/' + filename)
 
-	odom,gps,refLla = get_data(data, bag)
-	# imuIntegrated = integrateImu(imu,truth)
+	ubloxRelPos,estRelPos,odom,gps,refLla = get_data(data, bag)
 	gpsNed = ecef2ned(gps,refLla)
-	get_north_data(odom,gpsNed)
-	get_east_data(odom,gpsNed)
-	get_down_data(odom,gpsNed)
+
+	get_prn_data(ubloxRelPos,estRelPos)
+	get_pre_data(ubloxRelPos,estRelPos)
+	get_prd_data(ubloxRelPos,estRelPos)
+	get_pn_data(odom,gpsNed)
+	get_pe_data(odom,gpsNed)
+	get_pd_data(odom,gpsNed)
 
 	plt.show()
 
-
 def get_data(data, bag):
+	ubloxRelPos = data.get_ublox_relPos(bag)
+	ubloxRelPos.time = ubloxRelPos.time - ubloxRelPos.time[0]
+	ubloxRelPos.position = -ubloxRelPos.position
+	
+	estRelPos = data.get_estimated_relPos(bag)
+	estRelPos.time = estRelPos.time - estRelPos.time[0]
+
 	odom = data.get_odom(bag)
 	odom.time = odom.time - odom.time[0]
+	
 	gps = data.get_gps(bag)
 	gps.time = gps.time - gps.time[0]
+	
 	refLla = data.get_ref_lla(bag)
-	return odom,gps,refLla
+	refLla.lat = refLla.lat.item(0)
+	refLla.lon = refLla.lon.item(0)
+	refLla.alt = refLla.alt.item(0)
 
-def integrateImu(imu,truth):
-	imuU = []
-	imuV = []
-	imuW = []
-	imuX = []
-	imuY = []
-	imuZ = []
-	imuPhi = []
-	imuTheta = []
-	imuPsi = []
-
-	for i in range(len(imu.time)):
-		if i == 0:
-			dt = imu.time[1]-imu.time[0]
-			imuU.append(truth.velocity[0][0] + imu.accel[0][i]*dt)
-			imuV.append(truth.velocity[1][0] + imu.accel[1][i]*dt)
-			imuW.append(truth.velocity[2][0] + imu.accel[2][i]*dt)
-			imuX.append(truth.position[0][0] + imuU[-1]*dt)
-			imuY.append(truth.position[1][0] + imuV[-1]*dt)
-			imuZ.append(truth.position[2][0] + imuW[-1]*dt)
-			imuPhi.append(imu.omega[0][i]*dt) #TODO: Need to add initial euler angles.  May need to integrate differently/propertly for angles.
-			imuTheta.append(imu.omega[1][i]*dt)
-			imuPsi.append(imu.omega[2][i]*dt)
-		else:
-			dt = imu.time[i] - imu.time[i-1]
-			imuU.append(imuU[-1] + imu.accel[0][i]*dt)
-			imuV.append(imuV[-1] + imu.accel[1][i]*dt)
-			imuW.append(imuW[-1] + imu.accel[2][i]*dt)
-			imuX.append(imuX[-1] + imuU[-1]*dt)
-			imuY.append(imuY[-1] + imuV[-1]*dt)
-			imuZ.append(imuZ[-1] + imuW[-1]*dt)
-			imuPhi.append(imuPhi[-1] + imu.omega[0][i]*dt)
-			imuTheta.append(imuTheta[-1] + imu.omega[1][i]*dt)
-			imuPsi.append(imuPsi[-1] + imu.omega[2][i]*dt)
-	return ImuIntegrated(imu.time,imuX,imuY,imuZ,imuPhi,imuTheta,imuPsi,imuU,imuV,imuW)
+	return ubloxRelPos, estRelPos, odom,gps,refLla
 
 def ecef2ned(gps,refLla):
 	ecefOrigin1D = navpy.lla2ecef(refLla.lat,refLla.lon,refLla.alt)
@@ -79,17 +60,29 @@ def ecef2ned(gps,refLla):
 	gpsNed = GpsNed(gps.time,gpsPositionNed,gpsVelocityNed)
 	return gpsNed
 
-def get_north_data(odom, gpsNed):
+def get_prn_data(ubloxRelPos, estRelPos):
 	fig_num = 1
-	plot_2(fig_num, odom.time, odom.position[0], 'odom', gpsNed.time, gpsNed.position[0], 'gps')
+	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[0], 'ublox n', estRelPos.time, estRelPos.position[0], 'estimate n')
 
-def get_east_data(odom, gpsNed):
+def get_pre_data(ubloxRelPos, estRelPos):
 	fig_num = 2
-	plot_2(fig_num, odom.time, odom.position[1], 'odom', gpsNed.time, gpsNed.position[1], 'gps')
+	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[1], 'ublox n', estRelPos.time, estRelPos.position[1], 'estimate n')
 
-def get_down_data(odom, gpsNed):
+def get_prd_data(ubloxRelPos, estRelPos):
 	fig_num = 3
-	plot_2(fig_num, odom.time, odom.position[2], 'odom', gpsNed.time, gpsNed.position[2], 'gps')
+	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[2], 'ublox n', estRelPos.time, estRelPos.position[2], 'estimate n')
+
+def get_pn_data(odom, gpsNed):
+	fig_num = 4
+	plot_2(fig_num, odom.time, odom.position[0], 'odom n', gpsNed.time, gpsNed.position[0], 'gps n')
+
+def get_pe_data(odom, gpsNed):
+	fig_num = 5
+	plot_2(fig_num, odom.time, odom.position[1], 'odom e', gpsNed.time, gpsNed.position[1], 'gps e')
+
+def get_pd_data(odom, gpsNed):
+	fig_num = 6
+	plot_2(fig_num, odom.time, odom.position[2], 'odom d', gpsNed.time, gpsNed.position[2], 'gps d')
 
 def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
 
@@ -97,20 +90,12 @@ def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
 	plt.plot(t_x, x, label = xlabel)
 	plt.plot(t_y, y, label = ylabel)
 	plt.legend(loc = "upper right")
-	# plt.show()
 
 class GpsNed:
 	def __init__(self,time,position,velocity):
 		self.time = time
 		self.position = position.T
 		self.velocity = velocity.T
-
-class ImuIntegrated:
-	def __init__(self,time,x,y,z,phi,theta,psi,u,v,w):
-		self.time = time
-		self.position = [x,y,z]
-		self.orientation = [phi,theta,psi]
-		self.velocity = [u,v,w]
 
 if __name__ == '__main__':
 	main()

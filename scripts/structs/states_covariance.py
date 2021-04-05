@@ -1,15 +1,14 @@
 import numpy as np
 
 class StatesCovariance:
-   def __init__(self,relPosNedMeters,vRoverNedMetersPerSecond,pNedMeters,qDegrees,vBodyMetersPerSecond,baBodyMetersPerSecondSquared,bgDegreesPerSecond,PCovariance):
-      #TODO need to make units clear and type (numpy array?)
+   def __init__(self,relPosNedMeters,vRoverNedMetersPerSecond,pNedMeters,qRad,vBodyMetersPerSecond,baBodyMetersPerSecondSquared,bgRadPerSecond,PCovariance):
       self.pr = relPosNedMeters                 #Relative Position from rover to base, NED meters
       self.vr = vRoverNedMetersPerSecond        #Velocity of the rover, NED m/s
       self.p = pNedMeters                       #Position of the base, NED meters
-      self.q = qDegrees                         #Orientation of the base, degrees
+      self.q = qRad                             #Orientation of the base, radians
       self.v = vBodyMetersPerSecond             #velocity of the base, body m/s
       self.ba = baBodyMetersPerSecondSquared    #accelerometer bias of the base, body m/s^2
-      self.bg = bgDegreesPerSecond              #gyro bias of the base, deg/s^2
+      self.bg = bgRadPerSecond                  #gyro bias of the base, rad/s^2
 
       self.P = PCovariance
 
