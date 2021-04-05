@@ -52,7 +52,8 @@ class EstimatorRos:
 
     def relPosCallback(self,msg):
         base2RoverRelativePositionNedMeters = np.array(msg.relPosNED) + np.array(msg.relPosHPNED)
-        relPos = RelPosMsg(base2RoverRelativePositionNedMeters)
+        flags = bin(msg.flags)
+        relPos = RelPosMsg(base2RoverRelativePositionNedMeters,flags)
 
         self.estimator.relPos_callback(relPos)
 
@@ -60,7 +61,8 @@ class EstimatorRos:
         positionEcefMeters = msg.position
         velocityEcefMetersPerSecond = msg.velocity
         latLonAltDegM = msg.lla
-        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond,latLonAltDegM)
+        fix = msg.fix
+        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond,latLonAltDegM,fix)
  
         self.estimator.rover_gps_callback(gps)
 
@@ -68,14 +70,16 @@ class EstimatorRos:
         positionEcefMeters = msg.position
         velocityEcefMetersPerSecond = msg.velocity
         latLonAltDegM = msg.lla
-        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond,latLonAltDegM)
+        fix = msg.fix
+        gps = GpsMsg(positionEcefMeters,velocityEcefMetersPerSecond,latLonAltDegM,fix)
  
         self.estimator.base_gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
         #TODO Need to check and see if what we are receiving really is heading or if it is the z rotation in a frame that is rolled and pitched.  It is probably heading.
         headingDeg = msg.relPosHeading
-        gpsCompass = GpsCompassMsg(headingDeg)
+        flags = bin(msg.flags)
+        gpsCompass = GpsCompassMsg(headingDeg,flags)
 
         self.estimator.gps_compass_callback(gpsCompass)
 

@@ -38,7 +38,9 @@ class Estimator:
       ekf.propagate(self.belief,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)
 
    def relPos_callback(self,relPos):
-      #TODO: Add flag checks
+      if relPos.flags[-3] != '1':
+         print('relPos not valid = ', relPos.flags)
+         return
       zt = relPos.base2RoverRelPos
       ht = ekf.update_relPos_measurement_model(self.belief)
       Ct = ekf.get_jacobian_C_relPos()
@@ -46,7 +48,9 @@ class Estimator:
       ekf.update(self.belief,self.params.QtRtk,zt,ht,Ct)
 
    def rover_gps_callback(self,gps):
-      #TODO: Add flag checks
+      if gps.fix != 3:
+         print('rover gps not in fix.  Fix = ', gps.fix)
+         return
       if not self.refLlaSet:
          self.latRef = gps.lla[0]
          self.lonRef = gps.lla[1]
@@ -66,10 +70,11 @@ class Estimator:
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def base_gps_callback(self,gps):
-      #TODO: Add flag checks
+      if gps.fix != 3:
+         print('base gps not in fix.  Fix = ', gps.fix)
+         return
       if not self.refLlaSet:
          return
-
       positionEcefLocal = gps.positionEcef - self.refEcef
       positionNed1D = navpy.ecef2ned(positionEcefLocal,self.latRef,self.lonRef,self.altRef)
       positionNed = np.array([positionNed1D]).T
@@ -83,7 +88,9 @@ class Estimator:
       ekf.update(self.belief,self.params.QtGps,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
-      #TODO: Add flag check
+      if gpsCompass.flags[2] != '1':
+         print('Compass not valid = ', gpsCompass.flags)
+         return
       #TODO: Do I need to take into account the current orientation of the vehicle?
       zt = gpsCompass.heading*np.pi/180.0
       ht = ekf.update_compass_measurement_model(self.belief)

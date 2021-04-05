@@ -19,15 +19,18 @@ class ImuMsg:
         self.gyros = np.array([gyrosRadiansPerSecond]).T
 
 class RelPosMsg:
-    def __init__(self,base2RoverRelativePositionNedMeters = [0.0,0.0,0.0]):
+    def __init__(self,base2RoverRelativePositionNedMeters = [0.0,0.0,0.0],flags = '0b00000000'):
         self.base2RoverRelPos = np.array([base2RoverRelativePositionNedMeters]).T
+        self.flags = flags
 
 class GpsMsg:
-    def __init__(self,positionEcefMeters = [0.0,0.0,0.0],velocityEcefMetersPerSecond = [0.0,0.0,0.0],latLonAltDegM = [0.0,0.0,0.0]):
+    def __init__(self,positionEcefMeters = [0.0,0.0,0.0],velocityEcefMetersPerSecond = [0.0,0.0,0.0],latLonAltDegM = [0.0,0.0,0.0],fix = 0):
         self.positionEcef = np.array([positionEcefMeters]).T
         self.velocityEcef = np.array([velocityEcefMetersPerSecond]).T
         self.lla = np.array(latLonAltDegM)
+        self.fix = fix
 
 class GpsCompassMsg:
-    def __init__(self,headingDeg = 0.0):
+    def __init__(self,headingDeg = 0.0,flags = '0b00000000'):
         self.heading = np.array([[headingDeg]]).T
+        self.flags = flags
