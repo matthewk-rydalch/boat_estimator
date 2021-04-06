@@ -89,8 +89,12 @@ def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
     trueVelocityNed = Rb2i.apply(truth.velocity.T).T
     gps.velocityEcef = navpy.ned2ecef(trueVelocityNed,latRef,lonRef,altRef)
 
+    gps.fix = 3
+
 def compute_gps_compass(truth,gpsCompass):
-    gpsCompass.heading = truth.orientation[2]
+    gpsCompass.heading = truth.orientation[2]*180.0/np.pi
+
+    gpsCompass.flags = 311
 
 def add_imu_noise(imu,accelerometerAccuracy,gyroAccuracy):
     imu.accelerometers[0] = np.random.normal(imu.accelerometers[0],accelerometerAccuracy)
