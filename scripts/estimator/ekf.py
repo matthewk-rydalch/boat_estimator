@@ -17,6 +17,9 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      belief.P = Ad@belief.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):
+     # print('Ct = ', Ct)
+     # print('P = ', belief.P)
+     # print('Qt = ', Qt)
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      belief.pr = belief.pr + dx[0:3]
@@ -35,7 +38,7 @@ def update_dynamic_model(belief,ut):
      omega = ut.gyros - belief.bg
 
      Rb2i = R.from_euler('xyz',belief.q.squeeze())
-     Ri2b = Rb2i.inv() #TODO singular rotations some times cause it to break here
+     Ri2b = Rb2i.inv() #TODO q = nan some times cause it to break here
      sphi = np.sin(belief.q.item(0))
      cphi = np.cos(belief.q.item(0))
      cth = np.cos(belief.q.item(1))
