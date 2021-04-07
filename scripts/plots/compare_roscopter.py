@@ -6,19 +6,22 @@ import numpy as np
 import navpy
 
 def main():
-	estRelPosTopic = '/boat_relPos'
-	odomTopic = '/boat_odom'
+	estRelPosTopic = '/rover2base_relPos'
+	odomTopic = '/base_odom'
 	truthTopic = '/dummyTopic'
+	truePoseTopic = '/dummyTopic'
 	imuTopic = '/boat/imu'
 	ubloxRelPosTopic = '/rover/RelPos'
 	gpsTopic = '/boat/PosVelEcef'
+	roverGpsTopic = '/rover/PosVelEcef'
 	gpsCompassTopic = '/boat/compass/RelPos'
-	refLlaTopic = '/rover/PosVelEcef'
-	data = Parser(estRelPosTopic,odomTopic,truthTopic,imuTopic,ubloxRelPosTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
+	data = Parser(estRelPosTopic,odomTopic,truthTopic,truePoseTopic,imuTopic,ubloxRelPosTopic,gpsTopic,roverGpsTopic,gpsCompassTopic)
 	filename = 'compare_roscopter.bag'
 	bag = rosbag.Bag('/home/matt/data/px4flight/sim/' + filename)
 
-	ubloxRelPos,estRelPos,odom,gps,refLla = get_data(data, bag)
+	timeOffsetEstAheadOfTruth = [1.25,-0.75]
+
+	ubloxRelPos,estRelPos,odom,gps,refLla = get_data(data, bag, timeOffsetEstAheadOfTruth)
 	gpsNed = ecef2ned(gps,refLla)
 
 	get_prn_data(ubloxRelPos,estRelPos)
@@ -30,21 +33,21 @@ def main():
 
 	plt.show()
 
-def get_data(data, bag):
+def get_data(data, bag, timeOffset):
 	ubloxRelPos = data.get_ublox_relPos(bag)
 	ubloxRelPos.time = ubloxRelPos.time - ubloxRelPos.time[0]
 	ubloxRelPos.position = -ubloxRelPos.position
 	
 	estRelPos = data.get_estimated_relPos(bag)
-	estRelPos.time = estRelPos.time - estRelPos.time[0]
+	estRelPos.time = estRelPos.time - estRelPos.time[0] - timeOffset[0]
 
 	odom = data.get_odom(bag)
-	odom.time = odom.time - odom.time[0]
+	odom.time = odom.time - odom.time[0] - timeOffset[1]
 	
 	gps = data.get_gps(bag)
 	gps.time = gps.time - gps.time[0]
-	
-	refLla = data.get_ref_lla(bag)
+
+	roverGps,refLla = data.get_rover_gps(bag)
 	refLla.lat = refLla.lat.item(0)
 	refLla.lon = refLla.lon.item(0)
 	refLla.alt = refLla.alt.item(0)
@@ -63,26 +66,38 @@ def ecef2ned(gps,refLla):
 def get_prn_data(ubloxRelPos, estRelPos):
 	fig_num = 1
 	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[0], 'ublox n', estRelPos.time, estRelPos.position[0], 'estimate n')
+	finalError = ubloxRelPos.position[0][-1] - estRelPos.position[0][-1]
+	print('relative north final error = ', finalError, ' meters')
 
 def get_pre_data(ubloxRelPos, estRelPos):
 	fig_num = 2
-	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[1], 'ublox n', estRelPos.time, estRelPos.position[1], 'estimate n')
+	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[1], 'ublox e', estRelPos.time, estRelPos.position[1], 'estimate e')
+	finalError = ubloxRelPos.position[1][-1] - estRelPos.position[1][-1]
+	print('relative east final error = ', finalError, ' meters')
 
 def get_prd_data(ubloxRelPos, estRelPos):
 	fig_num = 3
-	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[2], 'ublox n', estRelPos.time, estRelPos.position[2], 'estimate n')
+	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[2], 'ublox d', estRelPos.time, estRelPos.position[2], 'estimate d')
+	finalError = ubloxRelPos.position[2][-1] - estRelPos.position[2][-1]
+	print('relative down final error = ', finalError, ' meters')
 
 def get_pn_data(odom, gpsNed):
 	fig_num = 4
 	plot_2(fig_num, odom.time, odom.position[0], 'odom n', gpsNed.time, gpsNed.position[0], 'gps n')
+	finalError = odom.position[0][-1] - gpsNed.position[0][-1]
+	print('north final error = ', finalError, ' meters')
 
 def get_pe_data(odom, gpsNed):
 	fig_num = 5
 	plot_2(fig_num, odom.time, odom.position[1], 'odom e', gpsNed.time, gpsNed.position[1], 'gps e')
+	finalError = odom.position[1][-1] - gpsNed.position[1][-1]
+	print('East final error = ', finalError, ' meters')
 
 def get_pd_data(odom, gpsNed):
 	fig_num = 6
 	plot_2(fig_num, odom.time, odom.position[2], 'odom d', gpsNed.time, gpsNed.position[2], 'gps d')
+	finalError = odom.position[2][-1] - gpsNed.position[2][-1]
+	print('down final error = ', finalError, ' meters')
 
 def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
 

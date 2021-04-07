@@ -1,5 +1,6 @@
 import navpy
 import numpy as np
+import math
 
 import sys
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
@@ -21,8 +22,14 @@ class Estimator:
       self.refEcef = np.zeros((3,1))
       self.imuPrevTime = 0.0
       self.firstImu = True
+      self.stop = False
 
    def imu_callback(self,imu):
+      if math.isnan(self.belief.q[0][0]) == True and self.stop == False:
+         print("q = nan")
+         self.stop = True
+      if self.stop == True:
+         return
       if self.firstImu:
          self.imuPrevTime = imu.time
          self.firstImu = False
@@ -38,6 +45,8 @@ class Estimator:
       ekf.propagate(self.belief,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)
 
    def relPos_callback(self,relPos):
+      if self.stop == True:
+         return
       if relPos.flags[-3] != '1':
          print('relPos not valid = ', relPos.flags)
          return
@@ -48,6 +57,8 @@ class Estimator:
       ekf.update(self.belief,self.params.QtRtk,zt,ht,Ct)
 
    def rover_gps_callback(self,gps):
+      if self.stop == True:
+         return
       if gps.fix != 3:
          print('rover gps not in fix.  Fix = ', gps.fix)
          return
@@ -70,6 +81,8 @@ class Estimator:
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def base_gps_callback(self,gps):
+      if self.stop == True:
+         return
       if gps.fix != 3:
          print('base gps not in fix.  Fix = ', gps.fix)
          return
@@ -88,6 +101,8 @@ class Estimator:
       ekf.update(self.belief,self.params.QtGps,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
+      if self.stop == True:
+         return
       if gpsCompass.flags[2] != '1':
          print('Compass not valid = ', gpsCompass.flags)
          return

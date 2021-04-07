@@ -30,8 +30,8 @@ class EstimatorRos:
         params = EstimatorParams()
         self.estimator = Estimator(params)
 
-        self.boat_estimate_pub_ = rospy.Publisher('boat_odom', Odometry, queue_size=5, latch=True)
-        self.boat_relative_position_estimate_pub_ = rospy.Publisher('boat_relPos', Vector3Stamped, queue_size=5, latch=True)
+        self.boat_estimate_pub_ = rospy.Publisher('base_odom', Odometry, queue_size=5, latch=True)
+        self.boat_relative_position_estimate_pub_ = rospy.Publisher('rover2base_relPos', Vector3Stamped, queue_size=5, latch=True)
         self.imu_sub_ = rospy.Subscriber('imu', Imu, self.imuCallback, queue_size=5)
         self.base_2_rover_relPos_sub_ = rospy.Subscriber('base_2_rover_relPos', RelPos, self.relPosCallback, queue_size=5)
         self.rover_pos_vel_ecef_sub_ = rospy.Subscriber('rover_posVelEcef', PosVelEcef, self.roverPosVelEcefCallback, queue_size=5)

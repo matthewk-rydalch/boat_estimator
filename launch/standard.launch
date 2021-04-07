@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="boat_imu"            default="/boat/imu"/>
+    <arg name="base_2_rover_relPos" default="/rover/RelPos"/>
+    <arg name="rover_PosVelEcef"    default="/rover/PosVelEcef"/>
+    <arg name="boat_PosVelEcef"     default="/boat/PosVelEcef"/>
+    <arg name="compass_relPos"      default="/boat/compass/RelPos"/>
+    <arg name="params_file"         default="params"/>
+
+    <rosparam command="load" file="$(find boat_estimator)/params/$(arg params_file).yaml"/>
+    <node name="boat_estimator" pkg="boat_estimator" type="estimator_ros.py" output="screen">
+        <remap from="imu" to="$(arg boat_imu)"/>
+        <remap from="base_2_rover_relPos" to="$(arg base_2_rover_relPos)"/>
+        <remap from="rover_posVelEcef" to="$(arg rover_PosVelEcef)"/>
+        <remap from="base_posVelEcef" to="$(arg boat_PosVelEcef)"/>
+        <remap from="compass_relPos" to="$(arg compass_relPos)"/>
+    </node>
+</launch>

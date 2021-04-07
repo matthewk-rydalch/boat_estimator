@@ -12,14 +12,14 @@
 
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock ../data/px4flight/outdoor/0318/$(arg bag_in_filename).bag"/>
 
-    <rosparam command="load" file="$(find boat_estimator)/params/$(arg params_file).yaml"/>
-    <node name="boat_estimator" pkg="boat_estimator" type="estimator_ros.py" output="screen">
-        <remap from="imu" to="$(arg boat_imu)"/>
-        <remap from="base_2_rover_relPos" to="$(arg base_2_rover_relPos)"/>
-        <remap from="rover_posVelEcef" to="$(arg rover_PosVelEcef)"/>
-        <remap from="base_posVelEcef" to="$(arg boat_PosVelEcef)"/>
-        <remap from="compass_relPos" to="$(arg compass_relPos)"/>
-    </node>
+    <include file="$(find boat_estimator)/launch/standard.launch">
+        <arg name="boat_imu"            value="$(arg boat_imu)"/>
+        <arg name="base_2_rover_relPos" value="$(arg base_2_rover_relPos)"/>
+        <arg name="rover_PosVelEcef"    value="$(arg rover_PosVelEcef)"/>
+        <arg name="boat_PosVelEcef"     value="$(arg boat_PosVelEcef)"/>
+        <arg name="compass_relPos"      value="$(arg compass_relPos)"/>
+        <arg name="params_file"         value="$(arg params_file)"/>
+    </include>
 
     <node pkg="rosbag" type="record" name="record" output="screen" args="-O ../data/px4flight/sim/$(arg bag_out_filename).bag --all"/>
 </launch>

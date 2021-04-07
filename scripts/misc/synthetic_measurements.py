@@ -68,6 +68,28 @@ def compute_truth(t,truth):
     truth.acceleration[1] = bodyAcceleration[1]
     truth.acceleration[2] = bodyAcceleration[2]
 
+def compute_rover_truth(t,truth):
+    truth.position[0] = 0.2*np.sin(t)
+    truth.velocity[0] = 1.0 + 0.2*np.cos(t)
+    truth.acceleration[0] = -0.2*np.sin(t)
+
+    truth.position[1] = 0.1*t**2 
+    truth.velocity[1] = 0.2*t
+    truth.acceleration[1] = 0.2
+
+    truth.position[2] = -0.3*np.sin(t)
+    truth.velocity[2] = -0.3*np.cos(t)
+    truth.acceleration[2] = 0.3*np.sin(t)
+
+    truth.orientation[0] = 0.0
+    truth.angularVelocity[0] = 0.0
+
+    truth.orientation[1] = 0.0
+    truth.angularVelocity[1] = 0.0
+
+    truth.orientation[2] = 0.0
+    truth.angularVelocity[2] = 0.0
+
 def compute_imu(truth,imu,gravity):
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
     Ri2b = Rb2i.inv()
@@ -89,8 +111,27 @@ def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
     trueVelocityNed = Rb2i.apply(truth.velocity.T).T
     gps.velocityEcef = navpy.ned2ecef(trueVelocityNed,latRef,lonRef,altRef)
 
+    gps.fix = 3
+
+def compute_rover_gps(truth,gps,latRef,lonRef,altRef,originEcef):
+    gps.lla = navpy.ned2lla(truth.position,latRef,lonRef,altRef)
+
+    ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
+    gps.positionEcef = ecefPositionRelative + originEcef
+    
+    gps.velocityEcef = navpy.ned2ecef(truth.velocity,latRef,lonRef,altRef)
+
+    gps.fix = 3
+
+def compute_rover_relative_position(baseTruth,roverTruth,base2RoverRelPos):
+    base2RoverRelPos.base2RoverRelPos = roverTruth.position - baseTruth.position
+
+    base2RoverRelPos.flags = 311
+
 def compute_gps_compass(truth,gpsCompass):
-    gpsCompass.heading = truth.orientation[2]
+    gpsCompass.heading = truth.orientation[2]*180.0/np.pi
+
+    gpsCompass.flags = 311
 
 def add_imu_noise(imu,accelerometerAccuracy,gyroAccuracy):
     imu.accelerometers[0] = np.random.normal(imu.accelerometers[0],accelerometerAccuracy)
@@ -116,6 +157,11 @@ def add_gps_noise(gps,gpsHorizontalAccuracy,gpsVerticalAccuracy,gpsSpeedAccuracy
     gps.velocityEcef[0] = gps.velocityEcef[0] + gpsNoise[3]
     gps.velocityEcef[1] = gps.velocityEcef[1] + gpsNoise[4]
     gps.velocityEcef[2] = gps.velocityEcef[2] + gpsNoise[5]
+
+def add_rtk_noise(relPos,rtkHorizontalAccuracyStdDev,rtkVerticalAccuracyStdDev):
+    for i in range(2):
+        relPos.base2RoverRelPos[i] = np.random.normal(relPos.base2RoverRelPos[i],rtkHorizontalAccuracyStdDev)
+    relPos.base2RoverRelPos[2] = np.random.normal(relPos.base2RoverRelPos[2],rtkVerticalAccuracyStdDev)
 
 def add_gps_compass_noise(gpsCompass,gpsCompassAccuracy,alpha,gpsCompassNoise):
     whiteNoise = np.random.normal(0.0,gpsCompassAccuracy)

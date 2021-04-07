@@ -2,18 +2,18 @@ import rosbag
 import pickle
 from collections import namedtuple
 import numpy as np
-from geometry_msgs.msg import Pose
 
 class Parser:
-	def __init__(self,estRelPosTopic,odomTopic,truthTopic,imuTopic,ubloxRelPosTopic,gpsTopic,gpsCompassTopic,refLlaTopic):
+	def __init__(self,estRelPosTopic,odomTopic,truthTopic,truePoseTopic,imuTopic,ubloxRelPosTopic,gpsTopic,roverGpsTopic,gpsCompassTopic):
 		self.estRelPosTopic = estRelPosTopic
 		self.odomTopic = odomTopic
 		self.truthTopic = truthTopic
+		self.truePoseTopic = truePoseTopic
 		self.imuTopic = imuTopic
 		self.ubloxRelPosTopic = ubloxRelPosTopic
+		self.roverGpsTopic = roverGpsTopic
 		self.gpsTopic = gpsTopic
 		self.gpsCompassTopic = gpsCompassTopic
-		self.refLlaTopic = refLlaTopic
 
 	def get_ublox_relPos(self, bag):
 		sec = []
@@ -97,6 +97,30 @@ class Parser:
 
 		return Odom(sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz)
 
+	def get_true_pose(self, bag):
+		sec = []
+		nsec = []
+		pn = []
+		pe = []
+		pd = []
+		qx = []
+		qy = []
+		qz = []
+		qw = []
+
+		for topic, msg, t in bag.read_messages(topics=[self.truePoseTopic]):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			pn.append(msg.pose.position.x)
+			pe.append(msg.pose.position.y)
+			pd.append(msg.pose.position.z)
+			qx.append(msg.pose.orientation.x)
+			qy.append(msg.pose.orientation.y)
+			qz.append(msg.pose.orientation.z)
+			qw.append(msg.pose.orientation.w)
+
+		return Pose(sec,nsec,pn,pe,pd,qx,qy,qz,qw)
+
 	def get_imu(self, bag):
 		sec = []
 		nsec = []
@@ -157,6 +181,34 @@ class Parser:
 
 		return Gps(sec,nsec,px,py,pz,vx,vy,vz)
 
+	def get_rover_gps(self, bag):
+		sec = []
+		nsec = []
+		px = []
+		py = []
+		pz = []
+		vx = []
+		vy = []
+		vz = []
+		lat = []
+		lon = []
+		alt = []
+
+		for topic, msg, t in bag.read_messages(topics=[self.roverGpsTopic]):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			px.append(msg.position[0])
+			py.append(msg.position[1])
+			pz.append(msg.position[2])
+			vx.append(msg.velocity[0])
+			vy.append(msg.velocity[1])
+			vz.append(msg.velocity[2])
+			lat.append(msg.lla[0])
+			lon.append(msg.lla[1])
+			alt.append(msg.lla[2])
+
+		return Gps(sec,nsec,px,py,pz,vx,vy,vz),refLla(lat,lon,alt)
+
 	def get_gps_compass(self, bag):
 		sec = []
 		nsec = []
@@ -169,18 +221,6 @@ class Parser:
 
 		return GpsCompass(sec,nsec,heading)
 
-	def get_ref_lla(self, bag):
-		lat = []
-		lon = []
-		alt = []
-
-		for topic, msg, t in bag.read_messages(topics=[self.refLlaTopic]):
-			lat.append(msg.lla[0])
-			lon.append(msg.lla[1])
-			alt.append(msg.lla[2])
-
-		return refLla(lat,lon,alt)
-
 class Odom:
 	def __init__(self,sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz):
 		
@@ -188,6 +228,13 @@ class Odom:
 		self.position = np.array([pn,pe,pd])
 		self.quat = np.array([qx,qy,qz,qw])
 		self.velocity = np.array([vx,vy,vz])
+
+class Pose:
+	def __init__(self,sec,nsec,pn,pe,pd,qx,qy,qz,qw):
+		
+		self.time = np.array(sec)+np.array(nsec)*1E-9
+		self.position = np.array([pn,pe,pd])
+		self.quat = np.array([qx,qy,qz,qw])
 
 class Imu:
 	def __init__(self,sec,nsec,ax,ay,az,wx,wy,wz):

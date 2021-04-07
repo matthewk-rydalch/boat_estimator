@@ -15,7 +15,7 @@
         <remap from="imu" to="$(arg boat_imu)"/>
         <remap from="base_2_rover_relPos" to="$(arg base_2_rover_relPos)"/>
         <remap from="rover_posVelEcef" to="$(arg rover_PosVelEcef)"/>
-        <remap from="posVelEcef" to="$(arg boat_PosVelEcef)"/>
+        <remap from="base_posVelEcef" to="$(arg boat_PosVelEcef)"/>
         <remap from="compass_relPos" to="$(arg compass_relPos)"/>
     </node>
 
