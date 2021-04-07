@@ -4,16 +4,16 @@ from collections import namedtuple
 import numpy as np
 
 class Parser:
-	def __init__(self,estRelPosTopic,odomTopic,truthTopic,truePoseTopic,imuTopic,ubloxRelPosTopic,gpsTopic,gpsCompassTopic,refLlaTopic):
+	def __init__(self,estRelPosTopic,odomTopic,truthTopic,truePoseTopic,imuTopic,ubloxRelPosTopic,gpsTopic,roverGpsTopic,gpsCompassTopic):
 		self.estRelPosTopic = estRelPosTopic
 		self.odomTopic = odomTopic
 		self.truthTopic = truthTopic
 		self.truePoseTopic = truePoseTopic
 		self.imuTopic = imuTopic
 		self.ubloxRelPosTopic = ubloxRelPosTopic
+		self.roverGpsTopic = roverGpsTopic
 		self.gpsTopic = gpsTopic
 		self.gpsCompassTopic = gpsCompassTopic
-		self.refLlaTopic = refLlaTopic
 
 	def get_ublox_relPos(self, bag):
 		sec = []
@@ -181,6 +181,34 @@ class Parser:
 
 		return Gps(sec,nsec,px,py,pz,vx,vy,vz)
 
+	def get_rover_gps(self, bag):
+		sec = []
+		nsec = []
+		px = []
+		py = []
+		pz = []
+		vx = []
+		vy = []
+		vz = []
+		lat = []
+		lon = []
+		alt = []
+
+		for topic, msg, t in bag.read_messages(topics=[self.roverGpsTopic]):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			px.append(msg.position[0])
+			py.append(msg.position[1])
+			pz.append(msg.position[2])
+			vx.append(msg.velocity[0])
+			vy.append(msg.velocity[1])
+			vz.append(msg.velocity[2])
+			lat.append(msg.lla[0])
+			lon.append(msg.lla[1])
+			alt.append(msg.lla[2])
+
+		return Gps(sec,nsec,px,py,pz,vx,vy,vz),refLla(lat,lon,alt)
+
 	def get_gps_compass(self, bag):
 		sec = []
 		nsec = []
@@ -192,18 +220,6 @@ class Parser:
 			heading.append(msg.relPosHeading)
 
 		return GpsCompass(sec,nsec,heading)
-
-	def get_ref_lla(self, bag):
-		lat = []
-		lon = []
-		alt = []
-
-		for topic, msg, t in bag.read_messages(topics=[self.refLlaTopic]):
-			lat.append(msg.lla[0])
-			lon.append(msg.lla[1])
-			alt.append(msg.lla[2])
-
-		return refLla(lat,lon,alt)
 
 class Odom:
 	def __init__(self,sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz):

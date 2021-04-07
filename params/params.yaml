@@ -23,9 +23,9 @@ sigma0: [100.0,  # prn
          2.0,  # u
          2.0,  # v
          2.0,  # w
-         0.3,  # bax     0.3 worked better for all biases,        
-         0.3,  # bay     but I think this is more true and would perform
-         0.3,  # baz     better for high biases
+         0.01,  # bax     0.3 worked better for all biases,        
+         0.01,  # bay     but I think this is more true and would perform
+         0.01,  # baz     better for high biases
          0.3,  # bgx
          0.3,  # bgy
          0.3], # bgz
@@ -45,19 +45,19 @@ sigmaProcess: [2.0,  # prn
                2.0,  # u
                2.0,  # v
                2.0,  # w
-               1.0,     #bax
-               1.0,     #bay
-               1.0,     #baz
+               0.1,     #bax
+               0.1,     #bay
+               0.1,     #baz
                1.0,     # bgx
                1.0,     # bgy
                1.0],    # bgz
 
-  sigmaImu: [0.001,  #ax
-             0.001,  #ay
-             0.001,  #az
-             0.001,  #p
-             0.001,  #q
-             0.001], #r
+  sigmaImu: [0.01,  #ax
+             0.01,  #ay
+             0.01,  #az
+             0.01,  #p
+             0.01,  #q
+             0.01], #r
 
 sigmaGps: [0.4,     #horizontal
            0.7,     #vertical

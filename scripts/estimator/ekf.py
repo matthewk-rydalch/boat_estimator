@@ -9,7 +9,10 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      belief.q[2] = belief.q[2] + ft.dq[2]*dt
      belief.v = belief.v + ft.dv*dt
      belief.ba = belief.ba + ft.dba*dt
+     # belief.ba = np.zeros((3,1))
      belief.bg = belief.bg + ft.dbg*dt
+     print('ba = ', belief.ba)
+     # print('bg = ', belief.bg)
 
      Ad = np.identity(belief.m) + At*dt
      Bd = Bt*dt
@@ -17,11 +20,6 @@ def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
      belief.P = Ad@belief.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):
-     # print('belief.P = ', belief.P)
-     # print('Qt = ', Qt)
-     # print('zt = ', zt)
-     # print('ht = ', ht)
-     # print('Ct = ', Ct)
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      belief.pr = belief.pr + dx[0:3]
@@ -35,10 +33,6 @@ def update(belief,Qt,zt,ht,Ct):
      belief.P = (np.identity(belief.m) - Lt@Ct)@belief.P
 
 def update_dynamic_model(belief,ut):
-     gravity = np.array([[0.0,0.0,9.81]]).T
-     accel = ut.accelerometers - belief.ba
-     omega = ut.gyros - belief.bg
-
      Rb2i = R.from_euler('xyz',belief.q.squeeze())
      Ri2b = Rb2i.inv() #TODO q = nan some times cause it to break here
      sphi = np.sin(belief.q.item(0))
@@ -49,11 +43,16 @@ def update_dynamic_model(belief,ut):
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
 
+     gravity = np.array([[0.0,0.0,9.81]]).T
+     accel = ut.accelerometers + Ri2b.apply(gravity.T).T - belief.ba
+     omega = ut.gyros - belief.bg
+
      dpr = Rb2i.apply(belief.v.T).T - belief.vr
      dvr = np.zeros((3,1))
      dp = Rb2i.apply(belief.v.T).T
      dq = attitudeModelInversion @ omega
-     dv = accel + Ri2b.apply(gravity.T).T - np.cross(omega.T,belief.v.T).T
+     # dv = accel - np.cross(omega.T,belief.v.T).T
+     dv = accel + np.cross(omega.T,belief.v.T).T
      dba = np.zeros((3,1))
      dbg = np.zeros((3,1))
      ft = np.concatenate((dpr,dvr,dp,dq,dv,dba,dbg),axis=0)
@@ -107,6 +106,9 @@ def update_jacobian_B(belief):
      dvdw = np.array([[0.0, belief.v.item(2), -belief.v.item(1)],
                          [-belief.v.item(2), 0.0, belief.v.item(0)],
                          [belief.v.item(1), -belief.v.item(0), 0.0]])
+     # dvdw = np.array([[0.0, -belief.v.item(2), belief.v.item(1)],
+     #                     [belief.v.item(2), 0.0, -belief.v.item(0)],
+     #                     [-belief.v.item(1), belief.v.item(0), 0.0]])
      dvdu = np.concatenate((dvda, dvdw), axis=1)
 
      dBada = np.identity(3)
