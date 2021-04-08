@@ -9,12 +9,15 @@ import ekf
 import comp_filter
 from states_covariance import StatesCovariance
 from dynamic_model import DynamicModel
+from inputs import Inputs
+from base_states import BaseStates
 
 class Estimator:
    def __init__(self,params):
       self.params = params
       self.belief = StatesCovariance(self.params.pr0,self.params.vr0,self.params.p0,self.params.q0, \
          self.params.v0,self.params.ba0,self.params.bg0, self.params.P0)
+      self.baseStates = BaseStates(self.params.p0,self.params.euler0,self.params.vb0)
       self.refLlaSet = False
       self.latRef = 0.0
       self.lonRef = 0.0
@@ -22,7 +25,6 @@ class Estimator:
       self.refEcef = np.zeros((3,1))
       self.imuPrevTime = 0.0
       self.firstImu = True
-      self.stop = False
 
    def imu_callback(self,imu):
       if self.firstImu:
@@ -73,8 +75,6 @@ class Estimator:
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def base_gps_callback(self,gps):
-      if self.stop == True:
-         return
       if gps.fix != 3:
          print('base gps not in fix.  Fix = ', gps.fix)
          return
