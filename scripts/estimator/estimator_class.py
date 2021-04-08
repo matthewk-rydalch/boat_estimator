@@ -49,7 +49,7 @@ class Estimator:
       ht = ekf.update_rtk_relPos_model(self.belief.p)
       Ct = ekf.get_jacobian_C_relPos()
 
-      # ekf.update(self.belief,self.params.QtRtk,zt,ht,Ct)
+      ekf.update(self.belief,self.params.QtRtk,zt,ht,Ct)
 
    def rover_gps_callback(self,gps):
       if gps.fix != 3:
@@ -71,7 +71,7 @@ class Estimator:
       ht = ekf.update_rover_gps_velocity_model(self.belief.vr)
       Ct = ekf.get_jacobian_C_rover_velocity()
 
-      # ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
+      ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def base_gps_callback(self,gps):
       if gps.fix != 3:
@@ -79,17 +79,14 @@ class Estimator:
          return
       if not self.refLlaSet:
          return
-      positionEcefLocal = gps.positionEcef - self.refEcef
-      positionNed1D = navpy.ecef2ned(positionEcefLocal,self.latRef,self.lonRef,self.altRef)
-      positionNed = np.array([positionNed1D]).T
       velocityNed1D = navpy.ecef2ned(gps.velocityEcef, self.latRef, self.lonRef, self.altRef)
       velocityNed = np.array([velocityNed1D]).T
 
-      zt = np.concatenate((positionNed,velocityNed),axis=0)
+      zt = velocityNed
       ht = ekf.update_base_gps_velocity_model(self.baseStates.euler,self.belief.vb)
       Ct = ekf.get_jacobian_C_base_velocity(self.baseStates)
 
-      # ekf.update(self.belief,self.params.QtGps,zt,ht,Ct)
+      ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
       if gpsCompass.flags[2] != '1':
@@ -99,7 +96,7 @@ class Estimator:
       ht = ekf.update_rtk_compass_model(self.belief.psi)
       Ct = ekf.get_jacobian_C_compass()
       
-      # ekf.update(self.belief,self.params.QtRtkCompass,zt,ht,Ct)
+      ekf.update(self.belief,self.params.QtRtkCompass,zt,ht,Ct)
 
    def update_full_state(self,phi,theta):
       self.baseStates.p = self.belief.p

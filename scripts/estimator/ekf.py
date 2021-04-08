@@ -13,9 +13,10 @@ def propagate(belief,RProcess,RInputs,ft,At,Bt,dt):
      belief.P = Ad@belief.P@Ad.T + Bd@RInputs@Bd.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):
-     print('belief.P = ', belief.P)
-     print('Ct = ',Ct)
-     print('Qt = ', Qt)
+     # print('Qt = ', Qt)
+     # print('zt = ', zt)
+     # print('ht = ', ht)
+     # print('Ct = ', Ct)
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      belief.p = belief.p + dx[0:3]
@@ -58,16 +59,16 @@ def update_base_gps_velocity_model(eulerAnglesHat,baseVelocityHat):
      return ht
 
 def update_rtk_compass_model(psiHat):
-     ht = np.array([[psiHat]]).T
+     ht = np.array([psiHat])
      return ht
 
 def update_jacobian_A(belief,ut):
-     sphi = np.sin(ut.phi)
-     cphi = np.cos(ut.phi)
-     sth = np.sin(ut.theta)
-     cth = np.cos(ut.theta)
-     spsi = np.sin(belief.psi)
-     cpsi = np.cos(belief.psi)
+     sphi = np.sin(ut.phi).squeeze()
+     cphi = np.cos(ut.phi).squeeze()
+     sth = np.sin(ut.theta).squeeze()
+     cth = np.cos(ut.theta).squeeze()
+     spsi = np.sin(belief.psi).squeeze()
+     cpsi = np.cos(belief.psi).squeeze()
 
      euler = np.array([ut.phi,ut.theta,belief.psi]).T
      Rb2i = R.from_euler('xyz',euler.squeeze())

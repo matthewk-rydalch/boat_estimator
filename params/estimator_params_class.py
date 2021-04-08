@@ -62,15 +62,6 @@ class EstimatorParams:
                     sigmaGps[2]**2, # gpsVelocityD
                     ])
 
-        self.QtGps = np.diag([
-                    sigmaGps[0]**2, # gpsN
-                    sigmaGps[0]**2, # gpsE
-                    sigmaGps[1]**2, # gpsD
-                    sigmaGps[2]**2, # gpsU
-                    sigmaGps[2]**2, # gpsV
-                    sigmaGps[2]**2, # gpsW
-                    ])
-
         self.QtRtkCompass = np.array([[sigmaGps[5]**2]]) # rtk compass heading
 
         self.kp = rospy.get_param('~compFiltKp',0.1)
