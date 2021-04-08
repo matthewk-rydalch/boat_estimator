@@ -19,11 +19,11 @@ def run(baseStates,imu,dt,kp):
 
      dEuler = attitudeModelInversion @ imu.gyros + kp*eulerError
      
-     phi = baseStates.euler.item(0) + dEuler[0]*dt
-     theta = baseStates.euler.item(1) + dEuler[1]*dt
+     phi = baseStates.euler.item(0) + dEuler.item(0)*dt
+     theta = baseStates.euler.item(1) + dEuler.item(1)*dt
 
      ut = [imu.accelerometers.item(0),imu.accelerometers.item(1),imu.accelerometers.item(2), \
                imu.gyros.item(0),imu.gyros.item(1),imu.gyros.item(2), \
-               phi, theta]
+               np.array([phi]), np.array([theta])]
 
      return ut

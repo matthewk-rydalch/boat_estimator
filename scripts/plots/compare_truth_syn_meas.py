@@ -82,19 +82,19 @@ def get_down_data(truth,est):
 def get_roll_data(truth,est):
 	fig_num = 4
 	plot_2(fig_num, truth.time, truth.euler[0], 'truth_roll', est.time, est.euler[0], 'estimated_roll')
-	finalError = (est.euler[0][-1] - truth.euler[0][-1])*180.0/np.pi
+	finalError = est.euler[0][-1] - truth.euler[0][-1]
 	print('phi final error = ', finalError, ' deg')
 	
 def get_pitch_data(truth,est):
 	fig_num = 5
 	plot_2(fig_num, truth.time, truth.euler[1], 'truth_pitch', est.time, est.euler[1], 'estimated_pitch')
-	finalError = (est.euler[1][-1] - truth.euler[1][-1])*180.0/np.pi
+	finalError = est.euler[1][-1] - truth.euler[1][-1]
 	print('theta final error = ', finalError, ' deg')
 
 def get_yaw_data(truth,est):
 	fig_num = 6
 	plot_2(fig_num, truth.time, truth.euler[2], 'truth_yaw', est.time, est.euler[2], 'estimated_yaw')
-	finalError = (est.euler[2][-1] - truth.euler[2][-1])*180.0/np.pi
+	finalError = est.euler[2][-1] - truth.euler[2][-1]
 	print('psi final error = ', finalError, ' deg')
 
 def get_u_data(truth,est):

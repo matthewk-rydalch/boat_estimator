@@ -35,7 +35,7 @@ def update_dynamic_model(belief,ut):
 
      dp = Rb2i.apply(belief.vb.T).T - belief.vr
      dvr = np.zeros((3,1))
-     dpsi = np.array([sphi/cth*ut.gyros.item(1) + cphi/cth*ut.gyros.item(2)])
+     dpsi = sphi/cth*ut.gyros.item(1) + cphi/cth*ut.gyros.item(2)
      dvb = ut.accelerometers + Ri2b.apply(gravity.T).T - np.cross(ut.gyros.T,belief.vb.T).T #TODO: May want to check the signs especially on the gravity term
      ft = np.concatenate((dp,dvr,dpsi,dvb),axis=0)
 
@@ -55,7 +55,7 @@ def update_base_gps_velocity_model(eulerAnglesHat,baseVelocityHat):
      return ht
 
 def update_rtk_compass_model(psiHat):
-     ht = np.array([psiHat])
+     ht = psiHat
      return ht
 
 def update_jacobian_A(belief,ut):

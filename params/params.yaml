@@ -8,33 +8,33 @@ vb0: [0.0,0.0,0.0],
 sigma0: [100.0,  # pn
          100.0,  # pe
          100.0,  # pd
-         2.0,  # vrn
-         2.0,  # vre
-         2.0,  # vrd
+         10.0,  # vrn
+         10.0,  # vre
+         10.0,  # vrd
          360.0,  # psiDeg
-         2.0,  # ub
-         2.0,  # vb
-         2.0],  # wb
+         10.0,  # ub
+         10.0,  # vb
+         10.0],  # wb
 
 sigmaProcess: [2.0,  # pn
                2.0,  # pe
                2.0,  # pd
-               2.0,  # vrn
-               2.0,  # vre
-               2.0,  # vrd
+               10.0,  # vrn
+               10.0,  # vre
+               10.0,  # vrd
                2.0,  # psi
-               2.0,  # ub
-               2.0,  # vb
-               2.0],  # wb
+               10.0,  # ub #TODO: These seem a little high.  Maybe there is somethign wrong that makes them be so high?
+               10.0,  # vb
+               10.0],  # wb
 
-sigmaInputs: [0.01,  #ax
-              0.01,  #ay
-              0.01,  #az
-              0.01,  #p
-              0.01,  #q
-              0.01,  #r
-              0.01,  #phi complimentary filter
-              0.01],  #theta complimentary filter
+sigmaInputs: [1.0,  #ax
+              1.0,  #ay
+              1.0,  #az
+              1.0,  #p
+              1.0,  #q
+              1.0,  #r
+              1.0,  #phi complimentary filter
+              1.0],  #theta complimentary filter
 
 sigmaGps: [0.4,     #horizontal
            0.7,     #vertical

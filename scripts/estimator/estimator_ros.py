@@ -87,9 +87,9 @@ class EstimatorRos:
 
         self.odomEstimate.header.stamp = timeStamp
 
-        self.odomEstimate.pose.pose.position.x = self.estimator.baseStates.p[0]
-        self.odomEstimate.pose.pose.position.y = self.estimator.baseStates.p[1]
-        self.odomEstimate.pose.pose.position.z = self.estimator.baseStates.p[2]
+        self.odomEstimate.pose.pose.position.x = self.estimator.baseStates.p.item(0)
+        self.odomEstimate.pose.pose.position.y = self.estimator.baseStates.p.item(1)
+        self.odomEstimate.pose.pose.position.z = self.estimator.baseStates.p.item(2)
 
         quat = R.from_euler('xyz', self.estimator.baseStates.euler.T, degrees=False).as_quat()
         self.odomEstimate.pose.pose.orientation.x = quat.item(0)
@@ -97,9 +97,9 @@ class EstimatorRos:
         self.odomEstimate.pose.pose.orientation.z = quat.item(2)
         self.odomEstimate.pose.pose.orientation.w = quat.item(3)
 
-        self.odomEstimate.twist.twist.linear.x = self.estimator.baseStates.vb[0]
-        self.odomEstimate.twist.twist.linear.y = self.estimator.baseStates.vb[1]
-        self.odomEstimate.twist.twist.linear.z = self.estimator.baseStates.vb[2]
+        self.odomEstimate.twist.twist.linear.x = self.estimator.baseStates.vb.item(0)
+        self.odomEstimate.twist.twist.linear.y = self.estimator.baseStates.vb.item(1)
+        self.odomEstimate.twist.twist.linear.z = self.estimator.baseStates.vb.item(2)
 
         self.boat_estimate_pub_.publish(self.odomEstimate)
 

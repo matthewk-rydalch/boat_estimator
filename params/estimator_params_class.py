@@ -6,7 +6,7 @@ class EstimatorParams:
         self.p0 = np.array([rospy.get_param('~p0',[0.0,0.0,0.0])]).T
         self.vr0 = np.array([rospy.get_param('~vr0',[0.0,0.0,0.0])]).T
         self.euler0 = np.array([rospy.get_param('~euler0',[0.0,0.0,0.0])]).T
-        self.psi0 = self.euler0.item(2)
+        self.psi0 = np.array([[self.euler0.item(2)]])
         self.vb0 = np.array([rospy.get_param('~vb0',[0.0,0.0,0.0])]).T
 
         sigma0 = rospy.get_param('~sigma0',[3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0])
