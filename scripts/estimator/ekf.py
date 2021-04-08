@@ -1,164 +1,198 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-def propagate(belief,RProcess,RImu,ft,At,Bt,dt):
-     belief.pr = belief.pr + ft.dpr*dt
-     belief.vr = belief.vr + ft.dvr*dt
+def propagate(belief,RProcess,RInputs,ft,At,Bt,dt):
      belief.p = belief.p + ft.dp*dt
-     # #belief.q[0:1] are estimated with the complementary filter
-     belief.q[2] = belief.q[2] + ft.dq[2]*dt
-     belief.v = belief.v + ft.dv*dt
-     belief.ba = belief.ba + ft.dba*dt
-     # belief.ba = np.zeros((3,1))
-     belief.bg = belief.bg + ft.dbg*dt
-     print('ba = ', belief.ba)
-     # print('bg = ', belief.bg)
+     belief.vr = belief.vr + ft.dvr*dt
+     belief.psi = belief.psi + ft.dpsi*dt
+     belief.vb = belief.vb + ft.dvb*dt
 
      Ad = np.identity(belief.m) + At*dt
      Bd = Bt*dt
 
-     belief.P = Ad@belief.P@Ad.T + Bd@RImu@Bd.T + RProcess*dt**2
+     belief.P = Ad@belief.P@Ad.T + Bd@RInputs@Bd.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
-     belief.pr = belief.pr + dx[0:3]
+     belief.p = belief.p + dx[0:3]
      belief.vr = belief.vr + dx[3:6]
-     belief.p = belief.p + dx[6:9]
-     belief.q = belief.q + dx[9:12]
-     belief.v = belief.v + dx[12:15]
-     belief.ba = belief.ba + dx[15:18]
-     belief.bg = belief.bg + dx[18:21]
+     belief.psi = belief.psi + dx[6]
+     belief.vb = belief.vb + dx[7:10]
 
      belief.P = (np.identity(belief.m) - Lt@Ct)@belief.P
 
 def update_dynamic_model(belief,ut):
-     Rb2i = R.from_euler('xyz',belief.q.squeeze())
-     Ri2b = Rb2i.inv() #TODO q = nan some times cause it to break here
-     sphi = np.sin(belief.q.item(0))
-     cphi = np.cos(belief.q.item(0))
-     cth = np.cos(belief.q.item(1))
-     tth = np.tan(belief.q.item(1))
-     attitudeModelInversion = np.array([[1.0, sphi*tth, cphi*tth],
-                                  [0.0, cphi, -sphi],
-                                  [0.0, sphi/cth, cphi/cth]])
+     euler = [ut.phi,ut.theta,belief.psi]
+     Rb2i = R.from_euler('xyz',euler)
+     Ri2b = Rb2i.inv()
+
+     sphi = np.sin(ut.phi)
+     cphi = np.cos(ut.phi)
+     cth = np.cos(ut.theta)
 
      gravity = np.array([[0.0,0.0,9.81]]).T
-     accel = ut.accelerometers + Ri2b.apply(gravity.T).T - belief.ba
-     omega = ut.gyros - belief.bg
 
-     dpr = Rb2i.apply(belief.v.T).T - belief.vr
+     dp = Rb2i.apply(belief.vb.T).T - belief.vr
      dvr = np.zeros((3,1))
-     dp = Rb2i.apply(belief.v.T).T
-     dq = attitudeModelInversion @ omega
-     # dv = accel - np.cross(omega.T,belief.v.T).T
-     dv = accel + np.cross(omega.T,belief.v.T).T
-     dba = np.zeros((3,1))
-     dbg = np.zeros((3,1))
-     ft = np.concatenate((dpr,dvr,dp,dq,dv,dba,dbg),axis=0)
+     dpsi = sphi/cth*ut.gyros[1] + cphi/cth*ut.gyros[2]
+     dvb = ut.accelerometers + Ri2b.apply(gravity.T).T - np.cross(ut.gyros.T,belief.vb.T).T #TODO: May want to check the signs especially on the gravity term
+     ft = np.concatenate((dp,dvr,dpsi,dvb),axis=0)
 
      return ft
 
-def update_relPos_measurement_model(belief):
-     ht = -belief.pr
+def update_rtk_relPos_model(relPosHat):
+     ht = -relPosHat
      return ht
 
-def update_rover_velocity_measurement_model(belief):
-     ht = belief.vr
+def update_rover_gps_velocity_model(roverVelocityHat):
+     ht = roverVelocityHat
      return ht
 
-def update_base_gps_measurement_model(belief,gps):
-     Rb2i = R.from_euler('xyz',belief.q.squeeze())
-     beliefVelocityNed = Rb2i.apply(belief.v.T).T
-     h = np.concatenate((belief.p,beliefVelocityNed),axis=0)
-     return h
+def update_base_gps_velocity_model(eulerAnglesHat,baseVelocityHat):
+     Rb2i = R.from_euler('xyz',eulerAnglesHat.squeeze())
+     ht = Rb2i.apply(baseVelocityHat.T).T
+     return ht
 
-def update_compass_measurement_model(belief):
-     h = np.array([[belief.q.item(2)]]).T
-     return h
+def update_compass_measurement_model(psiHat):
+     ht = np.array([[psiHat]]).T
+     return ht
+
+def update_jacobian_A(belief,ut):
+     sphi = np.sin(ut.phi)
+     cphi = np.cos(ut.phi)
+     sth = np.sin(ut.theta)
+     cth = np.cos(ut.theta)
+     spsi = np.sin(belief.psi)
+     cpsi = np.cos(belief.psi)
+
+     euler = [ut.phi,ut.theta,belief.psi]
+     Rb2i = R.from_euler('xyz',euler)
+
+     dpDp = np.zeros((3,3))
+     dpDvr = -np.identity(3)
+     dpDpsi = np.array([[(-cth*sphi)*belief.vb[0] + (-sphi*sth*spsi-cphi*cpsi)*belief.vb[1] + (-cphi*sth*spsi+sphi*cpsi)*belief.vb[2]],
+                        [(cth*cpsi)*belief.vb[0] + (sphi*sth*cpsi-cphi*spsi)*belief.vb[1] + (cphi*sth*cpsi+sphi*spsi)*belief.vb[2]],
+                        [0.0]])
+     dpDvb = Rb2i.as_matrix()
+     dpDx = np.concatenate((dpDp,dpDvr,dpDpsi,dpDvb),axis=1)
+
+     dvrDp = np.zeros((3,3))
+     dvrDvr = np.zeros((3,3))
+     dvrDpsi = np.zeros((1,3))
+     dvrDvb = np.zeros((3,3))
+     dvrDx = np.concatenate((dvrDp,dvrDvr,dvrDpsi,dvrDvb),axis=1)
+
+     dpsiDp = np.zeros((1,3))
+     dpsiDvr = np.zeros((1,3))
+     dpsiDpsi = np.zeros((1,1))
+     dpsiDvb = np.zeros((1,3))
+     dpsiDx = np.concatenate((dpsiDp,dpsiDvr,dpsiDpsi,dpsiDvb),axis=1)
+
+     dvbDp = np.zeros((3,3))
+     dvbDvr = np.zeros((3,3))
+     dvbDpsi = np.zeros((1,3))
+     dvbDvb = np.array([[0.0,ut.gyros[2],-ut.gyros[1]],
+                        [-ut.gyros[2],0.0,ut.gyros[0]],
+                        [ut.gyors[1],-ut.gyros[0],0.0]])
+     dvbDx = np.concatenate((dvbDp,dvbDvr,dvbDpsi,dvbDvb),axis=1)
+
+     At = np.concatenate((dpDx,dvrDx,dpsiDx,dvbDx),axis=0)
+     return At
     
-def update_jacobian_B(belief):
-     sphi = np.sin(belief.q.item(0))
-     cphi = np.cos(belief.q.item(0))
-     cth = np.cos(belief.q.item(1))
-     tth = np.tan(belief.q.item(1))
-     attitudeModelInversion = np.array([[1.0, sphi * tth, cphi * tth],
-                                        [0.0, cphi, -sphi],
-                                        [0.0, sphi / cth, cphi / cth]])
+def update_jacobian_B(belief,ut):
+     sphi = np.sin(ut.phi)
+     cphi = np.cos(ut.phi)
+     sth = np.sin(ut.theta)
+     cth = np.cos(ut.theta)
+     tth = np.tan(ut.theta)
+     spsi = np.sin(belief.psi)
+     cpsi = np.cos(belief.psi)
 
-     dprda = np.zeros((3,3))
-     dprdw = np.zeros((3,3))
-     dprdu = np.concatenate((dprda, dprdw),axis=1)
+     gravity = np.array([[0.0,0.0,9.81]]).T
 
-     dvrda = np.zeros((3,3))
-     dvrdw = np.zeros((3,3))
-     dvrdu = np.concatenate((dvrda, dvrdw),axis=1)
+     dpDa = np.zeros((3,3))
+     dpDw = np.zeros((3,3))
+     dpDphi = np.array([[(cphi*sth*cpsi+sphi*spsi)*belief.vb[1] + (-sphi*sth*cpsi+cphi*spsi)*belief.vb[2]],
+                        [(cphi*sth*spsi-sphi*cpsi)*belief.vb[1] + (-sphi*sth*spsi-cphi*cpsi)*belief.vb[2]],
+                        [(cphi*cth)*belief.vb[1] + (-sphi*cth)*belief.vb[2]]])
+     dpDth = np.array([[(-sth*cpsi)*belief.vb[0] + (sphi*cth*cpsi)*belief.vb[1] + (cphi*cth*cpsi)*belief.vb[2]],
+                       [(-sth*spsi)*belief.vb[0] + (sphi*cth*spsi)*belief.vb[1] + (cphi*cth*spsi)*belief.vb[2]],
+                       [(-cth)*belief.vb[0] + (-sphi*sth)*belief.vb[1] + (-cphi*sth)*belief.vb[2]]])
+     dpDu = np.concatenate((dpDa,dpDw,dpDphi,dpDth),axis=1)
 
-     dpda = np.zeros((3, 3))
-     dpdw = np.zeros((3, 3))
-     dpdu = np.concatenate((dpda, dpdw), axis=1)
+     dvrDa = np.zeros((3,3))
+     dvrDw = np.zeros((3,3))
+     dvrDphi = np.zeros((3,1))
+     dvrDth = np.zeros((3,1))
+     dvrDu = np.concatenate((dvrDa,dvrDw,dvrDphi,dvrDth),axis=1)
 
-     dqda = np.zeros((3, 3))
-     dqdw = attitudeModelInversion
-     dqdu = np.concatenate((dqda, dqdw), axis=1)
+     dpsiDa = np.zeros((3,1))
+     dpsiDw = np.array([[0.0, sphi/cth, cphi*cth]])
+     dpsiDphi = cphi/cth*ut.gyros[1] - sphi/cth*ut.gyros[2]
+     dpsiDth = sphi*tth/cth*ut.gyros[1] + cphi*tth/cth*ut.gyros[2]
+     dpsiDu = np.concatenate((dpsiDa,dpsiDw,dpsiDphi,dpsiDth),axis=1)
 
-     dvda = np.identity(3)
-     dvdw = np.array([[0.0, belief.v.item(2), -belief.v.item(1)],
-                         [-belief.v.item(2), 0.0, belief.v.item(0)],
-                         [belief.v.item(1), -belief.v.item(0), 0.0]])
-     # dvdw = np.array([[0.0, -belief.v.item(2), belief.v.item(1)],
-     #                     [belief.v.item(2), 0.0, -belief.v.item(0)],
-     #                     [-belief.v.item(1), belief.v.item(0), 0.0]])
-     dvdu = np.concatenate((dvda, dvdw), axis=1)
+     dvbDa = np.identity(3)
+     dvbDw = np.array([[0.0, -belief.vb[2], belief.vb[1]],
+                      [belief.vb[2], 0.0, -belief.vb[0]],
+                      [-belief.vb[1], belief.vb[0], 0.0]])
+     dvbDphi = np.array([[0.0, cphi*cth, -sphi*cth]]).T*gravity.item(2)
+     dvbDth = np.array([[-cth, -sphi*sth, -cphi*sth]]).T*gravity.item(2)
+     dvbDu = np.concatenate((dvbDa,dvbDw,dvbDphi,dvbDth),axis=1)
 
-     dBada = np.identity(3)
-     dBadw = np.identity(3)
-     dBadu = np.concatenate((dBada, dBadw), axis=1)
-
-     dBgda = np.identity(3)
-     dBgdw = np.identity(3)
-     dBgdu = np.concatenate((dBgda, dBgdw), axis=1)
-
-     Bt = np.concatenate((dprdu, dvrdu, dpdu, dqdu, dvdu, dBadu, dBgdu), axis=0)
+     Bt = np.concatenate((dpDu, dvrDu, dpsiDu, dvbDu), axis=0)
 
      return Bt
 
 def get_jacobian_C_relPos():
-     dprdpr = -np.identity(3)
-     dprdvr = np.zeros((3,3))
-     dprdp = np.zeros((3,3))
-     dprdq = np.zeros((3,3))
-     dprdv = np.zeros((3,3))
-     dprdBa = np.zeros((3,3))
-     dprdBg = np.zeros((3,3))
-     Ct = np.concatenate((dprdpr,dprdvr,dprdp,dprdq,dprdv,dprdBa,dprdBg),axis=1)
+     dyDp = -np.identity(3)
+     dyDvr = np.zeros((3,3))
+     dyDpsi = np.zeros((3,1))
+     dyDvb = np.zeros((3,3))
+     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
      
      return Ct
 
 def get_jacobian_C_rover_velocity():
-     dvrdpr = np.zeros((3,3))
-     dvrdvr = np.identity(3)
-     dvrdp = np.zeros((3,3))
-     dvrdq = np.zeros((3,3))
-     dvrdv = np.zeros((3,3))
-     dvrdBa = np.zeros((3,3))
-     dvrdBg = np.zeros((3,3))
-     Ct = np.concatenate((dvrdpr,dvrdvr,dvrdp,dvrdq,dvrdv,dvrdBa,dvrdBg),axis=1)
-     
+     dyDp = np.zeros((3,3))
+     dyDvr = np.identity(3)
+     dyDpsi = np.zeros((3,1))
+     dyDvb = np.zeros((3,3))
+     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
+
+     return Ct
+
+def get_jacobian_C_base_velocity(fullState):
+     sphi = np.sin(fullState.euler[0])
+     cphi = np.cos(fullState.euler[0])
+     sth = np.sin(fullState.euler[1])
+     cth = np.cos(fullState.euler[1])
+     spsi = np.sin(fullState.euler[2])
+     cpsi = np.cos(fullState.euler[2])
+
+     Rb2i = R.from_euler('xyz',fullState.euler.squeeze())
+
+     dyDp = np.zeros((3,3))
+     dyDvr = np.zeros((3,3))
+     dyDpsi = np.array([[(-cth*sphi)*fullState.vb[0] + (-sphi*sth*spsi-cphi*cpsi)*fullState.vb[1] + (-cphi*sth*spsi+sphi*cpsi)*fullState.vb[2]],
+                        [(cth*cpsi)*fullState.vb[0] + (sphi*sth*cpsi-cphi*spsi)*fullState.vb[1] + (cphi*sth*cpsi+sphi*spsi)*fullState.vb[2]],
+                        [0.0]])
+     dyDvb = Rb2i.as_matrix()
+     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
+
      return Ct
 
 def get_jacobian_C_compass():
-     dpsidpr = np.zeros((1,3))
-     dpsidvr = np.zeros((1,3))
-     dpsidp = np.zeros((1,3))
-     dpsidq = np.array([[0.0,0.0,1.0]])
-     dpsidv = np.zeros((1,3))
-     dpsidba = np.zeros((1,3))
-     dpsidbg = np.zeros((1,3))
-     Ct = np.concatenate((dpsidpr,dpsidvr,dpsidp,dpsidq,dpsidv,dpsidba,dpsidbg),axis=1)
+     dyDp = np.zeros((1,3))
+     dyDvr = np.zeros((1,3))
+     dyDpsi = np.array([[1.0]])
+     dyDvb = np.zeros((1,3))
+     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
 
      return Ct
 
+#TODO: Remove this if the analytical jacobians work
 def get_numerical_jacobian(fun, xk, zk):
     fk = fun(xk, zk)
     m = fk.shape[0]
