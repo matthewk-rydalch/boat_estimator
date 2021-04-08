@@ -3,61 +3,35 @@
 import numpy as np
 import navpy
 from scipy.spatial.transform import Rotation as R
+import math
 
 def compute_truth(t,truth,roverTruth):
     baseX = 2.0*t + 0.5*np.cos(t/2.0) - 3.0
     baseXDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
     baseXDDot = -0.5*np.cos(t/2.0)/4.0
-    # roverX = 2.0*t + 0.5*np.cos(t/2.0) - 3.0
-    # roverXDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
+    roverX = 2.0*t + 0.5*np.cos(t/2.0) -3.0 + math.exp(2.0/(t+1.0))
+    roverXDot = 2.0 + -0.5*np.sin(t/2.0)/2.0 + math.exp(2.0/(t+1.0))*(-2.0/((t+1.0)**2))
 
     baseY = -2.0*t -0.5*np.sin(t/2.0) + 5.0
     baseYDot = -2.0 + -0.5*np.cos(t/2.0)/2.0
     baseYDDot = 0.5*np.sin(t/2.0)/4.0
-    # roverY = -2.0*t -0.5*np.sin(t/2.0) + 5.0
-    # roverYDot = -2.0 + -0.5*np.cos(t/2.0)/2.0
+    roverY = -2.0*t -0.5*np.sin(t/2.0) + 5.0 + math.exp(2.0/(t+1.0))
+    roverYDot = -2.0 + -0.5*np.cos(t/2.0)/2.0 + math.exp(2.0/(t+1.0))*(-2.0/((t+1.0)**2))
 
     baseZ = 0.5*np.sin(t/2.0) - 1.0
     baseZDot = 0.5*np.cos(t/2.0)/2.0
     baseZDDot = -0.5*np.sin(t/2.0)/4.0
-    # roverZ = 0.5*np.sin(t/2.0) - 1.0
-    # roverZDot = 0.5*np.cos(t/2.0)/2.0
+    roverZ = 0.5*np.sin(t/2.0) - 1.0 + math.exp(2.0/(t+1.0))
+    roverZDot = 0.5*np.cos(t/2.0)/2.0 + math.exp(2.0/(t+1.0))*(-2.0/((t+1.0)**2))
 
-    # basePhi = 0.05*np.sin(t/2.0)
-    # basePhiDot = 0.05*np.cos(t/2.0)/2.0
+    basePhi = 0.05*np.sin(t/2.0)
+    basePhiDot = 0.05*np.cos(t/2.0)/2.0
 
-    # baseTheta = 0.05*np.sin(t/2.0)
-    # baseThetaDot = 0.05*np.cos(t/2.0)/2.0
+    baseTheta = 0.05*np.sin(t/2.0)
+    baseThetaDot = 0.05*np.cos(t/2.0)/2.0
 
     basePsi = -0.1*np.sin(t/2.0)
     basePsiDot = -0.1*np.cos(t/2.0)/2.0
-
-    # baseX = 0.1*t**2.0
-    # baseXDot = 0.2*t
-    # baseXDDot = 0.2
-    roverX = t
-    roverXDot = 1.0
-
-    # baseY = 0.1*t**2.0
-    # baseYDot = 0.2*t
-    # baseYDDot = 0.2
-    roverY = t
-    roverYDot = 1.0
-
-    # baseZ = 0.1*t**2.0
-    # baseZDot = 0.2*t
-    # baseZDDot = 0.2
-    roverZ = t
-    roverZDot = 1.0
-
-    basePhi = 0.0
-    basePhiDot = 0.0
-
-    baseTheta = 0.0
-    baseThetaDot = 0.0
-
-    # basePsi = 0.0
-    # basePsiDot = 0.0
 
     truth.position[0] = baseX - roverX
     truth.position[1] = baseY - roverY
