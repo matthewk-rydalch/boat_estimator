@@ -13,6 +13,7 @@ from sensor_msgs.msg import Imu
 from ublox.msg import PosVelEcef
 from ublox.msg import RelPos
 from geometry_msgs.msg import Vector3
+from geometry_msgs.msg import PoseStamped
 
 from sensors import TruthMsg,ImuMsg,GpsMsg,RelPosMsg,GpsCompassMsg
 import synthetic_measurements
@@ -20,20 +21,19 @@ import synthetic_measurements
 class SyntheticMeasurements:
     def __init__(self):
         self.truthRos = Odometry()
-        self.roverTruthRos = Odometry()
         self.imuRos = Imu()
-        self.gpsRos = PosVelEcef()
-        self.roverGpsRos = PosVelEcef()
         self.relPosRos = RelPos()
-        self.gpsCompassRos = RelPos()
+        self.baseGpsRos = PosVelEcef()
+        self.roverGpsRos = PosVelEcef()
+        self.rtkCompassRos = RelPos()
 
         self.truth = TruthMsg()
         self.roverTruth = TruthMsg()
         self.imu = ImuMsg()
-        self.gps = GpsMsg()
-        self.roverGps = GpsMsg()
         self.base2RoverRelPos = RelPosMsg()
-        self.gpsCompass = GpsCompassMsg
+        self.baseGps = GpsMsg()
+        self.roverGps = GpsMsg()
+        self.rtkCompass = GpsCompassMsg
 
         self.accelerometerAccuracyStdDev = 0.025
         self.gyroAccuracyStdDev = 0.0023
@@ -65,13 +65,12 @@ class SyntheticMeasurements:
         self.gravity = np.array([[0.0,0.0,9.81]]).T
         self.lowPassFilterAlpha = 0.9
 
-        self.truth_pub_ = rospy.Publisher('truth',Odometry,queue_size=5,latch=True)
-        self.rover_truth_pub_ = rospy.Publisher('rover_truth',Odometry,queue_size=5,latch=True)
-        self.imu_pub_ = rospy.Publisher('imu',Imu,queue_size=5,latch=True)
-        self.gps_pub_ = rospy.Publisher('gps',PosVelEcef,queue_size=5,latch=True)
-        self.rover_gps_pub_ = rospy.Publisher('rover_gps',PosVelEcef,queue_size=5,latch=True)
+        self.truth_pub_ = rospy.Publisher('base_truth',Odometry,queue_size=5,latch=True)
+        self.imu_pub_ = rospy.Publisher('base_imu',Imu,queue_size=5,latch=True)
         self.relPos_pub_ = rospy.Publisher('base2Rover_relPos',RelPos,queue_size=5,latch=True)
-        self.gps_compass_pub_ = rospy.Publisher('gps_compass',RelPos,queue_size=5,latch=True)
+        self.base_gps_pub_ = rospy.Publisher('base_gps',PosVelEcef,queue_size=5,latch=True)
+        self.rover_gps_pub_ = rospy.Publisher('rover_gps',PosVelEcef,queue_size=5,latch=True)
+        self.rtk_compass_pub_ = rospy.Publisher('base_rtk_compass',RelPos,queue_size=5,latch=True)
 
         self.truth_rate_timer_ = rospy.Timer(rospy.Duration(self.imuTs), self.truthCallback)
         self.gps_rate_timer_ = rospy.Timer(rospy.Duration(self.gpsTs), self.gpsCallback)
@@ -86,15 +85,12 @@ class SyntheticMeasurements:
             self.firstCallback = False
         timeSeconds = stamp.secs+stamp.nsecs*1E-9 - self.firstTime
 
-        synthetic_measurements.compute_truth(timeSeconds,self.truth)
+        synthetic_measurements.compute_truth(timeSeconds,self.truth,self.roverTruth)
         self.publish_truth(stamp,self.truth)
 
-        synthetic_measurements.compute_rover_truth(timeSeconds,self.roverTruth)
-        self.publish_rover_truth(stamp,self.roverTruth)
-
         synthetic_measurements.compute_imu(self.truth,self.imu,self.gravity)
-        synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
-        synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
+        # synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
+        # synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
 
     def gpsCallback(self,event):
@@ -102,26 +98,26 @@ class SyntheticMeasurements:
             return
         stamp = rospy.Time.now()
         
-        synthetic_measurements.compute_gps(self.truth,self.gps,self.latRef,self.lonRef,self.altRef,self.originEcef)
-        synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
-            self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
+        synthetic_measurements.compute_rover_relPos(self.truth,self.base2RoverRelPos)
+        # synthetic_measurements.add_rtk_noise(self.base2RoverRelPos,self.rtkHorizontalAccuracyStdDev,self.rtkVerticalAccuracyStdDev)
+        self.publish_relPos(stamp,self.base2RoverRelPos)
+
+        synthetic_measurements.compute_base_gps(self.truth,self.baseGps,self.latRef,self.lonRef,self.altRef,self.originEcef)
+        # synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
+        #     self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
         # TODO: Add gps random walk
-        self.publish_gps(stamp,self.gps)
+        self.publish_base_gps(stamp,self.baseGps)
 
         synthetic_measurements.compute_rover_gps(self.roverTruth,self.roverGps,self.latRef,self.lonRef,self.altRef,self.originEcef)
-        synthetic_measurements.add_gps_noise(self.roverGps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
-            self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
+        # synthetic_measurements.add_gps_noise(self.roverGps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
+        #     self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
         # TODO: Add gps random walk
         self.publish_rover_gps(stamp,self.roverGps)
 
-        synthetic_measurements.compute_rover_relative_position(self.truth,self.roverTruth,self.base2RoverRelPos)
-        synthetic_measurements.add_rtk_noise(self.base2RoverRelPos,self.rtkHorizontalAccuracyStdDev,self.rtkVerticalAccuracyStdDev)
-        self.publish_relPos(stamp,self.base2RoverRelPos)
-
-        synthetic_measurements.compute_gps_compass(self.truth,self.gpsCompass)
-        synthetic_measurements.add_gps_compass_noise(self.gpsCompass,self.gpsCompassAccuracyDegStdDev,self.lowPassFilterAlpha, \
-            self.gpsCompassNoise)
-        self.publish_gps_compass(stamp,self.gpsCompass)
+        synthetic_measurements.compute_rtk_compass(self.truth,self.rtkCompass)
+        # synthetic_measurements.add_rtk_compass_noise(self.rtkCompass,self.gpsCompassAccuracyDegStdDev,self.lowPassFilterAlpha, \
+        #     self.rtkCompassNoise)
+        self.publish_rtk_compass(stamp,self.rtkCompass)
 
     def publish_truth(self,stamp,truth):
         self.truthRos.header.stamp = stamp
@@ -142,24 +138,7 @@ class SyntheticMeasurements:
 
         self.truth_pub_.publish(self.truthRos)
 
-    def publish_rover_truth(self,stamp,truth):
-        self.roverTruthRos.header.stamp = stamp
-        self.roverTruthRos.pose.pose.position.x = truth.position[0]
-        self.roverTruthRos.pose.pose.position.y = truth.position[1]
-        self.roverTruthRos.pose.pose.position.z = truth.position[2]
-        quat = R.from_euler('xyz',np.squeeze(truth.orientation)).as_quat()
-        self.roverTruthRos.pose.pose.orientation.x = quat[0]
-        self.roverTruthRos.pose.pose.orientation.y = quat[1]
-        self.roverTruthRos.pose.pose.orientation.z = quat[2]
-        self.roverTruthRos.pose.pose.orientation.w = quat[3]
-        self.roverTruthRos.twist.twist.linear.x = truth.velocity[0]
-        self.roverTruthRos.twist.twist.linear.y = truth.velocity[1]
-        self.roverTruthRos.twist.twist.linear.z = truth.velocity[2]
-        self.roverTruthRos.twist.twist.angular.x = truth.angularVelocity[0]
-        self.roverTruthRos.twist.twist.angular.y = truth.angularVelocity[1]
-        self.roverTruthRos.twist.twist.angular.z = truth.angularVelocity[2]
-
-        self.rover_truth_pub_.publish(self.roverTruthRos)
+        self.truth
 
     def publish_imu(self,stamp,imu):
         self.imuRos.header.stamp = stamp
@@ -172,23 +151,6 @@ class SyntheticMeasurements:
 
         self.imu_pub_.publish(self.imuRos)
 
-    def publish_gps(self,stamp,gps):
-        self.gpsRos.header.stamp = stamp
-        self.gpsRos.position = gps.positionEcef
-        self.gpsRos.velocity = gps.velocityEcef
-        self.gpsRos.fix = gps.fix
-
-        self.gps_pub_.publish(self.gpsRos)
-
-    def publish_rover_gps(self,stamp,gps):
-        self.roverGpsRos.header.stamp = stamp
-        self.roverGpsRos.position = gps.positionEcef
-        self.roverGpsRos.velocity = gps.velocityEcef
-        self.roverGpsRos.lla = gps.lla
-        self.roverGpsRos.fix = gps.fix
-
-        self.rover_gps_pub_.publish(self.roverGpsRos)
-
     def publish_relPos(self,stamp,relPos):
         self.relPosRos.relPosNED[0] = relPos.base2RoverRelPos.item(0)
         self.relPosRos.relPosNED[1] = relPos.base2RoverRelPos.item(1)
@@ -197,12 +159,29 @@ class SyntheticMeasurements:
 
         self.relPos_pub_.publish(self.relPosRos)
 
-    def publish_gps_compass(self,stamp,gpsCompass):
-        self.gpsCompassRos.header.stamp = stamp
-        self.gpsCompassRos.relPosHeading = gpsCompass.heading
-        self.gpsCompassRos.flags = gpsCompass.flags
+    def publish_base_gps(self,stamp,baseGps):
+        self.baseGpsRos.header.stamp = stamp
+        self.baseGpsRos.position = baseGps.positionEcef
+        self.baseGpsRos.velocity = baseGps.velocityEcef
+        self.baseGpsRos.fix = baseGps.fix
 
-        self.gps_compass_pub_.publish(self.gpsCompassRos)
+        self.base_gps_pub_.publish(self.baseGpsRos)
+
+    def publish_rover_gps(self,stamp,roverGps):
+        self.roverGpsRos.header.stamp = stamp
+        self.roverGpsRos.position = roverGps.positionEcef
+        self.roverGpsRos.velocity = roverGps.velocityEcef
+        self.roverGpsRos.lla = roverGps.lla
+        self.roverGpsRos.fix = roverGps.fix
+
+        self.rover_gps_pub_.publish(self.roverGpsRos)
+
+    def publish_rtk_compass(self,stamp,rtkCompass):
+        self.rtkCompassRos.header.stamp = stamp
+        self.rtkCompassRos.relPosHeading = rtkCompass.heading
+        self.rtkCompassRos.flags = rtkCompass.flags
+
+        self.rtk_compass_pub_.publish(self.rtkCompassRos)
 
 if __name__ == '__main__':
     rospy.init_node('synthetic_measurements', anonymous=True)

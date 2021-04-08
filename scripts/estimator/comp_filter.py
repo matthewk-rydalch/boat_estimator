@@ -17,7 +17,6 @@ def run(baseStates,imu,dt,kp):
      eulerAccel[2][0] = baseStates.euler.item(2) #We update this with rtk compassing
      eulerError = eulerAccel - baseStates.euler
 
-     print('kp = ', kp)
      dEuler = attitudeModelInversion @ imu.gyros + kp*eulerError
      
      phi = baseStates.euler.item(0) + dEuler[0]*dt
