@@ -98,5 +98,4 @@ class EstimatorParams:
         self.gravity = np.array([rospy.get_param('~gravity',[0.0,0.0,9.81])]).T
 
         self.kp = rospy.get_param('~compFiltKp',0.1)
-        self.ki = rospy.get_param('~compFiltKi',0.0)
 

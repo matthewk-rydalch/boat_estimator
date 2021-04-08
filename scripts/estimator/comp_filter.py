@@ -1,6 +1,6 @@
 import numpy as np
 
-def run(fullState,imu,dt,kp,ki,gravity):
+def run(fullState,imu,dt,kp):
      #I added the attitude model inversion.  It seemed to help.  It is not from Dr. Beard
      sphi = np.sin(fullState.euler.item(0))
      cphi = np.cos(fullState.euler.item(0))

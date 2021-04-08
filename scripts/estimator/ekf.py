@@ -54,7 +54,7 @@ def update_base_gps_velocity_model(eulerAnglesHat,baseVelocityHat):
      ht = Rb2i.apply(baseVelocityHat.T).T
      return ht
 
-def update_compass_measurement_model(psiHat):
+def update_rtk_compass_model(psiHat):
      ht = np.array([[psiHat]]).T
      return ht
 
@@ -163,20 +163,20 @@ def get_jacobian_C_rover_velocity():
 
      return Ct
 
-def get_jacobian_C_base_velocity(fullState):
-     sphi = np.sin(fullState.euler[0])
-     cphi = np.cos(fullState.euler[0])
-     sth = np.sin(fullState.euler[1])
-     cth = np.cos(fullState.euler[1])
-     spsi = np.sin(fullState.euler[2])
-     cpsi = np.cos(fullState.euler[2])
+def get_jacobian_C_base_velocity(baseStates):
+     sphi = np.sin(baseStates.euler[0])
+     cphi = np.cos(baseStates.euler[0])
+     sth = np.sin(baseStates.euler[1])
+     cth = np.cos(baseStates.euler[1])
+     spsi = np.sin(baseStates.euler[2])
+     cpsi = np.cos(baseStates.euler[2])
 
-     Rb2i = R.from_euler('xyz',fullState.euler.squeeze())
+     Rb2i = R.from_euler('xyz',baseStates.euler.squeeze())
 
      dyDp = np.zeros((3,3))
      dyDvr = np.zeros((3,3))
-     dyDpsi = np.array([[(-cth*sphi)*fullState.vb[0] + (-sphi*sth*spsi-cphi*cpsi)*fullState.vb[1] + (-cphi*sth*spsi+sphi*cpsi)*fullState.vb[2]],
-                        [(cth*cpsi)*fullState.vb[0] + (sphi*sth*cpsi-cphi*spsi)*fullState.vb[1] + (cphi*sth*cpsi+sphi*spsi)*fullState.vb[2]],
+     dyDpsi = np.array([[(-cth*sphi)*baseStates.vb[0] + (-sphi*sth*spsi-cphi*cpsi)*baseStates.vb[1] + (-cphi*sth*spsi+sphi*cpsi)*baseStates.vb[2]],
+                        [(cth*cpsi)*baseStates.vb[0] + (sphi*sth*cpsi-cphi*spsi)*baseStates.vb[1] + (cphi*sth*cpsi+sphi*spsi)*baseStates.vb[2]],
                         [0.0]])
      dyDvb = Rb2i.as_matrix()
      Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
