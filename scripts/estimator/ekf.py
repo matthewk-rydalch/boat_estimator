@@ -13,10 +13,6 @@ def propagate(belief,RProcess,RInputs,ft,At,Bt,dt):
      belief.P = Ad@belief.P@Ad.T + Bd@RInputs@Bd.T + RProcess*dt**2
 
 def update(belief,Qt,zt,ht,Ct):
-     # print('Qt = ', Qt)
-     # print('zt = ', zt)
-     # print('ht = ', ht)
-     # print('Ct = ', Ct)
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
      dx = Lt@(zt-ht)
      belief.p = belief.p + dx[0:3]

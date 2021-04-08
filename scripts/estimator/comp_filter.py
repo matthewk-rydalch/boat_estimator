@@ -10,13 +10,14 @@ def run(baseStates,imu,dt,kp):
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
                                   
-     aBody = -imu.accelerometers #TODO: Check why this is negative
+     aBody = imu.accelerometers #This was negative
      eulerAccel = np.array([[0.0,0.0,0.0]]).T
-     eulerAccel[0][0] = np.arctan2(aBody.item(1),aBody.item(2))
-     eulerAccel[1][0] = np.arctan2(aBody.item(0),aBody.item(2))
+     eulerAccel[0][0] = np.arctan(aBody.item(1)/aBody.item(2)) #switched from arctan2 to arctan
+     eulerAccel[1][0] = np.arctan(aBody.item(0)/aBody.item(2))
      eulerAccel[2][0] = baseStates.euler.item(2) #We update this with rtk compassing
      eulerError = eulerAccel - baseStates.euler
 
+     print('kp = ', kp)
      dEuler = attitudeModelInversion @ imu.gyros + kp*eulerError
      
      phi = baseStates.euler.item(0) + dEuler[0]*dt

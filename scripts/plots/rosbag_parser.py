@@ -2,18 +2,18 @@ import rosbag
 import pickle
 from collections import namedtuple
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 class Parser:
-	def __init__(self,estRelPosTopic,odomTopic,truthTopic,truePoseTopic,imuTopic,ubloxRelPosTopic,gpsTopic,roverGpsTopic,gpsCompassTopic):
-		self.estRelPosTopic = estRelPosTopic
+	def __init__(self,odomTopic,truthTopic,truePoseTopic,imuTopic,ubloxRelPosTopic,baseGpsTopic,roverGpsTopic,rtkCompassTopic):
 		self.odomTopic = odomTopic
 		self.truthTopic = truthTopic
 		self.truePoseTopic = truePoseTopic
 		self.imuTopic = imuTopic
 		self.ubloxRelPosTopic = ubloxRelPosTopic
 		self.roverGpsTopic = roverGpsTopic
-		self.gpsTopic = gpsTopic
-		self.gpsCompassTopic = gpsCompassTopic
+		self.baseGpsTopic = baseGpsTopic
+		self.gpsCompassTopic = rtkCompassTopic
 
 	def get_ublox_relPos(self, bag):
 		sec = []
@@ -65,7 +65,7 @@ class Parser:
 			vy.append(msg.twist.twist.linear.y)
 			vz.append(msg.twist.twist.linear.z)
 
-		return Odom(sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz)
+		return RelPos(sec,nsec,pn,pe,pd), Odom(sec,nsec,0.0,0.0,0.0,qx,qy,qz,qw,vx,vy,vz)
 
 	def get_truth(self, bag):
 		sec = []
@@ -159,7 +159,7 @@ class Parser:
 
 		return RelPos(sec,nsec,pn,pe,pd)
 
-	def get_gps(self, bag):
+	def get_base_gps(self, bag):
 		sec = []
 		nsec = []
 		px = []
@@ -169,7 +169,7 @@ class Parser:
 		vy = []
 		vz = []
 
-		for topic, msg, t in bag.read_messages(topics=[self.gpsTopic]):
+		for topic, msg, t in bag.read_messages(topics=[self.baseGpsTopic]):
 			sec.append(msg.header.stamp.secs)
 			nsec.append(msg.header.stamp.nsecs)
 			px.append(msg.position[0])
@@ -209,12 +209,12 @@ class Parser:
 
 		return Gps(sec,nsec,px,py,pz,vx,vy,vz),refLla(lat,lon,alt)
 
-	def get_gps_compass(self, bag):
+	def get_rtk_compass(self, bag):
 		sec = []
 		nsec = []
 		heading = []
 
-		for topic, msg, t in bag.read_messages(topics=[self.gpsCompassTopic]):
+		for topic, msg, t in bag.read_messages(topics=[self.rtkCompassTopic]):
 			sec.append(msg.header.stamp.secs)
 			nsec.append(msg.header.stamp.nsecs)
 			heading.append(msg.relPosHeading)
@@ -226,7 +226,9 @@ class Odom:
 		
 		self.time = np.array(sec)+np.array(nsec)*1E-9
 		self.position = np.array([pn,pe,pd])
-		self.quat = np.array([qx,qy,qz,qw])
+		quat = np.array([qx,qy,qz,qw]).T
+		eulerRad = R.from_quat(quat).as_euler('xyz')
+		self.euler = eulerRad*180.0/np.pi
 		self.velocity = np.array([vx,vy,vz])
 
 class Pose:
