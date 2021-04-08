@@ -2,15 +2,15 @@ import numpy as np
 
 class Belief:
    def __init__(self,relPosNedMeters,vRoverNedMetersPerSecond,psiRad,vBodyMetersPerSecond,PCovariance):
-      self.pr = relPosNedMeters                 #Relative Position from rover to base, NED meters
+      self.p = relPosNedMeters                 #Relative Position from rover to base, NED meters
       self.vr = vRoverNedMetersPerSecond        #Velocity of the rover, NED m/s
       self.psi = psiRad                         #Yaw of the base, radians
       self.vb = vBodyMetersPerSecond            #velocity of the base, body m/s
 
       self.P = PCovariance
 
-      # self.m = 10
-      # self.n = 1
+      self.m = 10
+      self.n = 1
 
    # def get_copy(self):
    #    xCopy = Belief(np.copy(self.p),np.copy(self.vr),np.copy(self.psi),np.copy(self.vb),np.copy(self.P))
