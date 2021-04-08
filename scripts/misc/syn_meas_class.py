@@ -42,11 +42,11 @@ class SyntheticMeasurements:
         self.gpsSpeedAccuracyStdDev = 0.2
         self.rtkHorizontalAccuracyStdDev = 0.02
         self.rtkVerticalAccuracyStdDev = 0.04
-        self.gpsCompassAccuracyDegStdDev = 1.0 #depends on baseline. This also uses RTK
+        self.rtkCompassAccuracyDegStdDev = 1.0 #depends on baseline. This also uses RTK
 
         #These are to remember noise of previous update.  They are used in the low pass filter
         self.gpsNoise = [0.0,0.0,0.0,0.0,0.0,0.0]
-        self.gpsCompassNoise = 0.0
+        self.rtkCompassNoise = 0.0
         
         self.accelerometerBias = [0.3,-0.5,-0.2]
         self.gyroBias = [0.01,0.08,-0.02]
@@ -89,8 +89,8 @@ class SyntheticMeasurements:
         self.publish_truth(stamp,self.truth)
 
         synthetic_measurements.compute_imu(self.truth,self.imu,self.gravity)
-        # synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
-        # synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
+        synthetic_measurements.add_imu_noise(self.imu,self.accelerometerAccuracyStdDev,self.gyroAccuracyStdDev)
+        synthetic_measurements.add_imu_bias(self.imu,self.accelerometerBias,self.gyroBias)
         self.publish_imu(stamp,self.imu)      
 
     def gpsCallback(self,event):
@@ -99,24 +99,24 @@ class SyntheticMeasurements:
         stamp = rospy.Time.now()
         
         synthetic_measurements.compute_rover_relPos(self.truth,self.base2RoverRelPos)
-        # synthetic_measurements.add_rtk_noise(self.base2RoverRelPos,self.rtkHorizontalAccuracyStdDev,self.rtkVerticalAccuracyStdDev)
+        synthetic_measurements.add_rtk_noise(self.base2RoverRelPos,self.rtkHorizontalAccuracyStdDev,self.rtkVerticalAccuracyStdDev)
         self.publish_relPos(stamp,self.base2RoverRelPos)
 
         synthetic_measurements.compute_base_gps(self.truth,self.baseGps,self.latRef,self.lonRef,self.altRef,self.originEcef)
-        # synthetic_measurements.add_gps_noise(self.gps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
-        #     self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
+        synthetic_measurements.add_gps_noise(self.baseGps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
+            self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
         # TODO: Add gps random walk
         self.publish_base_gps(stamp,self.baseGps)
 
         synthetic_measurements.compute_rover_gps(self.roverTruth,self.roverGps,self.latRef,self.lonRef,self.altRef,self.originEcef)
-        # synthetic_measurements.add_gps_noise(self.roverGps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
-        #     self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
+        synthetic_measurements.add_gps_noise(self.roverGps,self.gpsHorizontalAccuracyStdDev,self.gpsVerticalAccuracyStdDev, \
+            self.gpsSpeedAccuracyStdDev,self.latRef,self.lonRef,self.altRef,self.lowPassFilterAlpha,self.gpsNoise)
         # TODO: Add gps random walk
         self.publish_rover_gps(stamp,self.roverGps)
 
         synthetic_measurements.compute_rtk_compass(self.truth,self.rtkCompass)
-        # synthetic_measurements.add_rtk_compass_noise(self.rtkCompass,self.gpsCompassAccuracyDegStdDev,self.lowPassFilterAlpha, \
-        #     self.rtkCompassNoise)
+        synthetic_measurements.add_rtk_compass_noise(self.rtkCompass,self.rtkCompassAccuracyDegStdDev,self.lowPassFilterAlpha, \
+            self.rtkCompassNoise)
         self.publish_rtk_compass(stamp,self.rtkCompass)
 
     def publish_truth(self,stamp,truth):

@@ -75,7 +75,6 @@ class EstimatorRos:
         self.estimator.base_gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
-        #TODO Need to check and see if what we are receiving really is heading or if it is the z rotation in a frame that is rolled and pitched.  It is probably heading.
         headingDeg = msg.relPosHeading
         flags = bin(msg.flags)
         gpsCompass = GpsCompassMsg(headingDeg,flags)

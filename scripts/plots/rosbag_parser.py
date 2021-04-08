@@ -222,6 +222,6 @@ class RtkCompass:
 
 class refLla:
 	def __init__(self,lat,lon,alt):
-		self.lat = np.array([lat])
-		self.lon = np.array([lon])
-		self.alt = np.array([alt])
+		self.lat = lat[0]
+		self.lon = lon[0]
+		self.alt = alt[0]

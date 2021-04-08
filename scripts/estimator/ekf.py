@@ -36,7 +36,7 @@ def update_dynamic_model(belief,ut):
      dp = Rb2i.apply(belief.vb.T).T - belief.vr
      dvr = np.zeros((3,1))
      dpsi = sphi/cth*ut.gyros.item(1) + cphi/cth*ut.gyros.item(2)
-     dvb = ut.accelerometers + Ri2b.apply(gravity.T).T - np.cross(ut.gyros.T,belief.vb.T).T #TODO: May want to check the signs especially on the gravity term
+     dvb = ut.accelerometers + Ri2b.apply(gravity.T).T - np.cross(ut.gyros.T,belief.vb.T).T
      ft = np.concatenate((dp,dvr,dpsi,dvb),axis=0)
 
      return ft
@@ -191,18 +191,3 @@ def get_jacobian_C_compass():
      Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
 
      return Ct
-
-#TODO: Remove this if the analytical jacobians work
-def get_numerical_jacobian(fun, xk, zk):
-    fk = fun(xk, zk)
-    m = fk.shape[0]
-    n = xk.m
-    epsilon = 0.01
-    J = np.zeros((m, n))
-    for i in range(0, n):
-        xkPlusOne = xk.get_copy()
-        xkPlusOne.add_to_item(i,epsilon)
-        fkPlusOne = fun(xkPlusOne, zk)
-        dfdx = (fkPlusOne - fk) / epsilon
-        J[:, i] = dfdx[:, 0]
-    return J
