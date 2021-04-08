@@ -14,7 +14,7 @@ sigma0: [100.0,  # pn
          360.0,  # psiDeg
          2.0,  # ub
          2.0,  # vb
-         2.0,  # wb
+         2.0],  # wb
 
 sigmaProcess: [2.0,  # pn
                2.0,  # pe
@@ -25,7 +25,7 @@ sigmaProcess: [2.0,  # pn
                2.0,  # psi
                2.0,  # ub
                2.0,  # vb
-               2.0,  # wb
+               2.0],  # wb
 
 sigmaInputs: [0.01,  #ax
               0.01,  #ay
@@ -34,7 +34,7 @@ sigmaInputs: [0.01,  #ax
               0.01,  #q
               0.01,  #r
               0.01,  #phi complimentary filter
-              0.01,  #theta complimentary filter
+              0.01],  #theta complimentary filter
 
 sigmaGps: [0.4,     #horizontal
            0.7,     #vertical
