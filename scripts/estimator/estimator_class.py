@@ -7,14 +7,16 @@ sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 import ekf
 import comp_filter
-from states_covariance import StatesCovariance
+from belief import Belief
 from dynamic_model import DynamicModel
+from inputs import Inputs
+from base_states import BaseStates
 
 class Estimator:
    def __init__(self,params):
       self.params = params
-      self.belief = StatesCovariance(self.params.pr0,self.params.vr0,self.params.p0,self.params.q0, \
-         self.params.v0,self.params.ba0,self.params.bg0, self.params.P0)
+      self.belief = Belief(self.params.p0,self.params.vr0,self.params.psi0,self.params.vb0,self.params.P0)
+      self.baseStates = BaseStates(self.params.p0,self.params.euler0,self.params.vb0)
       self.refLlaSet = False
       self.latRef = 0.0
       self.lonRef = 0.0
@@ -22,14 +24,8 @@ class Estimator:
       self.refEcef = np.zeros((3,1))
       self.imuPrevTime = 0.0
       self.firstImu = True
-      self.stop = False
 
    def imu_callback(self,imu):
-      if math.isnan(self.belief.q[0][0]) == True and self.stop == False:
-         print("q = nan")
-         self.stop = True
-      if self.stop == True:
-         return
       if self.firstImu:
          self.imuPrevTime = imu.time
          self.firstImu = False
@@ -37,28 +33,25 @@ class Estimator:
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time
 
-      ft = DynamicModel(ekf.update_dynamic_model(self.belief,imu))
-      At = ekf.get_numerical_jacobian(ekf.update_dynamic_model,self.belief,imu)
-      Bt = ekf.update_jacobian_B(self.belief)
+      ut = Inputs(comp_filter.run(self.baseStates,imu,dt,self.params.kp))
+      ft = DynamicModel(ekf.update_dynamic_model(self.belief,ut))
+      At = ekf.update_jacobian_A(self.belief,ut)
+      Bt = ekf.update_jacobian_B(self.belief,ut)
 
-      comp_filter.run(self.belief,imu,dt,self.params.kp,self.params.ki,self.params.gravity)
-      ekf.propagate(self.belief,self.params.RProcess,self.params.RImu,ft,At,Bt,dt)
+      ekf.propagate(self.belief,self.params.RProcess,self.params.RInputs,ft,At,Bt,dt)
+      self.update_full_state(ut.phi,ut.theta)
 
    def relPos_callback(self,relPos):
-      if self.stop == True:
-         return
       if relPos.flags[-3] != '1':
          print('relPos not valid = ', relPos.flags)
          return
       zt = relPos.base2RoverRelPos
-      ht = ekf.update_relPos_measurement_model(self.belief)
+      ht = ekf.update_rtk_relPos_model(self.belief.p)
       Ct = ekf.get_jacobian_C_relPos()
 
       ekf.update(self.belief,self.params.QtRtk,zt,ht,Ct)
 
    def rover_gps_callback(self,gps):
-      if self.stop == True:
-         return
       if gps.fix != 3:
          print('rover gps not in fix.  Fix = ', gps.fix)
          return
@@ -75,39 +68,37 @@ class Estimator:
       velocityNed = np.array([velocityNed1D]).T
 
       zt = velocityNed
-      ht = ekf.update_rover_velocity_measurement_model(self.belief)
+      ht = ekf.update_rover_gps_velocity_model(self.belief.vr)
       Ct = ekf.get_jacobian_C_rover_velocity()
 
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def base_gps_callback(self,gps):
-      if self.stop == True:
-         return
       if gps.fix != 3:
          print('base gps not in fix.  Fix = ', gps.fix)
          return
       if not self.refLlaSet:
          return
-      positionEcefLocal = gps.positionEcef - self.refEcef
-      positionNed1D = navpy.ecef2ned(positionEcefLocal,self.latRef,self.lonRef,self.altRef)
-      positionNed = np.array([positionNed1D]).T
       velocityNed1D = navpy.ecef2ned(gps.velocityEcef, self.latRef, self.lonRef, self.altRef)
       velocityNed = np.array([velocityNed1D]).T
 
-      zt = np.concatenate((positionNed,velocityNed),axis=0)
-      ht = ekf.update_base_gps_measurement_model(self.belief,gps)
-      Ct = ekf.get_numerical_jacobian(ekf.update_base_gps_measurement_model,self.belief,gps)
+      zt = velocityNed
+      ht = ekf.update_base_gps_velocity_model(self.baseStates.euler,self.belief.vb)
+      Ct = ekf.get_jacobian_C_base_velocity(self.baseStates)
 
-      ekf.update(self.belief,self.params.QtGps,zt,ht,Ct)
+      ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
-      if self.stop == True:
-         return
       if gpsCompass.flags[2] != '1':
          print('Compass not valid = ', gpsCompass.flags)
          return
       zt = gpsCompass.heading*np.pi/180.0
-      ht = ekf.update_compass_measurement_model(self.belief)
+      ht = ekf.update_rtk_compass_model(self.belief.psi)
       Ct = ekf.get_jacobian_C_compass()
       
       ekf.update(self.belief,self.params.QtRtkCompass,zt,ht,Ct)
+
+   def update_full_state(self,phi,theta):
+      self.baseStates.p = self.belief.p
+      self.baseStates.euler = np.array([[phi.squeeze(),theta.squeeze(),self.belief.psi.squeeze()]]).T
+      self.baseStates.vb = self.belief.vb

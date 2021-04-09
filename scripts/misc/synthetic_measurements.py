@@ -3,92 +3,66 @@
 import numpy as np
 import navpy
 from scipy.spatial.transform import Rotation as R
+import math
 
-def compute_truth(t,truth):
-    truth.position[0] = 2.0*t + 0.5*np.cos(t/2.0) - 3.0
-    xDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
-    xDDot = -0.5*np.cos(t/2.0)/4.0
+def compute_truth(t,truth,roverTruth):
+    baseX = 2.0*t + 0.5*np.cos(t/2.0) - 3.0
+    baseXDot = 2.0 + -0.5*np.sin(t/2.0)/2.0
+    baseXDDot = -0.5*np.cos(t/2.0)/4.0
+    roverX = 2.0*t + 0.5*np.cos(t/2.0) -3.0 + math.exp(2.0/(t+1.0))
+    roverXDot = 2.0 + -0.5*np.sin(t/2.0)/2.0 + math.exp(2.0/(t+1.0))*(-2.0/((t+1.0)**2))
 
-    truth.position[1] = -2.0*t -0.5*np.sin(t/2.0) + 5.0
-    yDot = -2.0 + -0.5*np.cos(t/2.0)/2.0
-    yDDot = 0.5*np.sin(t/2.0)/4.0
+    baseY = -2.0*t -0.5*np.sin(t/2.0) + 5.0
+    baseYDot = -2.0 + -0.5*np.cos(t/2.0)/2.0
+    baseYDDot = 0.5*np.sin(t/2.0)/4.0
+    roverY = -2.0*t -0.5*np.sin(t/2.0) + 5.0 + math.exp(2.0/(t+1.0))
+    roverYDot = -2.0 + -0.5*np.cos(t/2.0)/2.0 + math.exp(2.0/(t+1.0))*(-2.0/((t+1.0)**2))
 
-    truth.position[2] = 0.5*np.sin(t/2.0) - 1.0
-    zDot = 0.5*np.cos(t/2.0)/2.0
-    zDDot = -0.5*np.sin(t/2.0)/4.0
+    baseZ = 0.5*np.sin(t/2.0) - 1.0
+    baseZDot = 0.5*np.cos(t/2.0)/2.0
+    baseZDDot = -0.5*np.sin(t/2.0)/4.0
+    roverZ = 0.5*np.sin(t/2.0) - 1.0 + math.exp(2.0/(t+1.0))
+    roverZDot = 0.5*np.cos(t/2.0)/2.0 + math.exp(2.0/(t+1.0))*(-2.0/((t+1.0)**2))
 
-    truth.orientation[0] = 0.05*np.sin(t/2.0)
-    phiDot = 0.05*np.cos(t/2.0)/2.0
+    basePhi = 0.05*np.sin(t/2.0)
+    basePhiDot = 0.05*np.cos(t/2.0)/2.0
 
-    truth.orientation[1] = 0.05*np.sin(t/2.0)
-    thetaDot = 0.05*np.cos(t/2.0)/2.0
+    baseTheta = 0.05*np.sin(t/2.0)
+    baseThetaDot = 0.05*np.cos(t/2.0)/2.0
 
-    truth.orientation[2] = -0.05*np.sin(t/2.0) + np.pi
-    psiDot = -0.05*np.cos(t/2.0)/2.0
+    basePsi = -0.1*np.sin(t/2.0)
+    basePsiDot = -0.1*np.cos(t/2.0)/2.0
 
-    # truth.position[0] = 0.0
-    # xDot = 0.0
-    # xDDot = 0.0
-
-    # truth.position[1] = 0.0
-    # yDot = 0.0
-    # yDDot = 0.0
-
-    # truth.position[2] = 0.0
-    # zDot = 0.0
-    # zDDot = 0.0
-
-    # truth.orientation[0] = 0.0
-    # phiDot = 0.0
-
-    # truth.orientation[1] = 0.0
-    # thetaDot = 0.0
-
-    # truth.orientation[2] = 0.0
-    # psiDot = 0.0
+    truth.position[0] = baseX - roverX
+    truth.position[1] = baseY - roverY
+    truth.position[2] = baseZ - roverZ
 
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
     Ri2b = Rb2i.inv()
+    baseBodyVelocity = Ri2b.apply([baseXDot,baseYDot,baseZDot])
+    truth.velocity[0] = baseBodyVelocity[0]
+    truth.velocity[1] = baseBodyVelocity[1]
+    truth.velocity[2] = baseBodyVelocity[2]
 
-    bodyVelocity = Ri2b.apply([xDot,yDot,zDot])
-    truth.velocity[0] = bodyVelocity[0]
-    truth.velocity[1] = bodyVelocity[1]
-    truth.velocity[2] = bodyVelocity[2]
+    baseBodyAcceleration = Ri2b.apply([baseXDDot,baseYDDot,baseZDDot])
+    truth.acceleration[0] = baseBodyAcceleration[0]
+    truth.acceleration[1] = baseBodyAcceleration[1]
+    truth.acceleration[2] = baseBodyAcceleration[2]
     
-    sth = np.sin(truth.orientation[1])
-    cth = np.cos(truth.orientation[1])
-    cphi = np.cos(truth.orientation[0])
-    sphi = np.sin(truth.orientation[0])
-    truth.angularVelocity[0] = phiDot - sth*psiDot #These come from euler dynamics
-    truth.angularVelocity[1] = cphi*thetaDot + sphi*cth*psiDot
-    truth.angularVelocity[2] = -sphi*thetaDot + cphi*cth*psiDot
+    truth.orientation[0] = basePhi
+    truth.orientation[1] = baseTheta
+    truth.orientation[2] = basePsi
 
-    bodyAcceleration = Ri2b.apply([xDDot,yDDot,zDDot])
-    truth.acceleration[0] = bodyAcceleration[0]
-    truth.acceleration[1] = bodyAcceleration[1]
-    truth.acceleration[2] = bodyAcceleration[2]
+    cphi = np.cos(basePhi)
+    sphi = np.sin(basePhi)
+    sth = np.sin(baseTheta)
+    cth = np.cos(baseTheta)
+    truth.angularVelocity[0] = basePhiDot - sth*basePsiDot #These come from euler dynamics
+    truth.angularVelocity[1] = cphi*baseThetaDot + sphi*cth*basePsiDot
+    truth.angularVelocity[2] = -sphi*baseThetaDot + cphi*cth*basePsiDot
 
-def compute_rover_truth(t,truth):
-    truth.position[0] = 0.2*np.sin(t)
-    truth.velocity[0] = 1.0 + 0.2*np.cos(t)
-    truth.acceleration[0] = -0.2*np.sin(t)
-
-    truth.position[1] = 0.1*t**2 
-    truth.velocity[1] = 0.2*t
-    truth.acceleration[1] = 0.2
-
-    truth.position[2] = -0.3*np.sin(t)
-    truth.velocity[2] = -0.3*np.cos(t)
-    truth.acceleration[2] = 0.3*np.sin(t)
-
-    truth.orientation[0] = 0.0
-    truth.angularVelocity[0] = 0.0
-
-    truth.orientation[1] = 0.0
-    truth.angularVelocity[1] = 0.0
-
-    truth.orientation[2] = 0.0
-    truth.angularVelocity[2] = 0.0
+    roverTruth.position = np.array([[roverX,roverY,roverZ]]).T
+    roverTruth.velocity = np.array([[roverXDot,roverYDot,roverZDot]]).T
 
 def compute_imu(truth,imu,gravity):
     Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
@@ -101,37 +75,32 @@ def compute_imu(truth,imu,gravity):
     imu.accelerometers[1] = feltAcceleration[1]
     imu.accelerometers[2] = feltAcceleration[2]
 
-def compute_gps(truth,gps,latRef,lonRef,altRef,originEcef):
-    Rb2i = R.from_euler('xyz',np.squeeze(truth.orientation))
+def compute_rover_relPos(truth,base2RoverRelPos):
+    base2RoverRelPos.base2RoverRelPos = -truth.position
 
-    ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
-    gps.positionEcef = ecefPositionRelative + originEcef
-    
+    base2RoverRelPos.flags = 311
+
+def compute_base_gps(truth,gps,latRef,lonRef,altRef,originEcef):   
     Rb2i = R.from_euler('xyz',truth.orientation.squeeze())
     trueVelocityNed = Rb2i.apply(truth.velocity.T).T
     gps.velocityEcef = navpy.ned2ecef(trueVelocityNed,latRef,lonRef,altRef)
 
     gps.fix = 3
 
-def compute_rover_gps(truth,gps,latRef,lonRef,altRef,originEcef):
-    gps.lla = navpy.ned2lla(truth.position,latRef,lonRef,altRef)
+def compute_rover_gps(roverTruth,gps,latRef,lonRef,altRef,originEcef):
+    gps.lla = navpy.ned2lla(roverTruth.position,latRef,lonRef,altRef)
 
-    ecefPositionRelative = navpy.ned2ecef(truth.position,latRef,lonRef,altRef)
+    ecefPositionRelative = navpy.ned2ecef(roverTruth.position,latRef,lonRef,altRef)
     gps.positionEcef = ecefPositionRelative + originEcef
     
-    gps.velocityEcef = navpy.ned2ecef(truth.velocity,latRef,lonRef,altRef)
+    gps.velocityEcef = navpy.ned2ecef(roverTruth.velocity,latRef,lonRef,altRef)
 
     gps.fix = 3
 
-def compute_rover_relative_position(baseTruth,roverTruth,base2RoverRelPos):
-    base2RoverRelPos.base2RoverRelPos = roverTruth.position - baseTruth.position
+def compute_rtk_compass(truth,rtkCompass):
+    rtkCompass.heading = truth.orientation[2]*180.0/np.pi
 
-    base2RoverRelPos.flags = 311
-
-def compute_gps_compass(truth,gpsCompass):
-    gpsCompass.heading = truth.orientation[2]*180.0/np.pi
-
-    gpsCompass.flags = 311
+    rtkCompass.flags = 311
 
 def add_imu_noise(imu,accelerometerAccuracy,gyroAccuracy):
     imu.accelerometers[0] = np.random.normal(imu.accelerometers[0],accelerometerAccuracy)
@@ -163,10 +132,10 @@ def add_rtk_noise(relPos,rtkHorizontalAccuracyStdDev,rtkVerticalAccuracyStdDev):
         relPos.base2RoverRelPos[i] = np.random.normal(relPos.base2RoverRelPos[i],rtkHorizontalAccuracyStdDev)
     relPos.base2RoverRelPos[2] = np.random.normal(relPos.base2RoverRelPos[2],rtkVerticalAccuracyStdDev)
 
-def add_gps_compass_noise(gpsCompass,gpsCompassAccuracy,alpha,gpsCompassNoise):
-    whiteNoise = np.random.normal(0.0,gpsCompassAccuracy)
-    gpsCompassNoise = low_pass_filter(gpsCompassNoise,whiteNoise,alpha)
-    gpsCompass.heading = gpsCompass.heading + gpsCompassNoise
+def add_rtk_compass_noise(rtkCompass,rtkCompassAccuracy,alpha,rtkCompassNoise):
+    whiteNoise = np.random.normal(0.0,rtkCompassAccuracy)
+    rtkCompassNoise = low_pass_filter(rtkCompassNoise,whiteNoise,alpha)
+    rtkCompass.heading = rtkCompass.heading + rtkCompassNoise
 
 def add_imu_bias(imu,accelerometerBias,gyroBias):
     imu.accelerometers = imu.accelerometers + np.array([accelerometerBias]).T

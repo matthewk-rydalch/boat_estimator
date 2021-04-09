@@ -2,22 +2,22 @@
 
 <launch>
     <arg name="bag_out_filename"    value="syn_meas"/>
-    <arg name="boat_imu"            value="/imu"/>
-    <arg name="base_2_rover_relPos" value="/base_2_rover_relPos"/>
+    <arg name="boat_imu"            value="/base_imu"/>
+    <arg name="base_2_rover_relPos" value="/base2Rover_relPos"/>
     <arg name="rover_PosVelEcef"    value="/rover_gps"/>
-    <arg name="boat_PosVelEcef"     value="/gps"/>
-    <arg name="compass_relPos"      value="/gps_compass"/>
+    <arg name="boat_PosVelEcef"     value="/base_gps"/>
+    <arg name="compass_relPos"      value="/base_rtk_compass"/>
     <arg name="ref_lla"             value="/ref_lla"/>
-    <arg name="params_file"        value="params"/>
+    <arg name="params_file"         value="params"/>
 
-    <rosparam command="load" file="$(find boat_estimator)/params/$(arg params_file).yaml"/>
-    <node name="boat_estimator" pkg="boat_estimator" type="estimator_ros.py" output="screen">
-        <remap from="imu" to="$(arg boat_imu)"/>
-        <remap from="base_2_rover_relPos" to="$(arg base_2_rover_relPos)"/>
-        <remap from="rover_posVelEcef" to="$(arg rover_PosVelEcef)"/>
-        <remap from="base_posVelEcef" to="$(arg boat_PosVelEcef)"/>
-        <remap from="compass_relPos" to="$(arg compass_relPos)"/>
-    </node>
+    <include file="$(find boat_estimator)/launch/standard.launch">
+        <arg name="boat_imu"            value="$(arg boat_imu)"/>
+        <arg name="base_2_rover_relPos" value="$(arg base_2_rover_relPos)"/>
+        <arg name="rover_PosVelEcef"    value="$(arg rover_PosVelEcef)"/>
+        <arg name="boat_PosVelEcef"     value="$(arg boat_PosVelEcef)"/>
+        <arg name="compass_relPos"      value="$(arg compass_relPos)"/>
+        <arg name="params_file"         value="$(arg params_file)"/>
+    </include>
 
     <node name="syn_meas" pkg="boat_estimator" type="syn_meas_class.py" output="screen"/>
 

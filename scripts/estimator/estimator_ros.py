@@ -31,7 +31,6 @@ class EstimatorRos:
         self.estimator = Estimator(params)
 
         self.boat_estimate_pub_ = rospy.Publisher('base_odom', Odometry, queue_size=5, latch=True)
-        self.boat_relative_position_estimate_pub_ = rospy.Publisher('rover2base_relPos', Vector3Stamped, queue_size=5, latch=True)
         self.imu_sub_ = rospy.Subscriber('imu', Imu, self.imuCallback, queue_size=5)
         self.base_2_rover_relPos_sub_ = rospy.Subscriber('base_2_rover_relPos', RelPos, self.relPosCallback, queue_size=5)
         self.rover_pos_vel_ecef_sub_ = rospy.Subscriber('rover_posVelEcef', PosVelEcef, self.roverPosVelEcefCallback, queue_size=5)
@@ -76,7 +75,6 @@ class EstimatorRos:
         self.estimator.base_gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
-        #TODO Need to check and see if what we are receiving really is heading or if it is the z rotation in a frame that is rolled and pitched.  It is probably heading.
         headingDeg = msg.relPosHeading
         flags = bin(msg.flags)
         gpsCompass = GpsCompassMsg(headingDeg,flags)
@@ -85,30 +83,22 @@ class EstimatorRos:
 
     def publish_estimates(self):
         timeStamp = rospy.Time.now()
-        
-        self.relPosEstimate.header.stamp = timeStamp
-
-        self.relPosEstimate.vector.x = self.estimator.belief.pr[0]
-        self.relPosEstimate.vector.y = self.estimator.belief.pr[1]
-        self.relPosEstimate.vector.z = self.estimator.belief.pr[2]
-
-        self.boat_relative_position_estimate_pub_.publish(self.relPosEstimate)
 
         self.odomEstimate.header.stamp = timeStamp
 
-        self.odomEstimate.pose.pose.position.x = self.estimator.belief.p[0]
-        self.odomEstimate.pose.pose.position.y = self.estimator.belief.p[1]
-        self.odomEstimate.pose.pose.position.z = self.estimator.belief.p[2]
+        self.odomEstimate.pose.pose.position.x = self.estimator.baseStates.p.item(0)
+        self.odomEstimate.pose.pose.position.y = self.estimator.baseStates.p.item(1)
+        self.odomEstimate.pose.pose.position.z = self.estimator.baseStates.p.item(2)
 
-        quat = R.from_euler('xyz', self.estimator.belief.q.T, degrees=False).as_quat()
+        quat = R.from_euler('xyz', self.estimator.baseStates.euler.T, degrees=False).as_quat()
         self.odomEstimate.pose.pose.orientation.x = quat.item(0)
         self.odomEstimate.pose.pose.orientation.y = quat.item(1)
         self.odomEstimate.pose.pose.orientation.z = quat.item(2)
         self.odomEstimate.pose.pose.orientation.w = quat.item(3)
 
-        self.odomEstimate.twist.twist.linear.x = self.estimator.belief.v[0]
-        self.odomEstimate.twist.twist.linear.y = self.estimator.belief.v[1]
-        self.odomEstimate.twist.twist.linear.z = self.estimator.belief.v[2]
+        self.odomEstimate.twist.twist.linear.x = self.estimator.baseStates.vb.item(0)
+        self.odomEstimate.twist.twist.linear.y = self.estimator.baseStates.vb.item(1)
+        self.odomEstimate.twist.twist.linear.z = self.estimator.baseStates.vb.item(2)
 
         self.boat_estimate_pub_.publish(self.odomEstimate)
 
