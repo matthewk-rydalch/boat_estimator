@@ -10,10 +10,13 @@ def run(baseStates,imu,dt,kp):
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
                                   
-     aBody = imu.accelerometers #This was negative
+     # aBody = imu.accelerometers #This was negative
      eulerAccel = np.array([[0.0,0.0,0.0]]).T
-     eulerAccel[0][0] = np.arctan(aBody.item(1)/aBody.item(2)) #switched from arctan2 to arctan
-     eulerAccel[1][0] = np.arcsin(aBody.item(0)/9.81)
+     eulerAccel[0][0] = np.arctan(imu.accelerometers.item(1)/imu.accelerometers.item(2)) #switched from arctan2 to arctan
+     if imu.accelerometers.item(0) > 9.8:
+          print("accelerometer forward value too high, ", imu.accelerometers)
+          imu.accelerometers[0] = 9.8
+     eulerAccel[1][0] = np.arcsin(imu.accelerometers.item(0)/9.81)
      eulerAccel[2][0] = baseStates.euler.item(2) #We update this with rtk compassing
      eulerError = eulerAccel - baseStates.euler
 
