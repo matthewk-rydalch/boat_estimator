@@ -41,17 +41,18 @@ def update_dynamic_model(belief,ut):
 
      return ft
 
-def update_rtk_relPos_model(relPosHat):
-     ht = -relPosHat
+def update_rtk_relPos_model(relPosHat,eulerAnglesHat,antennaOffset):
+     Rb2i = R.from_euler('xyz',eulerAnglesHat.squeeze())
+     ht = -relPosHat - Rb2i.apply(antennaOffset.T).T
      return ht
 
 def update_rover_gps_velocity_model(roverVelocityHat):
      ht = roverVelocityHat
      return ht
 
-def update_base_gps_velocity_model(eulerAnglesHat,baseVelocityHat):
+def update_base_gps_velocity_model(eulerAnglesHat,baseVelocityHat,wLpf,antennaOffset):
      Rb2i = R.from_euler('xyz',eulerAnglesHat.squeeze())
-     ht = Rb2i.apply(baseVelocityHat.T).T
+     ht = Rb2i.apply(baseVelocityHat.T).T - np.cross(wLpf,antennaOffset)
      return ht
 
 def update_rtk_compass_model(psiHat):
@@ -145,10 +146,20 @@ def update_jacobian_B(belief,ut):
 
      return Bt
 
-def get_jacobian_C_relPos():
+def get_jacobian_C_relPos(baseStates,antennaOffset):
+     sphi = np.sin(baseStates.phi).squeeze()
+     cphi = np.cos(baseStates.phi).squeeze()
+     sth = np.sin(baseStates.theta).squeeze()
+     cth = np.cos(baseStates.theta).squeeze()
+     tth = np.tan(baseStates.theta).squeeze()
+     spsi = np.sin(baseStates.psi).squeeze()
+     cpsi = np.cos(baseStates.psi).squeeze()
+
      dyDp = -np.identity(3)
      dyDvr = np.zeros((3,3))
-     dyDpsi = np.zeros((3,1))
+     dyDpsi = np.array([[(cth*sphi)*antennaOffset.item(0) + (sphi*sth*spsi+cphi*cpsi)*antennaOffset.item(1) + (cphi*sth*spsi-sphi*cpsi)*antennaOffset.item(2)],
+                    [(-cth*cpsi)*antennaOffset.item(0) + (-sphi*sth*cpsi+cphi*spsi)*antennaOffset.item(1) + (-cphi*sth*cpsi-sphi*spsi)*antennaOffset.item(2)],
+                    [0.0]])
      dyDvb = np.zeros((3,3))
      Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
      

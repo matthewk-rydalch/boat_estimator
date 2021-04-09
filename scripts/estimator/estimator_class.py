@@ -17,6 +17,7 @@ class Estimator:
       self.params = params
       self.belief = Belief(self.params.p0,self.params.vr0,self.params.psi0,self.params.vb0,self.params.P0)
       self.baseStates = BaseStates(self.params.p0,self.params.euler0,self.params.vb0)
+      self.wLpf = np.zeros((3,1))
       self.refLlaSet = False
       self.latRef = 0.0
       self.lonRef = 0.0
@@ -34,6 +35,7 @@ class Estimator:
       self.imuPrevTime = imu.time
 
       ut = Inputs(comp_filter.run(self.baseStates,imu,dt,self.params.kp))
+      self.baseStates.update_w_lpf(ut.gyros)
       ft = DynamicModel(ekf.update_dynamic_model(self.belief,ut))
       At = ekf.update_jacobian_A(self.belief,ut)
       Bt = ekf.update_jacobian_B(self.belief,ut)
@@ -46,8 +48,8 @@ class Estimator:
          print('relPos not valid = ', relPos.flags)
          return
       zt = relPos.base2RoverRelPos
-      ht = ekf.update_rtk_relPos_model(self.belief.p)
-      Ct = ekf.get_jacobian_C_relPos()
+      ht = ekf.update_rtk_relPos_model(self.belief.p,self.baseStates.euler,self.params.antennaOffset)
+      Ct = ekf.get_jacobian_C_relPos(self.baseStates,self.params.antennaOffset)
 
       ekf.update(self.belief,self.params.QtRtk,zt,ht,Ct)
 
@@ -83,7 +85,7 @@ class Estimator:
       velocityNed = np.array([velocityNed1D]).T
 
       zt = velocityNed
-      ht = ekf.update_base_gps_velocity_model(self.baseStates.euler,self.belief.vb)
+      ht = ekf.update_base_gps_velocity_model(self.baseStates.euler,self.belief.vb,self.baseStates.wLpf,self.params.antennaOffset)
       Ct = ekf.get_jacobian_C_base_velocity(self.baseStates)
 
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)

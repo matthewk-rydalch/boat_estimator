@@ -66,3 +66,5 @@ class EstimatorParams:
 
         self.kp = rospy.get_param('~compFiltKp',0.1)
 
+        self.antennaOffset = np.array([rospy.get_param('~antennaOffset',[0.74,-0.73,0.11])]).T
+
