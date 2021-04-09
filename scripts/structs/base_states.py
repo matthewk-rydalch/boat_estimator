@@ -10,4 +10,4 @@ class BaseStates:
       self.alpha = 0.1
 
    def update_w_lpf(self,gyros):
-      self.wLpf = alpha*gyros+(1-alpha)*self.wLpf
+      self.wLpf = self.alpha*gyros+(1-self.alpha)*self.wLpf
