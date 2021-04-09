@@ -10,7 +10,7 @@
     <arg name="compass_relPos"      value="/boat/compass/RelPos"/>
     <arg name="params_file"         value="params"/>
 
-    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock ../data/px4flight/outdoor/0318/$(arg bag_in_filename).bag"/>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock ../data/px4flight/outdoor_bags/0318/$(arg bag_in_filename).bag"/>
 
     <include file="$(find boat_estimator)/launch/standard.launch">
         <arg name="boat_imu"            value="$(arg boat_imu)"/>

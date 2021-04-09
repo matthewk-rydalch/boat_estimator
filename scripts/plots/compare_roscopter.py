@@ -8,12 +8,13 @@ import navpy
 def main():
 	odomTopic = '/base_odom'
 	truthTopic = '/dummyTopic'
+	mocapTopic = '/dummyTopic'
 	imuTopic = '/boat/imu'
 	ubloxRelPosTopic = '/rover/RelPos'
 	baseGpsTopic = '/boat/PosVelEcef'
 	roverGpsTopic = '/rover/PosVelEcef'
 	rtkCompassTopic = '/boat/compass/RelPos'
-	data = Parser(odomTopic,truthTopic,imuTopic,ubloxRelPosTopic,baseGpsTopic,roverGpsTopic,rtkCompassTopic)
+	data = Parser(odomTopic,truthTopic,mocapTopic,imuTopic,ubloxRelPosTopic,baseGpsTopic,roverGpsTopic,rtkCompassTopic)
 	filename = 'compare_roscopter.bag'
 	bag = rosbag.Bag('/home/matt/data/px4flight/sim/' + filename)
 
@@ -33,7 +34,9 @@ def main():
 
 def get_data(data, timeOffset, bag):
 	estRelPos, estOdom = data.get_odom(bag)
+	estRelPos.time -= estRelPos.time[0]
 	estRelPos.time += timeOffset[0]
+	estOdom.time -= estOdom.time[0]
 	estOdom.time += timeOffset[1]
 
 	# trueRelPos, trueOdom = data.get_truth(bag)
@@ -41,18 +44,23 @@ def get_data(data, timeOffset, bag):
 	# trueOdom.time += timeOffset[3]
 
 	imu = data.get_imu(bag)
+	imu.time -= imu.time[0]
 	imu.time += timeOffset[4]
 
 	measuredRelPos = data.get_ublox_relPos(bag)
+	measuredRelPos.time -= measuredRelPos.time[0]
 	measuredRelPos.time += timeOffset[5]
 
 	baseGps = data.get_base_gps(bag)
+	baseGps.time -= baseGps.time[0]
 	baseGps.time += timeOffset[6]
 
 	roverGps,refLla = data.get_rover_gps(bag)
+	roverGps.time -= roverGps.time[0]
 	roverGps.time += timeOffset[7]
 
 	rtkCompass = data.get_rtk_compass(bag)
+	rtkCompass.time -= rtkCompass.time[0]
 	rtkCompass.time += timeOffset[8]
 
 	return estRelPos, estOdom, measuredRelPos, baseGps, refLla
