@@ -23,7 +23,7 @@ sigmaProcess: [2.0,  # pn
                10.0,  # vre
                10.0,  # vrd
                2.0,  # psi
-               10.0,  # ub #TODO: These seem a little high.  Maybe there is somethign wrong that makes them be so high?
+               10.0,  # ub
                10.0,  # vb
                10.0],  # wb
 
