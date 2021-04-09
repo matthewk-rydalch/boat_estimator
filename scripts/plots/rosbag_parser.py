@@ -5,9 +5,10 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 
 class Parser:
-	def __init__(self,odomTopic,truthTopic,imuTopic,ubloxRelPosTopic,baseGpsTopic,roverGpsTopic,rtkCompassTopic):
+	def __init__(self,odomTopic,truthTopic,mocapTopic,imuTopic,ubloxRelPosTopic,baseGpsTopic,roverGpsTopic,rtkCompassTopic):
 		self.odomTopic = odomTopic
 		self.truthTopic = truthTopic
+		self.mocapTopic = mocapTopic
 		self.imuTopic = imuTopic
 		self.ubloxRelPosTopic = ubloxRelPosTopic
 		self.roverGpsTopic = roverGpsTopic
@@ -73,6 +74,30 @@ class Parser:
 			vz.append(msg.twist.twist.linear.z)
 
 		return RelPos(sec,nsec,pn,pe,pd), Odom(sec,nsec,0.0,0.0,0.0,qx,qy,qz,qw,vx,vy,vz)
+
+	def get_mocap(self, bag):
+		sec = []
+		nsec = []
+		pn = []
+		pe = []
+		pd = []
+		qx = []
+		qy = []
+		qz = []
+		qw = []
+
+		for topic, msg, t in bag.read_messages(topics=[self.mocapTopic]):
+			sec.append(msg.header.stamp.secs)
+			nsec.append(msg.header.stamp.nsecs)
+			pn.append(msg.pose.position.x)
+			pe.append(msg.pose.position.y)
+			pd.append(msg.pose.position.z)
+			qx.append(msg.pose.orientation.x)
+			qy.append(msg.pose.orientation.y)
+			qz.append(msg.pose.orientation.z)
+			qw.append(msg.pose.orientation.w)
+
+		return Pose(sec,nsec,pn,pe,pd,qx,qy,qz,qw)
 
 	def get_imu(self, bag):
 		sec = []
@@ -184,24 +209,34 @@ class Odom:
 	def __init__(self,sec,nsec,pn,pe,pd,qx,qy,qz,qw,vx,vy,vz):
 		
 		self.time = np.array(sec)+np.array(nsec)*1E-9
-		self.time -= self.time[0]
+		# self.time -= self.time[0]
 		self.position = np.array([pn,pe,pd])
 		quat = np.array([qx,qy,qz,qw]).T
 		eulerRad = R.from_quat(quat).as_euler('xyz').T
 		self.euler = eulerRad*180.0/np.pi
 		self.velocity = np.array([vx,vy,vz])
 
+class Pose:
+	def __init__(self,sec,nsec,pn,pe,pd,qx,qy,qz,qw):
+		
+		self.time = np.array(sec)+np.array(nsec)*1E-9
+		# self.time -= self.time[0]
+		self.position = -np.array([pn,pe,pd]) #Need base2rover not rover2base
+		quat = np.array([qx,qy,qz,qw]).T
+		eulerRad = R.from_quat(quat).as_euler('xyz').T
+		self.euler = eulerRad*180.0/np.pi
+
 class Imu:
 	def __init__(self,sec,nsec,ax,ay,az,wx,wy,wz):
 		self.time = np.array(sec)+np.array(nsec)*1E-9
-		self.time -= self.time[0]
+		# self.time -= self.time[0]
 		self.accel = np.array([ax,ay,az])
 		self.omega = np.array([wx,wy,wz])
 
 class RelPos:
 	def __init__(self,sec,nsec,pn,pe,pd,pnHp=0.0,peHp=0.0,pdHp=0.0):
 		self.time = np.array(sec)+np.array(nsec)*1E-9
-		self.time -= self.time[0]
+		# self.time -= self.time[0]
 		pn = np.array(pn) + np.array(pnHp)
 		pe = np.array(pe) + np.array(peHp)
 		pd = np.array(pd) + np.array(pdHp)
@@ -210,14 +245,14 @@ class RelPos:
 class Gps:
 	def __init__(self,sec,nsec,px,py,pz,vx,vy,vz):
 		self.time = np.array(sec)+np.array(nsec)*1E-9
-		self.time -= self.time[0]
+		# self.time -= self.time[0]
 		self.position = np.array([px,py,pz])
 		self.velocity = np.array([vx,vy,vz])
 
 class RtkCompass:
 	def __init__(self,sec,nsec,heading):
 		self.time = np.array(sec)+np.array(nsec)*1E-9
-		self.time -= self.time[0]
+		# self.time -= self.time[0]
 		self.heading = np.array([heading])
 
 class refLla:
