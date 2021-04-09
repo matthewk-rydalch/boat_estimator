@@ -6,58 +6,68 @@ import numpy as np
 import navpy
 
 def main():
-	estRelPosTopic = '/rover2base_relPos'
 	odomTopic = '/base_odom'
 	truthTopic = '/dummyTopic'
-	truePoseTopic = '/gazebo_base_pose'
+	mocapTopic = '/gazebo_base_pose'
 	imuTopic = '/base/imu'
 	ubloxRelPosTopic = '/p2u/rover/RelPos'
-	gpsTopic = '/p2u/base/PosVelEcef'
-	gpsCompassTopic = '/p2u/base/compass/RelPos'
-	refLlaTopic = '/p2u/rover/PosVelEcef'
-	data = Parser(estRelPosTopic,odomTopic,truthTopic,truePoseTopic,imuTopic,ubloxRelPosTopic,gpsTopic,gpsCompassTopic,refLlaTopic)
+	baseGpsTopic = '/p2u/base/PosVelEcef'
+	roverGpsTopic = '/p2u/rover/PosVelEcef'
+	rtkCompassTopic = '/p2u/base/compass/RelPos'
+	data = Parser(odomTopic,truthTopic,mocapTopic,imuTopic,ubloxRelPosTopic,baseGpsTopic,roverGpsTopic,rtkCompassTopic)
 	filename = 'p2u.bag'
 	bag = rosbag.Bag('/home/matt/data/boatLanding_sim/' + filename)
 
-	ubloxRelPos,estRelPos,odom,gps,refLla,pose,imu = get_data(data, bag)
-	gpsNed = ecef2ned(gps,refLla)
-	# imuIntegrated = integrate_imu(imu)
+	timeOffset = [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+	estRelPos,estOdom,m2uRelPos,m2uBaseGps,refLla,gazebo = get_data(data, timeOffset, bag)
+	m2uBaseGpsNed = ecef2ned(m2uBaseGps,refLla)
 
-	get_prn_data(ubloxRelPos,estRelPos)
-	get_pre_data(ubloxRelPos,estRelPos)
-	get_prd_data(ubloxRelPos,estRelPos)
-	get_pn_data(odom,gpsNed)
-	get_pe_data(odom,gpsNed)
-	get_pd_data(odom,gpsNed)
+	get_pn_data(m2uRelPos,estRelPos,1)
+	get_pe_data(m2uRelPos,estRelPos,2)
+	get_pd_data(m2uRelPos,estRelPos,3)
+
+	get_pn_data(gazebo,estRelPos,4)
+	get_pe_data(gazebo,estRelPos,5)
+	get_pd_data(gazebo,estRelPos,6)
+
+	get_phi_data(gazebo,estOdom,7)
+	get_theta_data(gazebo,estOdom,8)
+	get_psi_data(gazebo,estOdom,9)
+
+	get_ub_data(estOdom,m2uBaseGpsNed,10)
+	get_vb_data(estOdom,m2uBaseGpsNed,11)
+	get_wb_data(estOdom,m2uBaseGpsNed,12)
 
 	plt.show()
 
-def get_data(data, bag):
-	ubloxRelPos = data.get_ublox_relPos(bag)
-	ubloxRelPos.time = ubloxRelPos.time - ubloxRelPos.time[0]
-	ubloxRelPos.position = -ubloxRelPos.position
-	
-	estRelPos = data.get_estimated_relPos(bag)
-	estRelPos.time = estRelPos.time - estRelPos.time[0]
+def get_data(data, timeOffset, bag):
+	estRelPos, estOdom = data.get_odom(bag)
+	estRelPos.time += timeOffset[0]
+	estOdom.time += timeOffset[1]
 
-	odom = data.get_odom(bag)
-	odom.time = odom.time - odom.time[0]
-	
-	gps = data.get_gps(bag)
-	gps.time = gps.time - gps.time[0]
-	
-	refLla = data.get_ref_lla(bag)
-	refLla.lat = refLla.lat.item(0)
-	refLla.lon = refLla.lon.item(0)
-	refLla.alt = refLla.alt.item(0)
-
-	pose = data.get_true_pose(bag)
-	pose.time = pose.time - pose.time[0]
+	# trueRelPos, trueOdom = data.get_truth(bag)
+	# trueRelPos.time += timeOffset[2]
+	# trueOdom.time += timeOffset[3]
 
 	imu = data.get_imu(bag)
-	imu.time = imu.time - imu.time[0]
+	imu.time += timeOffset[4]
 
-	return ubloxRelPos, estRelPos, odom, gps, refLla, pose, imu
+	measuredRelPos = data.get_ublox_relPos(bag)
+	measuredRelPos.time += timeOffset[5]
+
+	baseGps = data.get_base_gps(bag)
+	baseGps.time += timeOffset[6]
+
+	roverGps,refLla = data.get_rover_gps(bag)
+	roverGps.time += timeOffset[7]
+
+	rtkCompass = data.get_rtk_compass(bag)
+	rtkCompass.time += timeOffset[8]
+
+	mocap = data.get_mocap(bag)
+	mocap.time += timeOffset[9]
+
+	return estRelPos, estOdom, measuredRelPos, baseGps, refLla, mocap
 
 def ecef2ned(gps,refLla):
 	ecefOrigin1D = navpy.lla2ecef(refLla.lat,refLla.lon,refLla.alt)
@@ -68,80 +78,35 @@ def ecef2ned(gps,refLla):
 	gpsNed = GpsNed(gps.time,gpsPositionNed,gpsVelocityNed)
 	return gpsNed
 
-# def integrate_imu(imu,pose):
-# 	imuU = []
-# 	imuV = []
-# 	imuW = []
-# 	imuX = []
-# 	imuY = []
-# 	imuZ = []
-# 	imuPhi = []
-# 	imuTheta = []
-# 	imuPsi = []
+def get_pn_data(relPos, estRelPos, figNum):
+	plot_2(figNum, relPos.time, -relPos.position[0], 'ublox n', estRelPos.time, estRelPos.position[0], 'estimate n')
 
-# 	for i in range(len(imu.time)):
-# 		if i == 0:
-# 			dt = imu.time[1]-imu.time[0]
-# 			imuU.append(0.0)
-# 			imuV.append(0.0)
-# 			imuW.append(0.0)
-# 			imuX.append(pose.position[0][0] + imuU[-1]*dt)
-# 			imuY.append(pose.position[1][0] + imuV[-1]*dt)
-# 			imuZ.append(pose.position[2][0] + imuW[-1]*dt)
-# 			imuPhi.append(imu.omega[0][i]*dt) #TODO: Need to add initial euler angles.  May need to integrate differently/propertly for angles.
-# 			imuTheta.append(imu.omega[1][i]*dt)
-# 			imuPsi.append(imu.omega[2][i]*dt)
-# 		if i == 1:
-# 			dt = imu.time[1]-imu.time[0]
-# 			imuU.append(truth.velocity[0][0] + imu.accel[0][i]*dt)
-# 			imuV.append(truth.velocity[1][0] + imu.accel[1][i]*dt)
-# 			imuW.append(truth.velocity[2][0] + imu.accel[2][i]*dt)
-# 			imuX.append(truth.position[0][0] + imuU[-1]*dt)
-# 			imuY.append(truth.position[1][0] + imuV[-1]*dt)
-# 			imuZ.append(truth.position[2][0] + imuW[-1]*dt)
-# 			imuPhi.append(imu.omega[0][i]*dt) #TODO: Need to add initial euler angles.  May need to integrate differently/propertly for angles.
-# 			imuTheta.append(imu.omega[1][i]*dt)
-# 			imuPsi.append(imu.omega[2][i]*dt)
-# 		else:
-# 			dt = imu.time[i] - imu.time[i-1]
-# 			imuU.append(imuU[-1] + imu.accel[0][i]*dt)
-# 			imuV.append(imuV[-1] + imu.accel[1][i]*dt)
-# 			imuW.append(imuW[-1] + imu.accel[2][i]*dt)
-# 			imuX.append(imuX[-1] + imuU[-1]*dt)
-# 			imuY.append(imuY[-1] + imuV[-1]*dt)
-# 			imuZ.append(imuZ[-1] + imuW[-1]*dt)
-# 			imuPhi.append(imuPhi[-1] + imu.omega[0][i]*dt)
-# 			imuTheta.append(imuTheta[-1] + imu.omega[1][i]*dt)
-# 			imuPsi.append(imuPsi[-1] + imu.omega[2][i]*dt)
-# 	return ImuIntegrated(imu.time,imuX,imuY,imuZ,imuPhi,imuTheta,imuPsi,imuU,imuV,imuW)
+def get_pe_data(relPos, estRelPos, figNum):
+	plot_2(figNum, relPos.time, -relPos.position[1], 'ublox e', estRelPos.time, estRelPos.position[1], 'estimate e')
 
-def get_prn_data(ubloxRelPos, estRelPos):
-	fig_num = 1
-	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[0], 'ublox n', estRelPos.time, estRelPos.position[0], 'estimate n')
+def get_pd_data(relPos, estRelPos, figNum):
+	plot_2(figNum, relPos.time, -relPos.position[2], 'ublox d', estRelPos.time, estRelPos.position[2], 'estimate d')
 
-def get_pre_data(ubloxRelPos, estRelPos):
-	fig_num = 2
-	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[1], 'ublox e', estRelPos.time, estRelPos.position[1], 'estimate e')
+def get_phi_data(mocap, estOdom, figNum):
+	plot_2(figNum, mocap.time, mocap.euler[0], 'phi mocap deg', estOdom.time, estOdom.euler[0], 'phi est deg')
 
-def get_prd_data(ubloxRelPos, estRelPos):
-	fig_num = 3
-	plot_2(fig_num, ubloxRelPos.time, ubloxRelPos.position[2], 'ublox d', estRelPos.time, estRelPos.position[2], 'estimate d')
+def get_theta_data(mocap, estOdom, figNum):
+	plot_2(figNum, mocap.time, mocap.euler[1], 'theta mocap deg', estOdom.time, estOdom.euler[1], 'theta est deg')
 
-def get_pn_data(odom, gpsNed):
-	fig_num = 4
-	plot_2(fig_num, odom.time, odom.position[0], 'odom n', gpsNed.time, gpsNed.position[0], 'gps n')
+def get_psi_data(mocap, estOdom, figNum):
+	plot_2(figNum, mocap.time, mocap.euler[2], 'psi mocap deg', estOdom.time, estOdom.euler[2], 'psi est deg')
 
-def get_pe_data(odom, gpsNed):
-	fig_num = 5
-	plot_2(fig_num, odom.time, odom.position[1], 'odom e', gpsNed.time, gpsNed.position[1], 'gps e')
+def get_ub_data(odom, gpsNed, figNum):
+	plot_2(figNum, odom.time, odom.velocity[0], 'odom u', gpsNed.time, gpsNed.velocity[0], 'gps u')
 
-def get_pd_data(odom, gpsNed):
-	fig_num = 6
-	plot_2(fig_num, odom.time, odom.position[2], 'odom d', gpsNed.time, gpsNed.position[2], 'gps d')
+def get_vb_data(odom, gpsNed, figNum):
+	plot_2(figNum, odom.time, odom.velocity[1], 'odom v', gpsNed.time, gpsNed.velocity[1], 'gps v')
 
-def plot_2(fig_num, t_x, x, xlabel, t_y, y, ylabel):
+def get_wb_data(odom, gpsNed, figNum):
+	plot_2(figNum, odom.time, odom.velocity[2], 'odom w', gpsNed.time, gpsNed.velocity[2], 'gps w')
 
-	plt.figure(fig_num)
+def plot_2(figNum, t_x, x, xlabel, t_y, y, ylabel):
+	plt.figure(figNum)
 	plt.plot(t_x, x, label = xlabel)
 	plt.plot(t_y, y, label = ylabel)
 	plt.legend(loc = "upper right")
