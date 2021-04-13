@@ -75,9 +75,9 @@ class EstimatorRos:
         self.estimator.base_gps_callback(gps)
 
     def compassRelPosCallback(self,msg):
-        headingDeg = msg.relPosHeading
+        headingRad = msg.relPosHeading
         flags = bin(msg.flags)
-        gpsCompass = GpsCompassMsg(headingDeg,flags)
+        gpsCompass = GpsCompassMsg(headingRad,flags)
 
         self.estimator.gps_compass_callback(gpsCompass)
 
