@@ -91,10 +91,11 @@ class Estimator:
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
-      if gpsCompass.flags[2] != '1':
+      if gpsCompass.flags[1] != '1':
+      #if gpsCompass.flags[-3] != '1':
          print('Compass not valid = ', gpsCompass.flags)
          return
-      zt = gpsCompass.heading*np.pi/180.0
+      zt = gpsCompass.heading
       ht = ekf.update_rtk_compass_model(self.belief.psi)
       Ct = ekf.get_jacobian_C_compass()
       

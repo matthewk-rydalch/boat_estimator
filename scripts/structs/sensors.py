@@ -31,6 +31,6 @@ class GpsMsg:
         self.fix = fix
 
 class GpsCompassMsg:
-    def __init__(self,headingDeg = 0.0,flags = '0b00000000'):
-        self.heading = np.array([[headingDeg]]).T
+    def __init__(self,headingRad = 0.0,flags = '0b00000000'):
+        self.heading = np.array([[headingRad]]).T
         self.flags = flags
