@@ -44,7 +44,7 @@ class Estimator:
       self.update_full_state(ut.phi,ut.theta)
 
    def relPos_callback(self,relPos):
-      if relPos.flags[-3] != '1':
+      if relPos.flags != 311:
          print('relPos not valid = ', relPos.flags)
          return
       zt = relPos.base2RoverRelPos
@@ -91,7 +91,7 @@ class Estimator:
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
-      if gpsCompass.flags[1] != '1':
+      if gpsCompass.flags != 311:
       #if gpsCompass.flags[-3] != '1':
          print('Compass not valid = ', gpsCompass.flags)
          return

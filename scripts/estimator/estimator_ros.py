@@ -51,7 +51,7 @@ class EstimatorRos:
 
     def relPosCallback(self,msg):
         base2RoverRelativePositionNedMeters = np.array(msg.relPosNED) + np.array(msg.relPosHPNED)
-        flags = bin(msg.flags)
+        flags = msg.flags#bin(msg.flags)
         relPos = RelPosMsg(base2RoverRelativePositionNedMeters,flags)
 
         self.estimator.relPos_callback(relPos)
@@ -76,7 +76,7 @@ class EstimatorRos:
 
     def compassRelPosCallback(self,msg):
         headingRad = msg.relPosHeading
-        flags = bin(msg.flags)
+        flags = msg.flags #bin(msg.flags)
         gpsCompass = GpsCompassMsg(headingRad,flags)
 
         self.estimator.gps_compass_callback(gpsCompass)
