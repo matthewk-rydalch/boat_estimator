@@ -8,8 +8,9 @@ class EstimatorParams:
         self.euler0 = np.array([rospy.get_param('~euler0',[0.0,0.0,0.0])]).T
         self.psi0 = np.array([[self.euler0.item(2)]])
         self.vb0 = np.array([rospy.get_param('~vb0',[0.0,0.0,0.0])]).T
+        self.Ba0 = np.array([rospy.get_param('~Ba0',[0.0,0.0,0.0])]).T
 
-        sigma0 = rospy.get_param('~sigma0',[3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0])
+        sigma0 = rospy.get_param('~sigma0',[3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0,3.0])
         self.P0 = np.diag([
                     sigma0[0]**2,  # pn
                     sigma0[1]**2,  # pe
@@ -21,9 +22,12 @@ class EstimatorParams:
                     sigma0[7]**2,  # ub
                     sigma0[8]**2,  # vb
                     sigma0[9]**2,  # wb
+                    sigma0[10]**2,  # Bax
+                    sigma0[11]**2,  # Bay
+                    sigma0[12]**2,  # Baz
                    ])
 
-        sigmaProcess = rospy.get_param('~sigmaProcess',[0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003])
+        sigmaProcess = rospy.get_param('~sigmaProcess',[0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003])
         self.RProcess = 1.0 * np.diag([
                         sigmaProcess[0]**2,  # pn
                         sigmaProcess[1]**2,  # pe
@@ -35,6 +39,9 @@ class EstimatorParams:
                         sigmaProcess[7]**2,  # u
                         sigmaProcess[8]**2,  # v
                         sigmaProcess[9]**2,  # w
+                        sigmaProcess[10]**2,  # Bax
+                        sigmaProcess[11]**2,  # Bay
+                        sigmaProcess[12]**2,  # Baz
                         ])
 
         sigmaInputs = rospy.get_param('~sigmaInputs',[0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003,0.0003])

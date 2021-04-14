@@ -6,3 +6,4 @@ class DynamicModel:
       self.dvr = ft[3:6]
       self.dpsi = ft[6]
       self.dvb = ft[7:10]
+      self.dBa = ft[10:13]

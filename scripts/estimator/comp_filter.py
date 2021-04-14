@@ -1,6 +1,6 @@
 import numpy as np
 
-def run(baseStates,imu,dt,kp):
+def run(baseStates,imu,accelBias,dt,kp):
      #I added the attitude model inversion.  It seemed to help.  It is not from Dr. Beard
      sphi = np.sin(baseStates.euler.item(0))
      cphi = np.cos(baseStates.euler.item(0))
@@ -10,7 +10,7 @@ def run(baseStates,imu,dt,kp):
                                   [0.0, cphi, -sphi],
                                   [0.0, sphi/cth, cphi/cth]])
                                   
-     # aBody = imu.accelerometers #This was negative
+     accel = imu.accelerometers - accelBias
      eulerAccel = np.array([[0.0,0.0,0.0]]).T
      eulerAccel[0][0] = np.arctan(imu.accelerometers.item(1)/imu.accelerometers.item(2)) #switched from arctan2 to arctan
      if imu.accelerometers.item(0) > 9.8:
