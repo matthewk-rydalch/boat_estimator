@@ -16,6 +16,9 @@ def run(baseStates,imu,dt,kp):
      if imu.accelerometers.item(0) > 9.8:
           print("accelerometer forward value too high, ", imu.accelerometers)
           imu.accelerometers[0] = 9.8
+     if imu.accelerometers.item(0) < -9.8:
+          print("accelerometer forward value too high, ", imu.accelerometers)
+          imu.accelerometers[0] = -9.8
      eulerAccel[1][0] = np.arcsin(imu.accelerometers.item(0)/9.81)
      eulerAccel[2][0] = baseStates.euler.item(2) #We update this with rtk compassing
      eulerError = eulerAccel - baseStates.euler

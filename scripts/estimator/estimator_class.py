@@ -1,6 +1,7 @@
 import navpy
 import numpy as np
 import math
+from scipy.spatial.transform import Rotation as R
 
 import sys
 # sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
@@ -43,10 +44,10 @@ class Estimator:
 
       ekf.propagate(self.belief,self.params.RProcess,self.params.RInputs,ft,At,Bt,dt)
       self.update_full_state(ut.phi,ut.theta)
-      print('prop psi = ', self.belief.psi)
 
    def relPos_callback(self,relPos):
-      if relPos.flags != 311:
+      flagsBinary = bin(relPos.flags)
+      if flagsBinary[-3] != '1':
          print('relPos not valid = ', relPos.flags)
          return
       zt = relPos.base2RoverRelPos
@@ -88,23 +89,27 @@ class Estimator:
 
       zt = velocityNed
       ht = ekf.update_base_gps_velocity_model(self.baseStates.euler,self.belief.vb,self.baseStates.wLpf,self.params.antennaOffset)
-      Ct = ekf.get_jacobian_C_base_velocity(self.baseStates)
+      Ct = ekf.get_jacobian_C_base_velocity(self.baseStates.euler,self.belief.vb)
 
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
-      if gpsCompass.flags != 311:
-      #if gpsCompass.flags[-3] != '1':
+      flagsBinary = bin(gpsCompass.flags)
+      if gpsCompass.flags < 256:
          print('Compass not valid = ', gpsCompass.flags)
          return
+      elif gpsCompass.flags > 512 and flagsBinary[3] != 1:
+         print('Compass not valid = ', gpsCompass.flags)
+         return
+
       zt = gpsCompass.heading
       ht = ekf.update_rtk_compass_model(self.belief.psi,zt)
       Ct = ekf.get_jacobian_C_compass()
       
       ekf.update(self.belief,self.params.QtRtkCompass,zt,ht,Ct)
-      print('update psi = ', self.belief.psi)
 
    def update_full_state(self,phi,theta):
       self.baseStates.p = self.belief.p
       self.baseStates.euler = np.array([[phi.squeeze(),theta.squeeze(),self.belief.psi.squeeze()]]).T
-      self.baseStates.vb = self.belief.vb
+      Rb2i = R.from_euler('xyz',self.baseStates.euler.squeeze())
+      self.baseStates.vb = Rb2i.apply(self.belief.vb.T).T
