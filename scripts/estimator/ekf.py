@@ -55,8 +55,13 @@ def update_base_gps_velocity_model(eulerAnglesHat,baseVelocityHat,wLpf,antennaOf
      ht = Rb2i.apply(baseVelocityHat.T).T + np.cross(wLpf.T,antennaOffset.T).T
      return ht
 
-def update_rtk_compass_model(psiHat):
-     ht = psiHat
+def update_rtk_compass_model(psiHat,zPsi):
+     if zPsi-psiHat > np.pi:
+          ht = psiHat + 2.0*np.pi
+     elif zPsi-psiHat < -np.pi:
+          ht = psiHat - 2.0*np.pi
+     else:
+          ht = psiHat
      return ht
 
 def update_jacobian_A(belief,ut):

@@ -3,6 +3,7 @@ import numpy as np
 import math
 
 import sys
+# sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 import ekf
@@ -42,6 +43,7 @@ class Estimator:
 
       ekf.propagate(self.belief,self.params.RProcess,self.params.RInputs,ft,At,Bt,dt)
       self.update_full_state(ut.phi,ut.theta)
+      print('prop psi = ', self.belief.psi)
 
    def relPos_callback(self,relPos):
       if relPos.flags != 311:
@@ -96,10 +98,11 @@ class Estimator:
          print('Compass not valid = ', gpsCompass.flags)
          return
       zt = gpsCompass.heading
-      ht = ekf.update_rtk_compass_model(self.belief.psi)
+      ht = ekf.update_rtk_compass_model(self.belief.psi,zt)
       Ct = ekf.get_jacobian_C_compass()
       
       ekf.update(self.belief,self.params.QtRtkCompass,zt,ht,Ct)
+      print('update psi = ', self.belief.psi)
 
    def update_full_state(self,phi,theta):
       self.baseStates.p = self.belief.p
