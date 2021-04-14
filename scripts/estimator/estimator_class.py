@@ -17,7 +17,7 @@ from base_states import BaseStates
 class Estimator:
    def __init__(self,params):
       self.params = params
-      self.belief = Belief(self.params.p0,self.params.vr0,self.params.psi0,self.params.vb0,self.params.Ba0,self.params.P0)
+      self.belief = Belief(self.params.p0,self.params.vr0,self.params.psi0,self.params.vb0,self.params.P0)
       self.baseStates = BaseStates(self.params.p0,self.params.euler0,self.params.vb0)
       self.wLpf = np.zeros((3,1))
       self.refLlaSet = False
@@ -26,6 +26,7 @@ class Estimator:
       self.altRef = 0.0
       self.refEcef = np.zeros((3,1))
       self.imuPrevTime = 0.0
+      self.alpha = 0.3
       self.firstImu = True
       self.alpha = 0.05
 
@@ -37,7 +38,7 @@ class Estimator:
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time
 
-      ut = Inputs(comp_filter.run(self.baseStates,imu,self.belief.Ba,dt,self.params.kp))
+      ut = Inputs(comp_filter.run(self.baseStates,imu,dt,self.params.kp))
       self.baseStates.update_w_lpf(ut.gyros)
       ft = DynamicModel(ekf.update_dynamic_model(self.belief,ut))
       At = ekf.update_jacobian_A(self.belief,ut)
