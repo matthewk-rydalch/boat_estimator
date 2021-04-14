@@ -27,6 +27,7 @@ class Estimator:
       self.refEcef = np.zeros((3,1))
       self.imuPrevTime = 0.0
       self.firstImu = True
+      self.alpha = 0.05
 
    def imu_callback(self,imu):
       if self.firstImu:
@@ -112,4 +113,9 @@ class Estimator:
       self.baseStates.p = self.belief.p
       self.baseStates.euler = np.array([[phi.squeeze(),theta.squeeze(),self.belief.psi.squeeze()]]).T
       Rb2i = R.from_euler('xyz',self.baseStates.euler.squeeze())
-      self.baseStates.vb = Rb2i.apply(self.belief.vb.T).T
+      newVb = Rb2i.apply(self.belief.vb.T).T
+      self.baseStates.vb = self.low_pass_filter(newVb,self.baseStates.vb)
+
+   def low_pass_filter(self,new,old):
+      filtered = self.alpha*new+(1-self.alpha)*old
+      return filtered
