@@ -6,13 +6,11 @@ def propagate(belief,RProcess,RInputs,ft,At,Bt,dt):
      belief.vr = belief.vr + ft.dvr*dt
      belief.psi = belief.psi + ft.dpsi*dt
      belief.vb = belief.vb + ft.dvb*dt
-     belief.Ba = belief.Ba + ft.dBa*dt
 
      Ad = np.identity(belief.m) + At*dt
      Bd = Bt*dt
 
      belief.P = Ad@belief.P@Ad.T + Bd@RInputs@Bd.T + RProcess*dt**2
-     print('Ba = ', belief.Ba)
 
 def update(belief,Qt,zt,ht,Ct):
      Lt = belief.P@Ct.T@np.linalg.inv(Ct@belief.P@Ct.T+Qt)
@@ -21,7 +19,6 @@ def update(belief,Qt,zt,ht,Ct):
      belief.vr = belief.vr + dx[3:6]
      belief.psi = belief.psi + dx[6]
      belief.vb = belief.vb + dx[7:10]
-     belief.Ba = belief.Ba + dx[10:13]
 
      belief.P = (np.identity(belief.m) - Lt@Ct)@belief.P
 
@@ -39,9 +36,8 @@ def update_dynamic_model(belief,ut):
      dp = Rb2i.apply(belief.vb.T).T - belief.vr
      dvr = np.zeros((3,1))
      dpsi = sphi/cth*ut.gyros.item(1) + cphi/cth*ut.gyros.item(2)
-     dvb = ut.accelerometers -belief.Ba + Ri2b.apply(gravity.T).T - np.cross(ut.gyros.T,belief.vb.T).T
-     dBa = np.zeros((3,1))
-     ft = np.concatenate((dp,dvr,dpsi,dvb,dBa),axis=0)
+     dvb = ut.accelerometers + Ri2b.apply(gravity.T).T - np.cross(ut.gyros.T,belief.vb.T).T
+     ft = np.concatenate((dp,dvr,dpsi,dvb),axis=0)
 
      return ft
 
@@ -85,22 +81,19 @@ def update_jacobian_A(belief,ut):
                         [(cth*cpsi)*belief.vb.item(0) + (sphi*sth*cpsi-cphi*spsi)*belief.vb.item(1) + (cphi*sth*cpsi+sphi*spsi)*belief.vb.item(2)],
                         [0.0]])
      dpDvb = Rb2i.as_matrix()
-     dpDBa = np.zeros((3,3))
-     dpDx = np.concatenate((dpDp,dpDvr,dpDpsi,dpDvb,dpDBa),axis=1)
+     dpDx = np.concatenate((dpDp,dpDvr,dpDpsi,dpDvb),axis=1)
 
      dvrDp = np.zeros((3,3))
      dvrDvr = np.zeros((3,3))
      dvrDpsi = np.zeros((3,1))
      dvrDvb = np.zeros((3,3))
-     dvrDBa = np.zeros((3,3))
-     dvrDx = np.concatenate((dvrDp,dvrDvr,dvrDpsi,dvrDvb,dvrDBa),axis=1)
+     dvrDx = np.concatenate((dvrDp,dvrDvr,dvrDpsi,dvrDvb),axis=1)
 
      dpsiDp = np.zeros((1,3))
      dpsiDvr = np.zeros((1,3))
      dpsiDpsi = np.zeros((1,1))
      dpsiDvb = np.zeros((1,3))
-     dpsiDBa = np.zeros((1,3))
-     dpsiDx = np.concatenate((dpsiDp,dpsiDvr,dpsiDpsi,dpsiDvb,dpsiDBa),axis=1)
+     dpsiDx = np.concatenate((dpsiDp,dpsiDvr,dpsiDpsi,dpsiDvb),axis=1)
 
      dvbDp = np.zeros((3,3))
      dvbDvr = np.zeros((3,3))
@@ -108,17 +101,9 @@ def update_jacobian_A(belief,ut):
      dvbDvb = np.array([[0.0,ut.gyros.item(2),-ut.gyros.item(1)],
                         [-ut.gyros.item(2),0.0,ut.gyros.item(0)],
                         [ut.gyros.item(1),-ut.gyros.item(0),0.0]])
-     dpDBa = -np.identity(3)
-     dvbDx = np.concatenate((dvbDp,dvbDvr,dvbDpsi,dvbDvb,dpDBa),axis=1)
+     dvbDx = np.concatenate((dvbDp,dvbDvr,dvbDpsi,dvbDvb),axis=1)
 
-     dBaDp = np.zeros((3,3))
-     dBaDvr = np.zeros((3,3))
-     dBaDpsi = np.zeros((3,1))
-     dBaDvb = np.zeros((3,3))
-     dBaDBa = np.zeros((3,3))
-     dBaDx = np.concatenate((dBaDp,dBaDvr,dBaDpsi,dBaDvb,dBaDBa),axis=1)
-
-     At = np.concatenate((dpDx,dvrDx,dpsiDx,dvbDx,dBaDx),axis=0)
+     At = np.concatenate((dpDx,dvrDx,dpsiDx,dvbDx),axis=0)
      return At
     
 def update_jacobian_B(belief,ut):
@@ -162,13 +147,7 @@ def update_jacobian_B(belief,ut):
      dvbDth = np.array([[-cth, -sphi*sth, -cphi*sth]]).T*gravity.item(2)
      dvbDu = np.concatenate((dvbDa,dvbDw,dvbDphi,dvbDth),axis=1)
 
-     dBaDa = np.zeros((3,3))
-     dBaDw = np.zeros((3,3))
-     dBaDphi = np.zeros((3,1))
-     dBaDth = np.zeros((3,1))
-     dBaDu = np.concatenate((dBaDa,dBaDw,dBaDphi,dBaDth),axis=1)
-
-     Bt = np.concatenate((dpDu, dvrDu, dpsiDu, dvbDu, dBaDu), axis=0)
+     Bt = np.concatenate((dpDu, dvrDu, dpsiDu, dvbDu), axis=0)
 
      return Bt
 
@@ -177,6 +156,7 @@ def get_jacobian_C_relPos(baseStates,antennaOffset):
      cphi = np.cos(baseStates.euler[0]).squeeze()
      sth = np.sin(baseStates.euler[1]).squeeze()
      cth = np.cos(baseStates.euler[1]).squeeze()
+     tth = np.tan(baseStates.euler[1]).squeeze()
      spsi = np.sin(baseStates.euler[2]).squeeze()
      cpsi = np.cos(baseStates.euler[2]).squeeze()
 
@@ -186,8 +166,7 @@ def get_jacobian_C_relPos(baseStates,antennaOffset):
                         [(cth*cpsi)*antennaOffset.item(0) + (sphi*sth*cpsi-cphi*spsi)*antennaOffset.item(1) + (cphi*sth*cpsi+sphi*spsi)*antennaOffset.item(2)],
                         [0.0]])
      dyDvb = np.zeros((3,3))
-     dyDBa = np.zeros((3,3))
-     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb,dyDBa),axis=1)
+     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
      
      return Ct
 
@@ -196,8 +175,7 @@ def get_jacobian_C_rover_velocity():
      dyDvr = np.identity(3)
      dyDpsi = np.zeros((3,1))
      dyDvb = np.zeros((3,3))
-     dyDBa = np.zeros((3,3))
-     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb,dyDBa),axis=1)
+     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
 
      return Ct
 
@@ -217,8 +195,7 @@ def get_jacobian_C_base_velocity(euler,vb):
                         [(cth*cpsi)*vb.item(0) + (sphi*sth*cpsi-cphi*spsi)*vb.item(1) + (cphi*sth*cpsi+sphi*spsi)*vb.item(2)],
                         [0.0]])
      dyDvb = Rb2i.as_matrix()
-     dyDBa = np.zeros((3,3))
-     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb,dyDBa),axis=1)
+     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
 
      return Ct
 
@@ -227,7 +204,6 @@ def get_jacobian_C_compass():
      dyDvr = np.zeros((1,3))
      dyDpsi = np.array([[1.0]])
      dyDvb = np.zeros((1,3))
-     dyDBa = np.zeros((1,3))
-     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb,dyDBa),axis=1)
+     Ct = np.concatenate((dyDp,dyDvr,dyDpsi,dyDvb),axis=1)
 
      return Ct
