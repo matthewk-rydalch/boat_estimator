@@ -26,7 +26,6 @@ class Estimator:
       self.altRef = 0.0
       self.refEcef = np.zeros((3,1))
       self.imuPrevTime = 0.0
-      self.alpha = 0.3
       self.firstImu = True
       self.alpha = 0.05
 
