@@ -29,16 +29,17 @@ class EstimatorRos:
     def __init__(self):
         self.relPosEstimate = Vector3Stamped()
         self.odomEstimate = Odometry()
+        self.eulerEstimate = Vector3Stamped()
         params = EstimatorParams()
         self.estimator = Estimator(params)
 
         self.boat_estimate_pub_ = rospy.Publisher('base_odom', Odometry, queue_size=5, latch=True)
+        self.boat_euler_pub_ = rospy.Publisher('base_euler', Vector3Stamped, queue_size=5, latch=True)
         self.imu_sub_ = rospy.Subscriber('imu', Imu, self.imuCallback, queue_size=5)
         self.base_2_rover_relPos_sub_ = rospy.Subscriber('base_2_rover_relPos', RelPos, self.relPosCallback, queue_size=5)
         self.rover_pos_vel_ecef_sub_ = rospy.Subscriber('rover_posVelEcef', PosVelEcef, self.roverPosVelEcefCallback, queue_size=5)
         self.base_pos_vel_ecef_sub_ = rospy.Subscriber('base_posVelEcef', PosVelEcef, self.basePosVelEcefCallback, queue_size=5)
         self.comp_relPos_sub_ = rospy.Subscriber('compass_relPos', RelPos, self.compassRelPosCallback, queue_size=5)
-
         while not rospy.is_shutdown():
             rospy.spin()
 
@@ -87,11 +88,15 @@ class EstimatorRos:
         timeStamp = rospy.Time.now()
 
         self.odomEstimate.header.stamp = timeStamp
+        self.eulerEstimate.header.stamp = timeStamp
 
         self.odomEstimate.pose.pose.position.x = self.estimator.baseStates.p.item(0)
         self.odomEstimate.pose.pose.position.y = self.estimator.baseStates.p.item(1)
         self.odomEstimate.pose.pose.position.z = self.estimator.baseStates.p.item(2)
 
+        self.eulerEstimate.vector.x = self.estimator.baseStates.euler.item(0)
+        self.eulerEstimate.vector.y = self.estimator.baseStates.euler.item(1)
+        self.eulerEstimate.vector.z = self.estimator.baseStates.euler.item(2)
         quat = R.from_euler('xyz', self.estimator.baseStates.euler.T, degrees=False).as_quat()
         self.odomEstimate.pose.pose.orientation.x = quat.item(0)
         self.odomEstimate.pose.pose.orientation.y = quat.item(1)
@@ -103,6 +108,7 @@ class EstimatorRos:
         self.odomEstimate.twist.twist.linear.z = self.estimator.baseStates.vb.item(2)
 
         self.boat_estimate_pub_.publish(self.odomEstimate)
+        self.boat_euler_pub_.publish(self.eulerEstimate)
 
 if __name__ == '__main__':
     rospy.init_node('estimator_ros', anonymous=True)
