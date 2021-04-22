@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="bag_in_filename"     value="flightE_sideways"/>
+    <arg name="bag_in_filename"     value="flightE"/>
     <arg name="bag_out_filename"    value="compare_roscopter"/>
     <arg name="boat_imu"            value="/base/imu"/>
     <arg name="base_2_rover_relPos" value="/rover/RelPos"/>
@@ -10,7 +10,7 @@
     <arg name="compass_relPos"      value="/base/compass/RelPos"/>
     <arg name="params_file"         value="params"/>
 
-    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock ../data/px4flight/outdoor/0413/$(arg bag_in_filename).bag"/>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock ../data/px4flight/outdoor/0420/$(arg bag_in_filename).bag"/>
 
     <group ns="new">
         <include file="$(find boat_estimator)/launch/standard.launch">

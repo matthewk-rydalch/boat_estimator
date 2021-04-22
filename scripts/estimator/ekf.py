@@ -52,7 +52,7 @@ def update_rover_gps_velocity_model(roverVelocityHat):
 
 def update_base_gps_velocity_model(eulerAnglesHat,baseVelocityHat,wLpf,antennaOffset):
      Rb2i = R.from_euler('xyz',eulerAnglesHat.squeeze())
-     ht = Rb2i.apply(baseVelocityHat.T).T + np.cross(wLpf.T,antennaOffset.T).T
+     ht = Rb2i.apply(baseVelocityHat.T).T - np.cross(wLpf.T,antennaOffset.T).T
      return ht
 
 def update_rtk_compass_model(psiHat,zPsi):
