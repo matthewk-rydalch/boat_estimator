@@ -68,3 +68,5 @@ class EstimatorParams:
 
         self.antennaOffset = np.array([rospy.get_param('~antennaOffset',[0.74,-0.73,0.11])]).T
 
+        self.accelBias = np.array([rospy.get_param('~accelBias',[0.0,0.0,0.0])]).T
+        self.gyroBias = np.array([rospy.get_param('~gyroBias',[0.0,0.0,0.0])]).T
