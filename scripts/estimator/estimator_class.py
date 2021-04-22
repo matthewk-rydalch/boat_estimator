@@ -4,8 +4,6 @@ import math
 from scipy.spatial.transform import Rotation as R
 
 import sys
-#sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
-#sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
 
 import ekf
 import comp_filter
