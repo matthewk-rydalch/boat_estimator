@@ -32,11 +32,7 @@ class Estimator:
          self.imuPrevTime = imu.time
          self.firstImu = False
          return
-      print('accel before = ', imu.accelerometers)
-      print('gyro before = ', imu.gyros)
       imu.remove_bias(self.params.accelBias,self.params.gyroBias)
-      print('accel after = ', imu.accelerometers)
-      print('gyro after = ', imu.gyros)
       dt = imu.time - self.imuPrevTime
       self.imuPrevTime = imu.time
 
