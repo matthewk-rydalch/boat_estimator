@@ -5,8 +5,6 @@ import rospy
 from scipy.spatial.transform import Rotation as R
 
 import sys
-sys.path.append('/../../structs')
-sys.path.append('../../params')
 
 from geometry_msgs.msg import Vector3
 from geometry_msgs.msg import Vector3Stamped
