@@ -3,7 +3,7 @@ import numpy as np
 import math
 
 import sys
-sys.path.append('/home/matt/px4_ws/src/boat_estimator/src/structs')
+sys.path.append('../../structs')
 
 import ekf
 import comp_filter
@@ -91,10 +91,10 @@ class Estimator:
       ekf.update(self.belief,self.params.QtGpsVelocity,zt,ht,Ct)
 
    def gps_compass_callback(self,gpsCompass):
-      if gpsCompass.flags[1] != '1':
-      #if gpsCompass.flags[-3] != '1':
-         print('Compass not valid = ', gpsCompass.flags)
-         return
+      # if gpsCompass.flags[1] != '1':
+      # #if gpsCompass.flags[-3] != '1':
+      #    print('Compass not valid = ', gpsCompass.flags)
+      #    return
       zt = gpsCompass.heading
       ht = ekf.update_rtk_compass_model(self.belief.psi)
       Ct = ekf.get_jacobian_C_compass()
